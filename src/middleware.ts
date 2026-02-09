@@ -23,7 +23,7 @@ export async function middleware(req: NextRequest) {
 
   // Define protected routes that require authentication
   const protectedRoutes = [
-    "/portal",
+    "/home",
     "/ai-assistant",
     "/training",
     "/rfq",
@@ -102,7 +102,7 @@ export async function middleware(req: NextRequest) {
         session &&
         (pathname === "/login" || pathname === "/forgot-password")
       ) {
-        return NextResponse.redirect(new URL("/portal", req.url));
+        return NextResponse.redirect(new URL("/home", req.url));
       }
 
       return response;
@@ -187,21 +187,21 @@ export async function middleware(req: NextRequest) {
     console.error("Middleware error:", error);
   }
 
-  // Redirect root to portal if authenticated, otherwise to login
+  // Redirect root to home if authenticated, otherwise to login
   if (pathname === "/") {
     if (isAuthenticated) {
-      return NextResponse.redirect(new URL("/portal", req.url));
+      return NextResponse.redirect(new URL("/home", req.url));
     } else {
       return NextResponse.redirect(new URL("/login", req.url));
     }
   }
 
-  // If user is authenticated and trying to access public auth routes, redirect to portal
+  // If user is authenticated and trying to access public auth routes, redirect to home
   if (
     isAuthenticated &&
     (pathname === "/login" || pathname === "/forgot-password")
   ) {
-    return NextResponse.redirect(new URL("/portal", req.url));
+    return NextResponse.redirect(new URL("/home", req.url));
   }
 
   // If user is not authenticated and trying to access protected routes, redirect to login
@@ -220,7 +220,7 @@ export async function middleware(req: NextRequest) {
 
   // If user is authenticated but not admin and trying to access admin routes, redirect to portal
   if (isAuthenticated && isAdminRoute && userRole !== "admin") {
-    return NextResponse.redirect(new URL("/portal", req.url));
+    return NextResponse.redirect(new URL("/home", req.url));
   }
 
   return response;

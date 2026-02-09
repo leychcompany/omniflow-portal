@@ -57,7 +57,7 @@ export default function Home() {
   useEffect(() => {
     if (isInitialized) {
       if (user) {
-        router.push('/portal')
+        router.push('/home')
       } else {
         router.push('/login')
       }

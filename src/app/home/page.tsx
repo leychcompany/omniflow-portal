@@ -9,6 +9,7 @@ import { Logo } from '@/components/Logo'
 import { useAuthStore } from '@/store/auth-store'
 import { supabase } from '@/lib/supabase'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { manuals } from '../manuals/manuals-data'
 import { 
   Bot, 
   GraduationCap, 
@@ -17,9 +18,7 @@ import {
   BookOpen, 
   LogOut,
   TrendingUp,
-  Clock,
   CheckCircle,
-  AlertCircle,
   Menu,
   X,
   ArrowRight,
@@ -40,38 +39,8 @@ import {
 
 const dashboardStats = [
   { 
-    label: 'Pending RFQs', 
-    value: '3', 
-    color: 'text-amber-600', 
-    bgColor: 'bg-amber-50', 
-    borderColor: 'border-amber-200',
-    icon: Clock,
-    trend: '+12%',
-    trendUp: true
-  },
-  { 
-    label: 'Support Tickets', 
-    value: '7', 
-    color: 'text-red-600', 
-    bgColor: 'bg-red-50', 
-    borderColor: 'border-red-200',
-    icon: AlertCircle,
-    trend: '-5%',
-    trendUp: false
-  },
-  { 
-    label: 'Training Hours', 
-    value: '24', 
-    color: 'text-purple-600', 
-    bgColor: 'bg-purple-50', 
-    borderColor: 'border-purple-200',
-    icon: GraduationCap,
-    trend: '+8%',
-    trendUp: true
-  },
-  { 
     label: 'Manuals', 
-    value: '15', 
+    value: manuals.length.toString(), 
     color: 'text-green-600', 
     bgColor: 'bg-green-50', 
     borderColor: 'border-green-200',
@@ -108,7 +77,7 @@ const menuItems = [
     subtitle: 'Request quotes and proposals',
     icon: FileText,
     gradient: 'from-green-500 via-green-600 to-emerald-600',
-    href: '/rfq',
+    href: 'https://form.typeform.com/to/daiU0VJA',
     badge: null,
     badgeColor: ''
   },
@@ -145,7 +114,7 @@ const menuItems = [
 ]
 
 
-export default function PortalPage() {
+export default function HomePage() {
   const router = useRouter()
   const { user, signOut } = useAuthStore()
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -210,6 +179,10 @@ export default function PortalPage() {
   }
 
   const handleMenuClick = (href: string) => {
+    if (href.startsWith('http')) {
+      window.open(href, '_blank', 'noopener,noreferrer')
+      return
+    }
     router.push(href)
   }
 

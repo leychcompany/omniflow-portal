@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Logo } from '@/components/Logo'
+import { manuals } from './manuals-data'
 import { 
   ArrowLeft, 
   FileText, 
@@ -15,50 +16,21 @@ import {
   File
 } from 'lucide-react'
 
-interface Manual {
-  id: string
-  title: string
-  category: string
-  filename: string
-  path: string
-  size: string
-  description: string
-}
-
 export default function ManualsPage() {
   const router = useRouter()
+  const [selectedSeries, setSelectedSeries] = useState<'all' | 'OMNI-3000-6000' | 'OMNI-4000-7000'>('all')
 
-  const manuals: Manual[] = [
-    {
-      id: '1',
-      title: 'User Manual Volume 1 - System Architecture & Installation',
-      category: 'OMNI-3000-6000',
-      filename: 'User-Manual-Volume-1-System-Architecture-Installation.pdf',
-      path: '/manuals/OMNI-3000-6000/User-Manual-Volume-1-System-Architecture-Installation.pdf',
-      size: '2.4 MB',
-      description: 'Complete system architecture and installation guide for OMNI-3000 and OMNI-6000 series'
-    },
-    {
-      id: '2',
-      title: 'OMNI 7000 Installation and Configuration',
-      category: 'OMNI-4000-7000',
-      filename: 'OMNI 7000 Installation and Configuration.pdf',
-      path: '/manuals/OMNI-4000-7000/OMNI 7000 Installation and Configuration.pdf',
-      size: '1.8 MB',
-      description: 'Step-by-step installation and configuration guide for OMNI-7000 systems'
-    },
-    {
-      id: '3',
-      title: 'OMNI 7000 Operations and Maintenance Guide',
-      category: 'OMNI-4000-7000',
-      filename: 'OMNI 7000 Operations and Maintenance Guide.pdf',
-      path: '/manuals/OMNI-4000-7000/OMNI 7000 Operations and Maintenance Guide.pdf',
-      size: '3.2 MB',
-      description: 'Comprehensive operations and maintenance procedures for OMNI-7000 systems'
-    }
-  ]
+  const seriesOptions = [
+    { id: 'all', label: 'All', value: 'all' },
+    { id: '3000-6000', label: '3000/6000', value: 'OMNI-3000-6000' },
+    { id: '4000-7000', label: '4000/7000', value: 'OMNI-4000-7000' }
+  ] as const
 
-  const handleDownload = (manual: Manual) => {
+  const filteredManuals = manuals.filter(manual =>
+    selectedSeries === 'all' ? true : manual.category === selectedSeries
+  )
+
+  const handleDownload = (manual: (typeof manuals)[number]) => {
     const link = document.createElement('a')
     link.href = manual.path
     link.download = manual.filename
@@ -74,7 +46,7 @@ export default function ManualsPage() {
             <div className="flex items-center space-x-4">
               <Button
                 variant="ghost"
-                onClick={() => router.push('/portal')}
+                onClick={() => router.push('/home')}
                 className="flex items-center gap-2 px-3"
               >
                 <ArrowLeft className="h-4 w-4" />
@@ -146,9 +118,22 @@ export default function ManualsPage() {
             <h2 className="text-2xl font-bold text-slate-900 mb-2">Available Manuals</h2>
             <p className="text-slate-600">Download technical documentation and guides</p>
           </div>
+
+          <div className="flex flex-wrap gap-2">
+            {seriesOptions.map((option) => (
+              <Button
+                key={option.id}
+                variant={selectedSeries === option.value ? 'default' : 'outline'}
+                onClick={() => setSelectedSeries(option.value)}
+                className={selectedSeries === option.value ? 'bg-orange-600 text-white hover:bg-orange-700' : ''}
+              >
+                {option.label}
+              </Button>
+            ))}
+          </div>
           
           <div className="grid grid-cols-1 gap-6">
-            {manuals.map((manual) => (
+            {filteredManuals.map((manual) => (
               <Card key={manual.id} className="border-0 shadow-sm hover:shadow-lg transition-all">
                 <CardContent className="p-6">
                   <div className="flex justify-between items-start">
@@ -187,6 +172,12 @@ export default function ManualsPage() {
               </Card>
             ))}
           </div>
+
+          {filteredManuals.length === 0 && (
+            <div className="text-center py-10 text-slate-600">
+              No manuals found for this series.
+            </div>
+          )}
         </div>
       </div>
     </div>

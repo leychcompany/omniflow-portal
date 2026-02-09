@@ -100,7 +100,7 @@ function LoginForm() {
             router.push('/set-password')
           } else {
             setMustChangePassword(false)
-            const redirectTo = searchParams.get('redirect') || '/portal'
+            const redirectTo = searchParams.get('redirect') || '/home'
             router.push(redirectTo)
           }
         }

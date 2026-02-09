@@ -185,7 +185,7 @@ export default function TrainingPage() {
             <div className="flex items-center space-x-4">
               <Button
                 variant="outline"
-                onClick={() => router.push('/portal')}
+                onClick={() => router.push('/home')}
                 className="flex items-center gap-2 p-3"
               >
                 <ArrowLeft className="h-4 w-4" />

@@ -209,13 +209,13 @@ function SetPasswordContent() {
         if (profileError) {
           console.error('Error updating profile:', profileError)
           // Don't fail the whole operation if profile update fails
-          setMessage({ type: 'success', text: 'Password updated successfully! Redirecting to portal...' })
+          setMessage({ type: 'success', text: 'Password updated successfully! Redirecting to home...' })
         } else {
-          setMessage({ type: 'success', text: 'Password and profile updated successfully! Redirecting to portal...' })
+          setMessage({ type: 'success', text: 'Password and profile updated successfully! Redirecting to home...' })
         }
       } else {
         // For recovery, just update password
-        setMessage({ type: 'success', text: 'Password updated successfully! Redirecting to portal...' })
+        setMessage({ type: 'success', text: 'Password updated successfully! Redirecting to home...' })
       }
 
       setMustChangePassword(false)
@@ -232,7 +232,7 @@ function SetPasswordContent() {
       }
 
       setTimeout(() => {
-        router.push('/portal')
+        router.push('/home')
       }, 2000)
     } catch (error: any) {
       console.error('Error setting password:', error)
