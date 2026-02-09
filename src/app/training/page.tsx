@@ -1,29 +1,22 @@
 'use client'
 
-import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Logo } from '@/components/Logo'
+import Image from 'next/image'
 import { 
   ArrowLeft, 
   GraduationCap, 
   Play, 
-  Clock, 
   CheckCircle, 
-  Award, 
   BookOpen, 
-  Download,
-  Star,
-  Users,
   Calendar,
   Video,
   FileText,
-  Trophy,
   Zap,
-  Target,
   TrendingUp,
   Bookmark
 } from 'lucide-react'
@@ -33,7 +26,6 @@ interface Course {
   title: string
   description: string
   duration: string
-  level: 'Beginner' | 'Intermediate' | 'Advanced'
   progress: number
   completed: boolean
   thumbnail: string
@@ -42,139 +34,60 @@ interface Course {
   students: number
 }
 
-interface Certification {
-  id: string
-  name: string
-  description: string
-  requirements: string[]
-  validity: string
-  badge: string
-}
-
 export default function TrainingPage() {
   const router = useRouter()
-  const [activeTab, setActiveTab] = useState<'courses' | 'certifications'>('courses')
 
   const courses: Course[] = [
     {
-      id: '1',
-      title: 'OMNI-3000 Basic Operations',
-      description: 'Learn the fundamentals of operating the OMNI-3000 system with hands-on training.',
-      duration: '4 hours',
-      level: 'Beginner',
+      id: 'TR7000',
+      title: 'OMNI 7000',
+      description: 'Comprehensive instrument training for operators, technicians and integrators. Get experience using the latest OMNI 7000 hardware and software tools.',
+      duration: 'In Person',
       progress: 0,
       completed: false,
-      thumbnail: '/course-1.jpg',
-      instructor: 'John Smith',
-      rating: 4.7,
-      students: 892
+      thumbnail: '/images/tr7000.png',
+      instructor: 'OMNI Training',
+      rating: 0,
+      students: 0
     },
     {
-      id: '2',
-      title: 'OMNI-6000 Intermediate Training',
-      description: 'Advanced techniques for OMNI-6000 system maintenance and troubleshooting.',
-      duration: '6 hours',
-      level: 'Intermediate',
-      progress: 65,
-      completed: false,
-      thumbnail: '/course-2.jpg',
-      instructor: 'Sarah Johnson',
-      rating: 4.9,
-      students: 456
-    },
-    {
-      id: '3',
-      title: 'OMNI-7000 Advanced Operations',
-      description: 'Master advanced techniques for operating and maintaining the OMNI-7000 system.',
-      duration: '8 hours',
-      level: 'Advanced',
+      id: 'TR6100',
+      title: 'Basic Operator Online Class – TR6100',
+      description: 'If you need to get the baseline skills required to operate the OMNI 3000/6000 flow computer, this is the class for you.',
+      duration: 'In Person',
       progress: 0,
       completed: false,
-      thumbnail: '/course-3.jpg',
-      instructor: 'Mike Davis',
-      rating: 4.8,
-      students: 234
+      thumbnail: '/images/tr6100.png',
+      instructor: 'OMNI Training',
+      rating: 0,
+      students: 0
     },
     {
-      id: '4',
-      title: 'Safety Protocols and Procedures',
-      description: 'Essential safety training for all OMNI system operators.',
-      duration: '2 hours',
-      level: 'Beginner',
-      progress: 100,
-      completed: true,
-      thumbnail: '/course-4.jpg',
-      instructor: 'Lisa Wilson',
-      rating: 4.6,
-      students: 1200
-    },
-    {
-      id: '5',
-      title: 'Preventive Maintenance',
-      description: 'Learn how to perform routine maintenance to keep your systems running smoothly.',
-      duration: '5 hours',
-      level: 'Intermediate',
+      id: 'TR6300',
+      title: 'Operator / Technician Training - TR6300',
+      description: 'If you’re looking for a class that goes beyond basic navigation and front panel operations, this is the class for you.',
+      duration: 'In Person',
       progress: 0,
       completed: false,
-      thumbnail: '/course-5.jpg',
-      instructor: 'Robert Brown',
-      rating: 4.5,
-      students: 678
+      thumbnail: '/images/tr6300.png',
+      instructor: 'OMNI Training',
+      rating: 0,
+      students: 0
     },
     {
-      id: '6',
-      title: 'Troubleshooting Guide',
-      description: 'Comprehensive guide to diagnosing and fixing common system issues.',
-      duration: '3 hours',
-      level: 'Intermediate',
+      id: 'TR6400',
+      title: 'Advanced Technician Class – TR6400',
+      description: 'If you’re already an experienced OMNI user, or you’ve completed our Operator/Technician (TR6300) class and you’re ready for the next step, this is the class for you.',
+      duration: 'In Person',
       progress: 0,
       completed: false,
-      thumbnail: '/course-6.jpg',
-      instructor: 'Jennifer Lee',
-      rating: 4.7,
-      students: 345
+      thumbnail: '/images/tr6400.png',
+      instructor: 'OMNI Training',
+      rating: 0,
+      students: 0
     }
   ]
 
-  const certifications: Certification[] = [
-    {
-      id: '1',
-      name: 'OMNI System Operator',
-      description: 'Certified operator for all OMNI systems',
-      requirements: [
-        'Complete OMNI-3000 Basic Operations',
-        'Pass safety protocols exam',
-        'Complete 20 hours of hands-on training'
-      ],
-      validity: '2 years',
-      badge: '/cert-1.png'
-    },
-    {
-      id: '2',
-      name: 'Advanced System Technician',
-      description: 'Advanced certification for system maintenance',
-      requirements: [
-        'Complete all intermediate courses',
-        'Pass advanced operations exam',
-        'Complete 50 hours of hands-on training'
-      ],
-      validity: '3 years',
-      badge: '/cert-2.png'
-    },
-    {
-      id: '3',
-      name: 'Master Technician',
-      description: 'Highest level certification for system experts',
-      requirements: [
-        'Complete all advanced courses',
-        'Pass master technician exam',
-        'Complete 100 hours of hands-on training',
-        'Submit case study project'
-      ],
-      validity: '5 years',
-      badge: '/cert-3.png'
-    }
-  ]
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
@@ -242,7 +155,7 @@ export default function TrainingPage() {
                   <BookOpen className="h-6 w-6 text-blue-600" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-slate-900">12</p>
+                  <p className="text-2xl font-bold text-slate-900">{courses.length}</p>
                   <p className="text-sm text-slate-600">Available Courses</p>
                 </div>
               </div>
@@ -262,61 +175,9 @@ export default function TrainingPage() {
               </div>
             </CardContent>
           </Card>
-          
-          <Card className="border-0 shadow-sm hover:shadow-lg transition-all">
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-4">
-                <div className="p-3 bg-purple-100 rounded-xl">
-                  <Award className="h-6 w-6 text-purple-600" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-slate-900">3</p>
-                  <p className="text-sm text-slate-600">Certifications</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card className="border-0 shadow-sm hover:shadow-lg transition-all">
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-4">
-                <div className="p-3 bg-orange-100 rounded-xl">
-                  <Clock className="h-6 w-6 text-orange-600" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-slate-900">24h</p>
-                  <p className="text-sm text-slate-600">Total Hours</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
         </div>
 
-        {/* Tab Navigation */}
-        <div className="mb-8">
-          <div className="flex space-x-1 bg-slate-100 p-1 rounded-lg w-fit">
-            <Button
-              variant={activeTab === 'courses' ? 'default' : 'ghost'}
-              onClick={() => setActiveTab('courses')}
-              className={`px-6 ${activeTab === 'courses' ? 'bg-red-600 text-white shadow-sm hover:bg-red-700' : 'hover:bg-slate-200'}`}
-            >
-              <BookOpen className="h-4 w-4 mr-2" />
-              Courses
-            </Button>
-            <Button
-              variant={activeTab === 'certifications' ? 'default' : 'ghost'}
-              onClick={() => setActiveTab('certifications')}
-              className={`px-6 ${activeTab === 'certifications' ? 'bg-red-600 text-white shadow-sm hover:bg-red-700' : 'hover:bg-slate-200'}`}
-            >
-              <Award className="h-4 w-4 mr-2" />
-              Certifications
-            </Button>
-          </div>
-        </div>
-
-        {/* Content */}
-        {activeTab === 'courses' ? (
-          <div className="space-y-6">
+        <div className="space-y-6">
             {/* Featured Course */}
             <Card className="border-0 shadow-lg bg-gradient-to-r from-purple-50 to-blue-50">
               <CardContent className="p-8">
@@ -324,32 +185,17 @@ export default function TrainingPage() {
                   <div className="flex-1">
                     <div className="flex items-center space-x-2 mb-4">
                       <Badge className="bg-purple-100 text-purple-800">
-                        <Star className="h-3 w-3 mr-1" />
+                        <CheckCircle className="h-3 w-3 mr-1" />
                         Featured
                       </Badge>
-                      <Badge variant="secondary">Advanced</Badge>
                     </div>
                     <h2 className="text-2xl font-bold text-slate-900 mb-3">
-                      OMNI-7000 Advanced Operations
+                      OMNI 7000
                     </h2>
                     <p className="text-slate-600 mb-4">
-                      Master advanced techniques for operating and maintaining the OMNI-7000 system. 
-                      This comprehensive course covers troubleshooting, optimization, and best practices.
+                      Comprehensive instrument training for operators, technicians and integrators. Get experience using the latest OMNI 7000 hardware and software tools.
                     </p>
-                    <div className="flex items-center space-x-6 mb-6">
-                      <div className="flex items-center space-x-2">
-                        <Clock className="h-4 w-4 text-slate-500" />
-                        <span className="text-sm text-slate-600">8 hours</span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Users className="h-4 w-4 text-slate-500" />
-                        <span className="text-sm text-slate-600">1,234 students</span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Star className="h-4 w-4 text-yellow-500" />
-                        <span className="text-sm text-slate-600">4.8 (156 reviews)</span>
-                      </div>
-                    </div>
+                    <div className="mb-6" />
                     <div className="flex items-center space-x-4">
                       <Button className="bg-purple-600 hover:bg-purple-700 text-white transition-all duration-200">
                         <Play className="h-4 w-4 mr-2" />
@@ -372,17 +218,26 @@ export default function TrainingPage() {
 
             {/* Course Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {courses.map((course) => (
+              {courses.filter((course) => course.id !== 'TR7000').map((course) => (
                 <Card key={course.id} className="border-0 shadow-sm hover:shadow-lg transition-all group cursor-pointer">
                   <CardContent className="p-0">
                     <div className="relative">
-                      <div className="w-full h-48 bg-gradient-to-br from-slate-100 to-slate-200 rounded-t-lg flex items-center justify-center">
-                        <Video className="h-12 w-12 text-slate-400" />
-                      </div>
+                      {course.thumbnail ? (
+                        <div className="w-full h-48 overflow-hidden rounded-t-lg bg-slate-100">
+                          <Image
+                            src={course.thumbnail}
+                            alt={course.title}
+                            width={640}
+                            height={360}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      ) : (
+                        <div className="w-full h-48 bg-gradient-to-br from-slate-100 to-slate-200 rounded-t-lg flex items-center justify-center">
+                          <Video className="h-12 w-12 text-slate-400" />
+                        </div>
+                      )}
                       <div className="absolute top-4 right-4">
-                        <Badge variant="secondary" className="bg-white/90 text-slate-700">
-                          {course.level}
-                        </Badge>
                       </div>
                       {course.completed && (
                         <div className="absolute top-4 left-4">
@@ -394,33 +249,17 @@ export default function TrainingPage() {
                     </div>
                     
                     <div className="p-6">
-                      <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center justify-between mb-3">
                         <h3 className="font-semibold text-slate-900 group-hover:text-purple-600 transition-colors">
                           {course.title}
                         </h3>
-                        <div className="flex items-center space-x-1">
-                          <Star className="h-4 w-4 text-yellow-500 fill-current" />
-                          <span className="text-sm text-slate-600">{course.rating}</span>
-                        </div>
                       </div>
                       
                       <p className="text-sm text-slate-600 mb-4 line-clamp-2">
                         {course.description}
                       </p>
                       
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center space-x-4 text-sm text-slate-500">
-                          <div className="flex items-center space-x-1">
-                            <Clock className="h-4 w-4" />
-                            <span>{course.duration}</span>
-                          </div>
-                          <div className="flex items-center space-x-1">
-                            <Users className="h-4 w-4" />
-                            <span>{course.students}</span>
-                          </div>
-                        </div>
-                      </div>
-                      
+                      <div className="mb-4" />
                       {course.progress > 0 && !course.completed && (
                         <div className="mb-4">
                           <div className="flex items-center justify-between text-sm mb-2">
@@ -463,46 +302,6 @@ export default function TrainingPage() {
               ))}
             </div>
           </div>
-        ) : (
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {certifications.map((cert) => (
-                <Card key={cert.id} className="border-0 shadow-sm hover:shadow-lg transition-all">
-                  <CardContent className="p-6">
-                    <div className="text-center">
-                      <div className="w-16 h-16 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <Trophy className="h-8 w-8 text-white" />
-                      </div>
-                      <h3 className="text-lg font-semibold text-slate-900 mb-2">{cert.name}</h3>
-                      <p className="text-sm text-slate-600 mb-4">{cert.description}</p>
-                      
-                      <div className="space-y-2 mb-6">
-                        <h4 className="text-sm font-medium text-slate-900">Requirements:</h4>
-                        <ul className="text-sm text-slate-600 space-y-1">
-                          {cert.requirements.map((req, index) => (
-                            <li key={index} className="flex items-center space-x-2">
-                              <Target className="h-3 w-3 text-green-500" />
-                              <span>{req}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                      
-                      <div className="text-sm text-slate-500 mb-4">
-                        Valid for: {cert.validity}
-                      </div>
-                      
-                      <Button className="w-full">
-                        <Download className="h-4 w-4 mr-2" />
-                        Download Certificate
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
     </div>
   )

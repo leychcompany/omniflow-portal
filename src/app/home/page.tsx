@@ -45,8 +45,16 @@ const dashboardStats = [
     bgColor: 'bg-green-50', 
     borderColor: 'border-green-200',
     icon: FileText,
-    trend: '+3%',
-    trendUp: true
+    href: '/manuals'
+  },
+  { 
+    label: 'Training Classes', 
+    value: '4', 
+    color: 'text-purple-600', 
+    bgColor: 'bg-purple-50', 
+    borderColor: 'border-purple-200',
+    icon: GraduationCap,
+    href: '/training'
   },
 ]
 
@@ -314,7 +322,11 @@ export default function HomePage() {
           {dashboardStats.map((stat, index) => {
             const Icon = stat.icon
             return (
-              <Card key={index} className="hover:shadow-lg transition-all duration-200 border-0 shadow-sm">
+              <Card
+                key={index}
+                className="hover:shadow-lg transition-all duration-200 border-0 shadow-sm cursor-pointer"
+                onClick={() => router.push(stat.href)}
+              >
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-4">
@@ -326,9 +338,6 @@ export default function HomePage() {
                         <p className="text-sm text-slate-600">{stat.label}</p>
                       </div>
                     </div>
-                    {/* <div className={`text-sm font-medium ${stat.trendUp ? 'text-green-600' : 'text-red-600'}`}>
-                      {stat.trend}
-                    </div> */}
                   </div>
                 </CardContent>
               </Card>
