@@ -161,20 +161,6 @@ export default function TrainingPage() {
               </div>
             </CardContent>
           </Card>
-          
-          <Card className="border-0 shadow-sm hover:shadow-lg transition-all">
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-4">
-                <div className="p-3 bg-green-100 rounded-xl">
-                  <CheckCircle className="h-6 w-6 text-green-600" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-slate-900">8</p>
-                  <p className="text-sm text-slate-600">Completed</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
         </div>
 
         <div className="space-y-6">
@@ -201,15 +187,17 @@ export default function TrainingPage() {
                         <Play className="h-4 w-4 mr-2" />
                         Start Course
                       </Button>
-                      <Button variant="outline">
-                        <Bookmark className="h-4 w-4 mr-2" />
-                        Save for Later
-                      </Button>
                     </div>
                   </div>
                   <div className="mt-6 lg:mt-0 lg:ml-8">
-                    <div className="w-64 h-40 bg-gradient-to-br from-purple-200 to-blue-200 rounded-lg flex items-center justify-center">
-                      <Video className="h-16 w-16 text-purple-600" />
+                    <div className="w-64 h-40 rounded-lg overflow-hidden bg-slate-100">
+                      <Image
+                        src="/images/tr7000-featured.png"
+                        alt="OMNI 7000 training"
+                        width={640}
+                        height={360}
+                        className="w-full h-full object-cover"
+                      />
                     </div>
                   </div>
                 </div>

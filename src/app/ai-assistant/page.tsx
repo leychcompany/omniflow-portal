@@ -47,7 +47,7 @@ export default function AIAssistantPage() {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      text: "Hello! I'm your Omni AI Assistant. How can I help you today?",
+      text: "This AI chatbot provides general information about OMNI products and services. Although we strive to provide reliable information, responses may not reflect current specifications or requirements.  The information provided does not constitute a formal technical advice. For official guidance or on complex topics, please contact a qualified OMNI representative at helpdesk@omniflow.com",
       isUser: false,
       timestamp: new Date(),
     },
