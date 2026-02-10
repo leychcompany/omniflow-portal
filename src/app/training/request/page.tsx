@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { Suspense, useEffect, useMemo, useState } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
@@ -14,6 +14,14 @@ import { ArrowLeft, Send } from 'lucide-react'
 type Status = 'idle' | 'submitting' | 'success' | 'error'
 
 export default function TrainingRequestPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-slate-50" />}>
+      <TrainingRequestInner />
+    </Suspense>
+  )
+}
+
+function TrainingRequestInner() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [status, setStatus] = useState<Status>('idle')

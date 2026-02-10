@@ -51,12 +51,7 @@ export default function TrainingPage() {
               </div>
             </div>
             
-            <div className="flex items-center space-x-2">
-              <Badge variant="secondary" className="bg-purple-100 text-purple-800">
-                <TrendingUp className="h-3 w-3 mr-1" />
-                Live Learning
-              </Badge>
-            </div>
+            <div className="flex items-center space-x-2"></div>
           </div>
         </div>
       </header>
@@ -213,8 +208,8 @@ export default function TrainingPage() {
                       
                       <Button 
                         asChild
-                        className="w-full"
-                        variant={course.completed ? "outline" : "default"}
+                        className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+                        variant="default"
                       >
                         <Link href={`/training/request?course=${course.id}`}>
                           <Play className="h-4 w-4 mr-2" />
