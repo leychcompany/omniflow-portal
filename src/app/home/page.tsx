@@ -10,6 +10,7 @@ import { useAuthStore } from '@/store/auth-store'
 import { supabase } from '@/lib/supabase'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { manuals } from '../manuals/manuals-data'
+import { courses } from '../training/courses-data'
 import { 
   Bot, 
   GraduationCap, 
@@ -49,7 +50,7 @@ const dashboardStats = [
   },
   { 
     label: 'Training Classes', 
-    value: '4', 
+    value: courses.length.toString(), 
     color: 'text-purple-600', 
     bgColor: 'bg-purple-50', 
     borderColor: 'border-purple-200',

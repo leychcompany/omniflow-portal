@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -17,76 +18,12 @@ import {
   Video,
   FileText,
   Zap,
-  TrendingUp,
-  Bookmark
+  TrendingUp
 } from 'lucide-react'
-
-interface Course {
-  id: string
-  title: string
-  description: string
-  duration: string
-  progress: number
-  completed: boolean
-  thumbnail: string
-  instructor: string
-  rating: number
-  students: number
-}
+import { courses, featuredCourse } from './courses-data'
 
 export default function TrainingPage() {
   const router = useRouter()
-
-  const courses: Course[] = [
-    {
-      id: 'TR7000',
-      title: 'OMNI 7000',
-      description: 'Comprehensive instrument training for operators, technicians and integrators. Get experience using the latest OMNI 7000 hardware and software tools.',
-      duration: 'In Person',
-      progress: 0,
-      completed: false,
-      thumbnail: '/images/tr7000.png',
-      instructor: 'OMNI Training',
-      rating: 0,
-      students: 0
-    },
-    {
-      id: 'TR6100',
-      title: 'Basic Operator Online Class – TR6100',
-      description: 'If you need to get the baseline skills required to operate the OMNI 3000/6000 flow computer, this is the class for you.',
-      duration: 'In Person',
-      progress: 0,
-      completed: false,
-      thumbnail: '/images/tr6100.png',
-      instructor: 'OMNI Training',
-      rating: 0,
-      students: 0
-    },
-    {
-      id: 'TR6300',
-      title: 'Operator / Technician Training - TR6300',
-      description: 'If you’re looking for a class that goes beyond basic navigation and front panel operations, this is the class for you.',
-      duration: 'In Person',
-      progress: 0,
-      completed: false,
-      thumbnail: '/images/tr6300.png',
-      instructor: 'OMNI Training',
-      rating: 0,
-      students: 0
-    },
-    {
-      id: 'TR6400',
-      title: 'Advanced Technician Class – TR6400',
-      description: 'If you’re already an experienced OMNI user, or you’ve completed our Operator/Technician (TR6300) class and you’re ready for the next step, this is the class for you.',
-      duration: 'In Person',
-      progress: 0,
-      completed: false,
-      thumbnail: '/images/tr6400.png',
-      instructor: 'OMNI Training',
-      rating: 0,
-      students: 0
-    }
-  ]
 
 
   return (
@@ -176,28 +113,39 @@ export default function TrainingPage() {
                       </Badge>
                     </div>
                     <h2 className="text-2xl font-bold text-slate-900 mb-3">
-                      OMNI 7000
+                      {featuredCourse.title}
                     </h2>
                     <p className="text-slate-600 mb-4">
-                      Comprehensive instrument training for operators, technicians and integrators. Get experience using the latest OMNI 7000 hardware and software tools.
+                      {featuredCourse.description}
                     </p>
                     <div className="mb-6" />
                     <div className="flex items-center space-x-4">
-                      <Button className="bg-purple-600 hover:bg-purple-700 text-white transition-all duration-200">
-                        <Play className="h-4 w-4 mr-2" />
-                        Start Course
+                      <Button
+                        asChild
+                        className="bg-purple-600 hover:bg-purple-700 text-white transition-all duration-200"
+                      >
+                        <Link href={`/training/request?course=${featuredCourse.id}`}>
+                          <Play className="h-4 w-4 mr-2" />
+                          Request Training
+                        </Link>
                       </Button>
                     </div>
                   </div>
                   <div className="mt-6 lg:mt-0 lg:ml-8">
                     <div className="w-64 h-40 rounded-lg overflow-hidden bg-slate-100">
-                      <Image
-                        src="/images/tr7000-featured.png"
-                        alt="OMNI 7000 training"
-                        width={640}
-                        height={360}
-                        className="w-full h-full object-cover"
-                      />
+                      {featuredCourse.thumbnail ? (
+                        <Image
+                          src="/images/tr7000-featured.png"
+                          alt={featuredCourse.title}
+                          width={640}
+                          height={360}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-200 to-blue-200">
+                          <Video className="h-16 w-16 text-purple-600" />
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -206,7 +154,7 @@ export default function TrainingPage() {
 
             {/* Course Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {courses.filter((course) => course.id !== 'TR7000').map((course) => (
+              {courses.filter((course) => course.id !== featuredCourse.id).map((course) => (
                 <Card key={course.id} className="border-0 shadow-sm hover:shadow-lg transition-all group cursor-pointer">
                   <CardContent className="p-0">
                     <div className="relative">
@@ -264,25 +212,14 @@ export default function TrainingPage() {
                       )}
                       
                       <Button 
+                        asChild
                         className="w-full"
                         variant={course.completed ? "outline" : "default"}
                       >
-                        {course.completed ? (
-                          <>
-                            <CheckCircle className="h-4 w-4 mr-2" />
-                            Completed
-                          </>
-                        ) : course.progress > 0 ? (
-                          <>
-                            <Play className="h-4 w-4 mr-2" />
-                            Continue
-                          </>
-                        ) : (
-                          <>
-                            <Play className="h-4 w-4 mr-2" />
-                            Start Course
-                          </>
-                        )}
+                        <Link href={`/training/request?course=${course.id}`}>
+                          <Play className="h-4 w-4 mr-2" />
+                          Request Training
+                        </Link>
                       </Button>
                     </div>
                   </CardContent>
