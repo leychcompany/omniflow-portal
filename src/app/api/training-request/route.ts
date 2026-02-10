@@ -13,8 +13,7 @@ const bodySchema = z.object({
 export async function POST(req: Request) {
   const RESEND_API_KEY = process.env.RESEND_API_KEY
   const TRAINING_REQUEST_TO = process.env.TRAINING_REQUEST_TO
-  const TRAINING_REQUEST_FROM =
-    process.env.TRAINING_REQUEST_FROM || 'no-reply@omniflow.com'
+  const TRAINING_REQUEST_FROM = process.env.REQUEST_FROM
 
   if (!RESEND_API_KEY || !TRAINING_REQUEST_TO) {
     return NextResponse.json(
