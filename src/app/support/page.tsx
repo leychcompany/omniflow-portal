@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Logo } from '@/components/Logo'
-import { 
+import {
   ArrowLeft, 
   Headphones, 
   Plus, 
@@ -41,6 +41,8 @@ import {
   DollarSign
 } from 'lucide-react'
 
+type Status = 'idle' | 'submitting' | 'success' | 'error'
+
 interface SupportTicket {
   id: string
   title: string
@@ -68,7 +70,98 @@ interface TicketMessage {
 export default function SupportPage() {
   const router = useRouter()
   const [activeTab, setActiveTab] = useState<'new'>('new')
-  const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null)
+  const [form, setForm] = useState({
+    subject: '',
+    category: 'Technical',
+    priority: 'Medium',
+    description: '',
+    email: '',
+  })
+  const [attachments, setAttachments] = useState<File[]>([])
+  const [status, setStatus] = useState<Status>('idle')
+  const [error, setError] = useState<string | null>(null)
+
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
+
+  const MAX_FILES = 3
+  const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target
+    setForm(prev => ({ ...prev, [name]: value }))
+  }
+
+  const handleFiles = (files: FileList | null) => {
+    if (!files) return
+    const incoming = Array.from(files)
+    const allowed = incoming.filter(file => file.size <= MAX_FILE_SIZE)
+    const next = [...attachments, ...allowed].slice(0, MAX_FILES)
+
+    if (allowed.length !== incoming.length) {
+      setError(`Some files exceeded the ${Math.round(MAX_FILE_SIZE / (1024 * 1024))}MB limit and were skipped.`)
+    } else {
+      setError(null)
+    }
+
+    if (attachments.length + allowed.length > MAX_FILES) {
+      setError(`Only ${MAX_FILES} attachments allowed.`)
+    }
+
+    setAttachments(next)
+  }
+
+  const removeAttachment = (name: string) => {
+    setAttachments(prev => prev.filter(file => file.name !== name))
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!form.subject || !form.description || !form.email) {
+      setError('Subject, email, and description are required.')
+      return
+    }
+
+    setStatus('submitting')
+    setError(null)
+
+    try {
+      const formData = new FormData()
+      formData.append('subject', form.subject)
+      formData.append('category', form.category)
+      formData.append('priority', form.priority)
+      formData.append('description', form.description)
+      formData.append('email', form.email)
+
+      attachments.forEach(file => {
+        formData.append('attachments', file)
+      })
+
+      const res = await fetch('/api/support', {
+        method: 'POST',
+        body: formData,
+      })
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data.error || 'Failed to submit ticket')
+      }
+
+      setStatus('success')
+      setForm({
+        subject: '',
+        category: 'Technical',
+        priority: 'Medium',
+        description: '',
+        email: '',
+      })
+      setAttachments([])
+    } catch (err: any) {
+      setStatus('error')
+      setError(err.message || 'Failed to submit ticket')
+    } finally {
+      setTimeout(() => setStatus('idle'), 3000)
+    }
+  }
 
   const tickets: SupportTicket[] = [
     {
@@ -265,60 +358,143 @@ export default function SupportPage() {
               Describe your issue and we'll get back to you as soon as possible
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700">Subject</label>
-                <Input placeholder="Brief description of your issue" />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700">Category</label>
-                <select className="w-full p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500">
-                  <option>Technical</option>
-                  <option>Billing</option>
-                  <option>General</option>
-                  <option>Feature Request</option>
-                </select>
-              </div>
-            </div>
-            
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">Priority</label>
-              <select className="w-full p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500">
-                <option>Low</option>
-                <option>Medium</option>
-                <option>High</option>
-                <option>Critical</option>
-              </select>
-            </div>
-            
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">Description</label>
-              <textarea 
-                className="w-full p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
-                rows={6}
-                placeholder="Please provide detailed information about your issue..."
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">Attachments</label>
-              <div className="border-2 border-dashed border-slate-200 rounded-lg p-6 text-center">
-                <FileText className="h-8 w-8 text-slate-400 mx-auto mb-2" />
-                <p className="text-sm text-slate-600">Drag and drop files here or click to upload</p>
-                <Button variant="outline" className="mt-2">
-                  Choose Files
-                </Button>
-              </div>
-            </div>
-            
-            <div className="flex items-center space-x-4 pt-6">
-              <Button className="bg-red-600 hover:bg-red-700 text-white transition-all duration-200">
-                <Send className="h-4 w-4 mr-2" />
-                Submit Ticket
-              </Button>
-            </div>
-          </CardContent>
+            <CardContent>
+              <form className="space-y-6" onSubmit={handleSubmit}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-slate-700">Subject</label>
+                    <Input
+                      name="subject"
+                      value={form.subject}
+                      onChange={handleChange}
+                      required
+                      placeholder="Brief description of your issue"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-slate-700">Email</label>
+                    <Input
+                      name="email"
+                      type="email"
+                      value={form.email}
+                      onChange={handleChange}
+                      required
+                      placeholder="you@company.com"
+                    />
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-slate-700">Category</label>
+                    <select
+                      name="category"
+                      value={form.category}
+                      onChange={handleChange}
+                      className="w-full p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                    >
+                      <option>Technical</option>
+                      <option>Billing</option>
+                      <option>General</option>
+                      <option>Feature Request</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-slate-700">Priority</label>
+                    <select
+                      name="priority"
+                      value={form.priority}
+                      onChange={handleChange}
+                      className="w-full p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                    >
+                      <option>Low</option>
+                      <option>Medium</option>
+                      <option>High</option>
+                      <option>Critical</option>
+                    </select>
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-700">Description</label>
+                  <textarea 
+                    name="description"
+                    value={form.description}
+                    onChange={handleChange}
+                    className="w-full p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                    rows={6}
+                    placeholder="Please provide detailed information about your issue..."
+                    required
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium text-slate-700">Attachments</label>
+                    <span className="text-xs text-slate-500">Up to {MAX_FILES} files, {Math.round(MAX_FILE_SIZE / (1024 * 1024))}MB each</span>
+                  </div>
+                  <div
+                    className="border-2 border-dashed border-slate-200 rounded-lg p-6 text-center"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <FileText className="h-8 w-8 text-slate-400 mx-auto mb-2" />
+                    <p className="text-sm text-slate-600">Click to choose files</p>
+                    <Input
+                      ref={fileInputRef}
+                      type="file"
+                      multiple
+                      className="hidden"
+                      onChange={(e) => handleFiles(e.target.files)}
+                    />
+                    <Button type="button" variant="outline" className="mt-2" onClick={() => fileInputRef.current?.click()}>
+                      Choose Files
+                    </Button>
+                  </div>
+                  {attachments.length > 0 && (
+                    <div className="space-y-2">
+                      {attachments.map(file => (
+                        <div key={file.name} className="flex items-center justify-between rounded-md border border-slate-200 px-3 py-2">
+                          <span className="text-sm text-slate-700 truncate">{file.name}</span>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeAttachment(file.name)}
+                          >
+                            Remove
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {error && (
+                  <p className="text-sm text-red-600">{error}</p>
+                )}
+                {status === 'success' && (
+                  <p className="text-sm text-green-600">Ticket submitted. Our team will contact you soon.</p>
+                )}
+                
+                <div className="flex items-center space-x-4 pt-2">
+                  <Button
+                    type="submit"
+                    className="bg-red-600 hover:bg-red-700 text-white transition-all duration-200"
+                    disabled={status === 'submitting'}
+                  >
+                    <Send className="h-4 w-4 mr-2" />
+                    {status === 'submitting' ? 'Submitting...' : 'Submit Ticket'}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => router.push('/home')}
+                  >
+                    Back to Home
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
         </Card>
       </div>
     </div>
