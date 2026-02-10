@@ -155,6 +155,8 @@ export default function SupportPage() {
         email: '',
       })
       setAttachments([])
+      // Redirect back to main support page after successful submission
+      router.push('/support')
     } catch (err: any) {
       setStatus('error')
       setError(err.message || 'Failed to submit ticket')

@@ -77,6 +77,8 @@ function TrainingRequestInner() {
         courseId: featuredCourse.id,
         message: '',
       })
+      // Redirect to training page after successful submission
+      router.push('/training')
     } catch (err: any) {
       setStatus('error')
       setError(err.message || 'Failed to send request')
