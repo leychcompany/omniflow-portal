@@ -125,7 +125,7 @@ const menuItems = [
 
 export default function HomePage() {
   const router = useRouter()
-  const { user, signOut } = useAuthStore()
+  const { user } = useAuthStore()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false)
   const hashHandledRef = useRef(false)
@@ -170,19 +170,11 @@ export default function HomePage() {
 
   const handleSignOut = async () => {
     try {
-      // Sign out from Supabase first
       const { error } = await supabase.auth.signOut()
       if (error) throw error
-      
-      // Then clear local state
-      signOut()
-      
-      // Redirect to login with full page reload to ensure session is cleared
       window.location.href = '/login'
     } catch (error) {
       console.error('Error signing out:', error)
-      // Even if Supabase fails, clear local state and redirect
-      signOut()
       window.location.href = '/login'
     }
   }

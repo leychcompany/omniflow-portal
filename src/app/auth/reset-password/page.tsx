@@ -4,7 +4,8 @@ import { useEffect, Suspense, useState, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { Logo } from "@/components/Logo";
-import { Loader2 } from "lucide-react";
+import { Loader2, XCircle, ArrowLeft, Key } from "lucide-react";
+import Link from "next/link";
 
 function ResetPasswordHandler() {
   const router = useRouter();
@@ -15,6 +16,7 @@ function ResetPasswordHandler() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [isProcessing, setIsProcessing] = useState(true);
+  const [expiredLinkError, setExpiredLinkError] = useState(false);
 
   const processHashAndRedirect = useCallback(async () => {
     // Extract token and other params from Supabase's redirect URL
@@ -162,18 +164,27 @@ function ResetPasswordHandler() {
 
     // If there's an error, handle differently for web vs mobile
     if (error || errorCode) {
-      const errorDescription = hashParams.get("error_description") || searchParams.get("error_description") || "This link is invalid or has expired";
-      const errorMsg = decodeURIComponent(errorDescription.replace(/\+/g, " "));
-      
+      const errorDescription = hashParams.get("error_description") || searchParams.get("error_description") || "";
+      const errorMsg = errorDescription ? decodeURIComponent(errorDescription.replace(/\+/g, " ")) : "";
+      const isExpiredLink = error === "otp_expired" || errorCode === "otp_expired" ||
+        /invalid or has expired|expired/i.test(errorMsg);
+
+      if (isExpiredLink && !shouldRedirectToApp) {
+        // Show customer-friendly error on page for web
+        setExpiredLinkError(true);
+        setIsProcessing(false);
+        return;
+      }
+
       if (shouldRedirectToApp) {
         // Build the deep link with error params for mobile app
-        const errorUrl = `omniflow://set-password?error=${error}&error_code=${errorCode}&error_description=${encodeURIComponent(errorMsg)}${email ? `&email=${email}` : ""}`;
+        const errorUrl = `omniflow://set-password?error=${error}&error_code=${errorCode}&error_description=${encodeURIComponent(errorMsg || "This link is invalid or has expired")}${email ? `&email=${email}` : ""}`;
         console.log("Mobile app detected - redirecting to app with error:", errorUrl);
         window.location.href = errorUrl;
       } else {
         // For web, redirect to login page with error
         console.log("Web browser detected - redirecting to login");
-        router.push("/login?error=" + encodeURIComponent(errorMsg));
+        router.push("/login?error=" + encodeURIComponent(errorMsg || "This link is invalid or has expired"));
       }
       return;
     }
@@ -459,6 +470,51 @@ function ResetPasswordHandler() {
               {loading ? "Setting Password..." : "Set Password"}
             </button>
           </form>
+        </div>
+      </div>
+    );
+  }
+
+  // Expired or invalid link error
+  if (expiredLinkError) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 flex items-center justify-center">
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmM2Y0ZjYiIGZpbGwtb3BhY2l0eT0iMC40Ij48Y2lyY2xlIGN4PSIzMCIgY3k9IjMwIiByPSIyIi8+PC9nPjwvZz48L3N2Zz4=')] opacity-40"></div>
+        <div className="relative z-10 text-center px-4 max-w-md w-full">
+          <div className="mb-8 flex justify-center">
+            <Logo width={180} height={63} className="mx-auto" />
+          </div>
+          <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl p-8 border border-red-100">
+            <div className="flex flex-col items-center gap-6">
+              <div className="p-4 bg-red-50 rounded-full">
+                <XCircle className="w-12 h-12 text-red-500" />
+              </div>
+              <div className="space-y-2">
+                <h2 className="text-xl font-semibold text-slate-900">
+                  This link has expired
+                </h2>
+                <p className="text-sm text-slate-600">
+                  Password reset links are only valid for a short time for security. Please request a new one to continue.
+                </p>
+              </div>
+              <div className="flex flex-col gap-3 w-full">
+                <Link
+                  href="/forgot-password"
+                  className="inline-flex items-center justify-center gap-2 w-full h-12 px-4 rounded-lg bg-slate-900 text-white font-semibold hover:bg-slate-800 transition-colors"
+                >
+                  <Key className="h-5 w-5" />
+                  Request new reset link
+                </Link>
+                <Link
+                  href="/login"
+                  className="inline-flex items-center justify-center gap-2 text-sm text-slate-600 hover:text-slate-800 font-medium transition-colors"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  Back to Sign In
+                </Link>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );

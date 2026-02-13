@@ -110,23 +110,25 @@ export default function ForgotPasswordPage() {
                   </div>
                 )}
 
-                <Button
-                  type="submit"
-                  className="w-full h-12 bg-gradient-to-r from-slate-900 to-slate-800 hover:from-slate-800 hover:to-slate-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <>
-                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                      Sending...
-                    </>
-                  ) : (
-                    <>
-                      <Mail className="mr-2 h-5 w-5" />
-                      Send Reset Link
-                    </>
-                  )}
-                </Button>
+                {message?.type !== 'success' && (
+                  <Button
+                    type="submit"
+                    className="w-full h-12 bg-gradient-to-r from-slate-900 to-slate-800 hover:from-slate-800 hover:to-slate-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <>
+                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                        Sending...
+                      </>
+                    ) : (
+                      <>
+                        <Mail className="mr-2 h-5 w-5" />
+                        Send Reset Link
+                      </>
+                    )}
+                  </Button>
+                )}
               </form>
 
               <div className="text-center space-y-3">
@@ -138,10 +140,6 @@ export default function ForgotPasswordPage() {
                   <ArrowLeft className="h-4 w-4" />
                   Back to Sign In
                 </button>
-                
-                <p className="text-sm text-slate-500">
-                  Remember your password? Sign in instead
-                </p>
               </div>
             </CardContent>
           </Card>

@@ -14,7 +14,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { useAuthStore } from '@/store/auth-store'
 import { supabase } from '@/lib/supabase'
 import { 
   ArrowLeft, 
@@ -101,7 +100,6 @@ interface Invite {
 
 export default function AdminPage() {
   const router = useRouter()
-  const { signOut } = useAuthStore()
   const [activeTab, setActiveTab] = useState<'users' | 'training' | 'rfqs' | 'news'>('users')
   const [userSubTab, setUserSubTab] = useState<'active' | 'invites'>('active')
   const [showAddUserModal, setShowAddUserModal] = useState(false)
@@ -305,12 +303,9 @@ export default function AdminPage() {
     try {
       const { error } = await supabase.auth.signOut()
       if (error) throw error
-      
-      signOut()
       window.location.href = '/login'
     } catch (error) {
       console.error('Error signing out:', error)
-      signOut()
       window.location.href = '/login'
     }
   }

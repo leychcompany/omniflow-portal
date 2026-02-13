@@ -58,6 +58,14 @@ function LoginForm() {
     }
   }, [router])
 
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) {
+        useAuthStore.getState().signOut()
+      }
+    })
+  }, [])
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!email || !password) {
@@ -109,7 +117,6 @@ function LoginForm() {
       const error = err as { message?: string }
       console.error('Login error:', error)
       setError(error.message || 'Login failed')
-    } finally {
       setLoading(false)
     }
   }
