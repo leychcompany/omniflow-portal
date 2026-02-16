@@ -39,7 +39,8 @@ import {
   Calendar,
   Shield,
   Eye,
-  Clock
+  Clock,
+  Key
 } from 'lucide-react'
 
 interface User {
@@ -120,6 +121,9 @@ export default function AdminPage() {
   // Invite user modal state
   const [inviteEmail, setInviteEmail] = useState('')
   const [inviteRole, setInviteRole] = useState<'admin' | 'client'>('client')
+  const [invitePassword, setInvitePassword] = useState('')
+  const [addUserMode, setAddUserMode] = useState<'invite' | 'password'>('invite')
+  const [inviteSuccessMessage, setInviteSuccessMessage] = useState('')
   const [inviteLoading, setInviteLoading] = useState(false)
   const [inviteError, setInviteError] = useState('')
   const [inviteSuccess, setInviteSuccess] = useState(false)
@@ -323,40 +327,57 @@ export default function AdminPage() {
       return
     }
 
+    if (addUserMode === 'password') {
+      if (!invitePassword.trim()) {
+        setInviteError('Please enter a password')
+        return
+      }
+      if (invitePassword.trim().length < 6) {
+        setInviteError('Password must be at least 6 characters')
+        return
+      }
+    }
+
     setInviteLoading(true)
     setInviteError('')
     setInviteSuccess(false)
+    setInviteSuccessMessage('')
 
     try {
-      // Get current session to ensure we have the latest token
       const { data: { session }, error: sessionError } = await supabase.auth.getSession()
       
       if (sessionError || !session) {
         throw new Error('Session expired. Please log in again.')
       }
 
-      // Call API route to create user and send email
+      const payload: { email: string; role: string; password?: string } = {
+        email: inviteEmail.trim(),
+        role: inviteRole,
+      }
+      if (addUserMode === 'password') {
+        payload.password = invitePassword.trim()
+      }
+
       const response = await fetch('/api/invites', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${session.access_token}`,
         },
-        body: JSON.stringify({
-          email: inviteEmail.trim(),
-          role: inviteRole,
-        }),
+        body: JSON.stringify(payload),
       })
 
       const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to send invite')
+        throw new Error(data.error || (addUserMode === 'password' ? 'Failed to create user' : 'Failed to send invite'))
       }
 
       setInviteSuccess(true)
+      setInviteSuccessMessage(data.message || (addUserMode === 'password' ? 'User created. They can sign in with their email and the password you set.' : 'Invite sent successfully!'))
       setInviteEmail('')
       setInviteRole('client')
+      setInvitePassword('')
       
       // Refresh users and invites lists
       await fetchUsers()
@@ -364,8 +385,7 @@ export default function AdminPage() {
       
       // Close modal after 2 seconds
       setTimeout(() => {
-        setShowAddUserModal(false)
-        setInviteSuccess(false)
+        handleCloseInviteModal()
       }, 2000)
     } catch (err: unknown) {
       const error = err as { message?: string }
@@ -380,8 +400,11 @@ export default function AdminPage() {
     setShowAddUserModal(false)
     setInviteEmail('')
     setInviteRole('client')
+    setInvitePassword('')
+    setAddUserMode('invite')
     setInviteError('')
     setInviteSuccess(false)
+    setInviteSuccessMessage('')
   }
 
   const toggleUserRole = async (userId: string) => {
@@ -699,8 +722,8 @@ export default function AdminPage() {
           </Card>
         </div>
 
-        {/* Tab Navigation */}
-        <div className="mb-8">
+        {/* Tab Navigation - hidden */}
+        <div className="mb-8 hidden">
           <div className="flex space-x-2 bg-white p-1.5 rounded-xl shadow-lg border border-slate-200 w-fit">
             <Button
               variant={activeTab === 'users' ? 'default' : 'ghost'}
@@ -1105,7 +1128,7 @@ export default function AdminPage() {
                   Add User
                 </CardTitle>
                 <CardDescription className="mt-1">
-                  Invite a new user by email
+                  {addUserMode === 'invite' ? 'Invite a new user by email' : 'Create a user with a password (no email verification)'}
                 </CardDescription>
               </div>
               <Button
@@ -1118,6 +1141,26 @@ export default function AdminPage() {
               </Button>
             </CardHeader>
             <CardContent className="space-y-5 pt-6">
+              <div className="flex rounded-lg border border-slate-200 p-1 bg-slate-50">
+                <button
+                  type="button"
+                  onClick={() => { setAddUserMode('invite'); setInviteError(''); setInvitePassword('') }}
+                  className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-sm font-medium transition-colors ${addUserMode === 'invite' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-600 hover:text-slate-900'}`}
+                  disabled={inviteLoading}
+                >
+                  <Mail className="h-4 w-4" />
+                  Send invite email
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setAddUserMode('password'); setInviteError('') }}
+                  className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-sm font-medium transition-colors ${addUserMode === 'password' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-600 hover:text-slate-900'}`}
+                  disabled={inviteLoading}
+                >
+                  <Key className="h-4 w-4" />
+                  Set password
+                </button>
+              </div>
               <div>
                 <label className="text-sm font-medium text-slate-700 mb-2 block">Email Address</label>
                 <Input 
@@ -1143,6 +1186,22 @@ export default function AdminPage() {
                   <option value="admin">Admin</option>
                 </select>
               </div>
+              {addUserMode === 'password' && (
+                <div>
+                  <label className="text-sm font-medium text-slate-700 mb-2 block">Password</label>
+                  <Input 
+                    type="password"
+                    placeholder="Min 6 characters"
+                    value={invitePassword}
+                    onChange={(e) => {
+                      setInvitePassword(e.target.value)
+                      setInviteError('')
+                    }}
+                    disabled={inviteLoading}
+                    className="h-11 border-slate-200 focus:border-slate-900 focus:ring-slate-900"
+                  />
+                </div>
+              )}
 
               {inviteError && (
                 <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm flex items-center gap-2">
@@ -1154,7 +1213,7 @@ export default function AdminPage() {
               {inviteSuccess && (
                 <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-lg text-sm flex items-center gap-2">
                   <CheckCircle className="h-4 w-4 flex-shrink-0" />
-                  <span>Invite sent successfully! A temporary password has been emailed.</span>
+                  <span>{inviteSuccessMessage}</span>
                 </div>
               )}
 
@@ -1175,12 +1234,21 @@ export default function AdminPage() {
                   {inviteLoading ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Sending...
+                      {addUserMode === 'password' ? 'Creating...' : 'Sending...'}
                     </>
                   ) : (
                     <>
-                      <Send className="h-4 w-4 mr-2" />
-                      Send Invite
+                      {addUserMode === 'password' ? (
+                        <>
+                          <Key className="h-4 w-4 mr-2" />
+                          Create User
+                        </>
+                      ) : (
+                        <>
+                          <Send className="h-4 w-4 mr-2" />
+                          Send Invite
+                        </>
+                      )}
                     </>
                   )}
                 </Button>

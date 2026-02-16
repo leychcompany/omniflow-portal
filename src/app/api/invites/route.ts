@@ -13,6 +13,7 @@ const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
 interface Payload {
   email: string;
   role?: string;
+  password?: string;
 }
 
 export async function POST(req: NextRequest) {
@@ -52,13 +53,24 @@ export async function POST(req: NextRequest) {
     }
 
     const body: Payload = await req.json();
-    const { email, role = "client" } = body;
+    const { email, role = "client", password } = body;
 
     if (!email) {
       return NextResponse.json({ error: "Email is required" }, { status: 400 });
     }
 
+    if (password !== undefined && password !== null && String(password).trim() !== "") {
+      const pwd = String(password).trim();
+      if (pwd.length < 6) {
+        return NextResponse.json(
+          { error: "Password must be at least 6 characters" },
+          { status: 400 }
+        );
+      }
+    }
+
     const normalizedEmail = email.trim().toLowerCase();
+    const createWithPassword = Boolean(password && String(password).trim().length >= 6);
 
     // Check if user already exists
     const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
@@ -70,133 +82,118 @@ export async function POST(req: NextRequest) {
 
     let isExistingUser = false;
 
-    if (existing) {
-      isExistingUser = true;
-
-      // User exists: send password reset email instead
-      createdUserId = existing.id;
-
-      // Check if user profile exists in users table
-      const { data: existingProfile } = await supabaseAdmin
+    const ensureProfile = async (userId: string) => {
+      const { error: updateError } = await supabaseAdmin
         .from("users")
-        .select("id")
-        .eq("id", existing.id)
+        .update({ role: role as "admin" | "client", email: normalizedEmail })
+        .eq("id", userId)
+        .select()
         .single();
 
-      if (existingProfile) {
-        // Profile exists, just update role
-        const { error: roleError } = await supabaseAdmin
-          .from("users")
-          .update({ role: role as "admin" | "client" })
-          .eq("id", existing.id);
-        if (roleError) console.error("Error updating role:", roleError);
-      } else {
-        // Profile doesn't exist, create it
-        const { error: profileError } = await supabaseAdmin
+      if (updateError && updateError.code === "PGRST116") {
+        const { error: insertError } = await supabaseAdmin
           .from("users")
           .insert({
-            id: existing.id,
+            id: userId,
             email: normalizedEmail,
             role: role as "admin" | "client",
           });
-        if (profileError) {
-          console.error("Error creating profile:", profileError);
-          // If insert fails due to duplicate, try update instead
-          if (profileError.code === "23505") {
-            const { error: roleError } = await supabaseAdmin
-              .from("users")
-              .update({ role: role as "admin" | "client" })
-              .eq("id", existing.id);
-            if (roleError) console.error("Error updating role:", roleError);
-          }
+        if (insertError && insertError.code === "23505") {
+          await supabaseAdmin
+            .from("users")
+            .update({ role: role as "admin" | "client", email: normalizedEmail })
+            .eq("id", userId);
         }
       }
+    };
 
-      // Re-send invite email using inviteUserByEmail
-      // This works even for existing users and will resend the invite email
-      const redirectUrl = process.env.NEXT_PUBLIC_APP_URL
-        ? `${process.env.NEXT_PUBLIC_APP_URL}/auth/reset-password`
-        : `${req.nextUrl.origin}/auth/reset-password`;
+    if (existing) {
+      isExistingUser = true;
+      createdUserId = existing.id;
 
-      const { error: inviteError } =
-        await supabaseAdmin.auth.admin.inviteUserByEmail(normalizedEmail, {
-          redirectTo: redirectUrl,
-        });
-
-      if (inviteError) {
-        console.error("Error resending invite email:", inviteError);
-        // If inviteUserByEmail fails for existing user, try generating recovery link
-        // Note: generateLink doesn't send email automatically, but we log it for debugging
-        const { data: linkData } = await supabaseAdmin.auth.admin.generateLink({
-          type: "recovery",
-          email: normalizedEmail,
-          options: {
-            redirectTo: redirectUrl,
-          },
-        });
-        if (linkData) {
-          console.log(
-            "Recovery link generated (email may not be sent automatically):",
-            normalizedEmail
-          );
-        }
-      }
-    } else {
-      // Create new user using inviteUserByEmail - this creates user AND sends email automatically
-      const redirectUrl = process.env.NEXT_PUBLIC_APP_URL
-        ? `${process.env.NEXT_PUBLIC_APP_URL}/auth/reset-password`
-        : `${req.nextUrl.origin}/auth/reset-password`;
-
-      const { data: inviteData, error: inviteError } =
-        await supabaseAdmin.auth.admin.inviteUserByEmail(normalizedEmail, {
-          redirectTo: redirectUrl,
-        });
-
-      if (inviteError) throw inviteError;
-      createdUserId = inviteData?.user?.id;
-
-      // The trigger should create the profile automatically, but we need to update the role
-      // Try to update first (if trigger created it), if not exists, then insert
-      if (createdUserId) {
-        // First, try to update (in case trigger already created it)
-        const { error: updateError } = await supabaseAdmin
+      if (createWithPassword) {
+        // Update existing user's password
+        const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
+          existing.id,
+          { password: String(password).trim() }
+        );
+        if (updateError) throw updateError;
+        await ensureProfile(existing.id);
+      } else {
+        // User exists: send password reset email instead
+        const { data: existingProfile } = await supabaseAdmin
           .from("users")
-          .update({ role: role as "admin" | "client", email: normalizedEmail })
-          .eq("id", createdUserId)
-          .select()
+          .select("id")
+          .eq("id", existing.id)
           .single();
 
-        // If update didn't find a row, try to insert
-        if (updateError && updateError.code === "PGRST116") {
-          // Row doesn't exist, try to insert
-          const { error: insertError } = await supabaseAdmin
+        if (existingProfile) {
+          const { error: roleError } = await supabaseAdmin
+            .from("users")
+            .update({ role: role as "admin" | "client" })
+            .eq("id", existing.id);
+          if (roleError) console.error("Error updating role:", roleError);
+        } else {
+          const { error: profileError } = await supabaseAdmin
             .from("users")
             .insert({
-              id: createdUserId,
+              id: existing.id,
               email: normalizedEmail,
               role: role as "admin" | "client",
             });
-
-          // If insert fails due to duplicate (race condition with trigger), try update again
-          if (insertError && insertError.code === "23505") {
-            const { error: retryUpdateError } = await supabaseAdmin
+          if (profileError && profileError.code === "23505") {
+            await supabaseAdmin
               .from("users")
-              .update({
-                role: role as "admin" | "client",
-                email: normalizedEmail,
-              })
-              .eq("id", createdUserId);
-            if (retryUpdateError) {
-              console.error(
-                "Error updating role after retry:",
-                retryUpdateError
-              );
-            }
-          } else if (insertError) {
-            console.error("Error creating profile:", insertError);
+              .update({ role: role as "admin" | "client" })
+              .eq("id", existing.id);
           }
-        } else if (updateError) {
-          console.error("Error updating role:", updateError);
+        }
+
+        const redirectUrl = process.env.NEXT_PUBLIC_APP_URL
+          ? `${process.env.NEXT_PUBLIC_APP_URL}/auth/reset-password`
+          : `${req.nextUrl.origin}/auth/reset-password`;
+
+        const { error: inviteError } =
+          await supabaseAdmin.auth.admin.inviteUserByEmail(normalizedEmail, {
+            redirectTo: redirectUrl,
+          });
+
+        if (inviteError) {
+          console.error("Error resending invite email:", inviteError);
+        }
+      }
+    } else {
+      if (createWithPassword) {
+        // Create new user with password, no email verification
+        const { data: createData, error: createError } =
+          await supabaseAdmin.auth.admin.createUser({
+            email: normalizedEmail,
+            password: String(password).trim(),
+            email_confirm: true,
+          });
+
+        if (createError) throw createError;
+        createdUserId = createData?.user?.id;
+
+        if (createdUserId) {
+          await ensureProfile(createdUserId);
+        }
+      } else {
+        // Create new user using inviteUserByEmail
+        const redirectUrl = process.env.NEXT_PUBLIC_APP_URL
+          ? `${process.env.NEXT_PUBLIC_APP_URL}/auth/reset-password`
+          : `${req.nextUrl.origin}/auth/reset-password`;
+
+        const { data: inviteData, error: inviteError } =
+          await supabaseAdmin.auth.admin.inviteUserByEmail(normalizedEmail, {
+            redirectTo: redirectUrl,
+          });
+
+        if (inviteError) throw inviteError;
+        createdUserId = inviteData?.user?.id;
+
+        if (createdUserId) {
+          await ensureProfile(createdUserId);
         }
       }
     }
@@ -206,12 +203,12 @@ export async function POST(req: NextRequest) {
       .toString(36)
       .substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`;
 
-    // Create invite record
-    const { data: inviteData, error: inviteError } = await supabaseAdmin
+    // Create invite record (audit trail)
+    const { data: inviteData, error: inviteRecordError } = await supabaseAdmin
       .from("invites")
       .insert({
         email: normalizedEmail,
-        used: isExistingUser,
+        used: isExistingUser || createWithPassword,
         created_by: user.id,
         token: inviteToken,
         expires_at: new Date(
@@ -221,8 +218,8 @@ export async function POST(req: NextRequest) {
       .select()
       .single();
 
-    if (inviteError) {
-      console.error("Error creating invite:", inviteError);
+    if (inviteRecordError) {
+      console.error("Error creating invite:", inviteRecordError);
       // Don't fail if invite creation fails, user is already created
     }
 
@@ -230,7 +227,9 @@ export async function POST(req: NextRequest) {
       success: true,
       userId: createdUserId,
       inviteId: inviteData?.id,
-      message: "User created and email sent successfully",
+      message: createWithPassword
+        ? "User created. They can sign in with their email and the password you set."
+        : "User created and email sent successfully",
     });
   } catch (error: any) {
     console.error("Error in invite API:", error);

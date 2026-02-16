@@ -25,7 +25,7 @@ export const newsArticles: NewsArticle[] = [
     title: 'OMNI Flow Computers Launches New Customer Portal',
     excerpt: 'We are excited to introduce a centralized customer portal for training, support, resources, and account tools from OMNI Flow Computers.',
     content: 'Today we are announcing the launch of the OMNI Flow Computers Customer Portal, a secure hub that brings training, support resources, manuals, and RFQ tools into a single experience. The portal is designed to help teams onboard faster, find technical answers quickly, and manage ongoing service needs more efficiently. Customers can access product documentation, submit service requests, and track updates from one place, with a streamlined interface that reduces time spent searching for information. We will continue to expand the portal with new learning modules, best-practice guides, and proactive service notifications as we roll out additional capabilities over the coming months.',
-    publishedAt: '2024-02-01',
+    publishedAt: '2026-02-16',
     imageUrl: '/news-1.jpg',
     featured: true,
     slug: createSlug('OMNI Flow Computers Launches New Customer Portal')
