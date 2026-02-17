@@ -1,24 +1,48 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Logo } from '@/components/Logo'
-import { manuals } from './manuals-data'
 import { 
   ArrowLeft, 
   FileText, 
   Download,
   BookOpen,
   Calendar,
-  File
+  File,
+  Loader2
 } from 'lucide-react'
+
+interface Manual {
+  id: string
+  title: string
+  category: string
+  filename: string
+  path?: string
+  download_url?: string
+  size: string
+  description: string
+}
 
 export default function ManualsPage() {
   const router = useRouter()
+  const [manuals, setManuals] = useState<Manual[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [selectedSeries, setSelectedSeries] = useState<'all' | 'OMNI-3000-6000' | 'OMNI-4000-7000'>('all')
+
+  useEffect(() => {
+    fetch('/api/manuals')
+      .then((res) => {
+        if (!res.ok) throw new Error('Failed to load manuals')
+        return res.json()
+      })
+      .then((data) => setManuals(Array.isArray(data) ? data : []))
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false))
+  }, [])
 
   const seriesOptions = [
     { id: 'all', label: 'All', value: 'all' },
@@ -30,11 +54,31 @@ export default function ManualsPage() {
     selectedSeries === 'all' ? true : manual.category === selectedSeries
   )
 
-  const handleDownload = (manual: (typeof manuals)[number]) => {
+  const handleDownload = (manual: Manual) => {
+    const url = manual.download_url ?? manual.path
+    if (!url) return
     const link = document.createElement('a')
-    link.href = manual.path
+    link.href = url
     link.download = manual.filename
+    link.target = '_blank'
+    link.rel = 'noopener noreferrer'
     link.click()
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <Loader2 className="h-10 w-10 animate-spin text-orange-600" />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <p className="text-red-600">{error}</p>
+      </div>
+    )
   }
 
   return (

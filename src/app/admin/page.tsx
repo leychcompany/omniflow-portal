@@ -33,14 +33,16 @@ import {
   LogOut,
   Loader2,
   XCircle,
-  FileText,
   RefreshCw,
   Mail,
   Calendar,
   Shield,
   Eye,
   Clock,
-  Key
+  Key,
+  Upload,
+  BookOpen,
+  Image
 } from 'lucide-react'
 
 interface User {
@@ -54,39 +56,40 @@ interface User {
   avatarUrl?: string
 }
 
-interface Training {
+interface Course {
   id: string
   title: string
-  description: string
+  description: string | null
   duration: string
-  level: 'Beginner' | 'Intermediate' | 'Advanced'
-  category: string
-  instructor: string
-  status: 'draft' | 'published' | 'archived'
-  createdAt: string
+  thumbnail: string | null
+  instructor: string | null
+  featured: boolean
+  sort_order: number
+  created_at: string
 }
 
-interface RFQ {
+interface Manual {
   id: string
   title: string
-  client: string
-  email: string
-  status: 'pending' | 'in-review' | 'quoted' | 'approved' | 'rejected'
-  priority: 'low' | 'medium' | 'high'
-  estimatedValue: string
-  dueDate: string
-  submittedAt: string
+  category: string
+  filename: string
+  storage_path: string
+  size: string | null
+  description: string | null
+  created_at: string
+  download_url?: string
 }
 
 interface NewsArticle {
   id: string
   title: string
-  excerpt: string
-  author: string
-  category: string
-  status: 'draft' | 'published' | 'archived'
-  publishedAt: string
-  createdAt: string
+  slug: string
+  excerpt: string | null
+  content: string | null
+  image_url: string | null
+  featured: boolean
+  published_at: string
+  created_at: string
 }
 
 interface Invite {
@@ -101,11 +104,15 @@ interface Invite {
 
 export default function AdminPage() {
   const router = useRouter()
-  const [activeTab, setActiveTab] = useState<'users' | 'training' | 'rfqs' | 'news'>('users')
+  const [activeTab, setActiveTab] = useState<'users' | 'training' | 'manuals' | 'news'>('users')
   const [userSubTab, setUserSubTab] = useState<'active' | 'invites'>('active')
   const [showAddUserModal, setShowAddUserModal] = useState(false)
   const [showAddTrainingModal, setShowAddTrainingModal] = useState(false)
+  const [showAddManualModal, setShowAddManualModal] = useState(false)
   const [showAddNewsModal, setShowAddNewsModal] = useState(false)
+  const [editingCourse, setEditingCourse] = useState<Course | null>(null)
+  const [editingManual, setEditingManual] = useState<Manual | null>(null)
+  const [editingNews, setEditingNews] = useState<NewsArticle | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   
   // Users state
@@ -139,84 +146,95 @@ export default function AdminPage() {
   // Delete invite state
   const [deletingInviteId, setDeletingInviteId] = useState<string | null>(null)
 
+  // Courses state
+  const [courses, setCourses] = useState<Course[]>([])
+  const [coursesLoading, setCoursesLoading] = useState(false)
+  const [coursesError, setCoursesError] = useState('')
+
+  // Manuals state
+  const [manuals, setManuals] = useState<Manual[]>([])
+  const [manualsLoading, setManualsLoading] = useState(false)
+  const [manualsError, setManualsError] = useState('')
+
+  // News state
+  const [newsArticles, setNewsArticles] = useState<NewsArticle[]>([])
+  const [newsLoading, setNewsLoading] = useState(false)
+  const [newsError, setNewsError] = useState('')
+
+  // Course form state
+  const [courseForm, setCourseForm] = useState({ id: '', title: '', description: '', duration: 'In Person', thumbnail: '', instructor: 'OMNI Training', featured: false, sort_order: 0 })
+  const [courseSubmitLoading, setCourseSubmitLoading] = useState(false)
+  const [courseSubmitError, setCourseSubmitError] = useState('')
+
+  // Manual form state
+  const [manualForm, setManualForm] = useState({ title: '', category: '', description: '' })
+  const [manualFile, setManualFile] = useState<File | null>(null)
+  const [manualSubmitLoading, setManualSubmitLoading] = useState(false)
+  const [manualSubmitError, setManualSubmitError] = useState('')
+
+  // News form state
+  const [newsForm, setNewsForm] = useState({ title: '', excerpt: '', content: '', image_url: '', featured: false, published_at: '' })
+  const [newsSubmitLoading, setNewsSubmitLoading] = useState(false)
+  const [newsSubmitError, setNewsSubmitError] = useState('')
+
+  // Image upload state
+  const [imageUploading, setImageUploading] = useState(false)
+
   const adminCount = useMemo(
     () => users.filter((userItem) => userItem.role === 'admin').length,
     [users]
   )
 
-  // Mock data for other tabs
-  const trainings: Training[] = [
-    {
-      id: '1',
-      title: 'OMNI-3000 Basic Operations',
-      description: 'Learn the fundamentals of operating the OMNI-3000 system',
-      duration: '4 hours',
-      level: 'Beginner',
-      category: 'Operations',
-      instructor: 'John Smith',
-      status: 'published',
-      createdAt: '2024-01-10'
-    },
-    {
-      id: '2',
-      title: 'OMNI-6000 Intermediate Training',
-      description: 'Advanced techniques for OMNI-6000 system maintenance',
-      duration: '6 hours',
-      level: 'Intermediate',
-      category: 'Maintenance',
-      instructor: 'Sarah Johnson',
-      status: 'draft',
-      createdAt: '2024-01-12'
+  // Fetch courses from API
+  const fetchCourses = useCallback(async () => {
+    setCoursesLoading(true)
+    setCoursesError('')
+    try {
+      const res = await fetch('/api/courses')
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed to load courses')
+      setCourses(Array.isArray(data) ? data : [])
+    } catch (e: unknown) {
+      setCoursesError(e instanceof Error ? e.message : 'Failed to load courses')
+    } finally {
+      setCoursesLoading(false)
     }
-  ]
+  }, [])
 
-  const rfqs: RFQ[] = [
-    {
-      id: '1',
-      title: 'OMNI-7000 System Quote',
-      client: 'ABC Manufacturing',
-      email: 'contact@abc.com',
-      status: 'pending',
-      priority: 'high',
-      estimatedValue: '$50,000',
-      dueDate: '2024-02-15',
-      submittedAt: '2024-01-15'
-    },
-    {
-      id: '2',
-      title: 'Maintenance Service Contract',
-      client: 'XYZ Corp',
-      email: 'procurement@xyz.com',
-      status: 'in-review',
-      priority: 'medium',
-      estimatedValue: '$25,000',
-      dueDate: '2024-02-20',
-      submittedAt: '2024-01-14'
+  // Fetch manuals from API
+  const fetchManuals = useCallback(async () => {
+    setManualsLoading(true)
+    setManualsError('')
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const res = await fetch('/api/manuals', {
+        headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {},
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed to load manuals')
+      setManuals(Array.isArray(data) ? data : [])
+    } catch (e: unknown) {
+      setManualsError(e instanceof Error ? e.message : 'Failed to load manuals')
+    } finally {
+      setManualsLoading(false)
     }
-  ]
+  }, [])
 
-  const newsArticles: NewsArticle[] = [
-    {
-      id: '1',
-      title: 'OMNI-7000 Series Launch',
-      excerpt: 'Introducing the latest OMNI-7000 series with enhanced automation',
-      author: 'Sarah Johnson',
-      category: 'Product Updates',
-      status: 'published',
-      publishedAt: '2024-01-15',
-      createdAt: '2024-01-14'
-    },
-    {
-      id: '2',
-      title: 'Q4 2023 Financial Results',
-      excerpt: 'Our company reports record-breaking revenue and expansion',
-      author: 'Michael Chen',
-      category: 'Company News',
-      status: 'draft',
-      publishedAt: '',
-      createdAt: '2024-01-12'
+  // Fetch news from API
+  const fetchNews = useCallback(async () => {
+    setNewsLoading(true)
+    setNewsError('')
+    try {
+      const res = await fetch('/api/news')
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed to load news')
+      setNewsArticles(Array.isArray(data) ? data : [])
+    } catch (e: unknown) {
+      setNewsError(e instanceof Error ? e.message : 'Failed to load news')
+    } finally {
+      setNewsLoading(false)
     }
-  ]
+  }, [])
 
   // Fetch users from database
   const fetchUsers = useCallback(async () => {
@@ -302,6 +320,19 @@ export default function AdminPage() {
     fetchUsers()
     fetchInvites()
   }, [fetchUsers, fetchInvites])
+
+  useEffect(() => {
+    if (activeTab === 'training') fetchCourses()
+    if (activeTab === 'manuals') fetchManuals()
+    if (activeTab === 'news') fetchNews()
+  }, [activeTab, fetchCourses, fetchManuals, fetchNews])
+
+  // Prefetch courses, manuals, news for stats cards
+  useEffect(() => {
+    fetchCourses()
+    fetchManuals()
+    fetchNews()
+  }, [fetchCourses, fetchManuals, fetchNews])
 
   const handleSignOut = async () => {
     try {
@@ -562,6 +593,252 @@ export default function AdminPage() {
     invite.email.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
+  const getAuthHeaders = async () => {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) throw new Error('Session expired. Please log in again.')
+    return { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` }
+  }
+
+  const handleSaveCourse = async () => {
+    if (!courseForm.title.trim()) {
+      setCourseSubmitError('Title is required')
+      return
+    }
+    setCourseSubmitLoading(true)
+    setCourseSubmitError('')
+    try {
+      const headers = await getAuthHeaders()
+      if (editingCourse) {
+        const res = await fetch(`/api/courses/${editingCourse.id}`, {
+          method: 'PATCH',
+          headers,
+          body: JSON.stringify({
+            title: courseForm.title,
+            description: courseForm.description || null,
+            duration: courseForm.duration,
+            thumbnail: courseForm.thumbnail || null,
+            instructor: courseForm.instructor || null,
+            featured: courseForm.featured,
+            sort_order: courseForm.sort_order,
+          }),
+        })
+        const data = await res.json()
+        if (!res.ok) throw new Error(data.error || 'Failed to update course')
+      } else {
+        if (!courseForm.id.trim()) {
+          setCourseSubmitError('Course ID is required (e.g. TR7000)')
+          setCourseSubmitLoading(false)
+          return
+        }
+        const res = await fetch('/api/courses', {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({
+            id: courseForm.id.trim(),
+            title: courseForm.title,
+            description: courseForm.description || null,
+            duration: courseForm.duration,
+            thumbnail: courseForm.thumbnail || null,
+            instructor: courseForm.instructor || null,
+            featured: courseForm.featured,
+            sort_order: courseForm.sort_order,
+          }),
+        })
+        const data = await res.json()
+        if (!res.ok) throw new Error(data.error || 'Failed to create course')
+      }
+      setShowAddTrainingModal(false)
+      setEditingCourse(null)
+      setCourseForm({ id: '', title: '', description: '', duration: 'In Person', thumbnail: '', instructor: 'OMNI Training', featured: false, sort_order: 0 })
+      await fetchCourses()
+    } catch (e: unknown) {
+      setCourseSubmitError(e instanceof Error ? e.message : 'Failed to save')
+    } finally {
+      setCourseSubmitLoading(false)
+    }
+  }
+
+  const handleSaveManual = async () => {
+    if (!manualForm.title.trim() || !manualForm.category.trim()) {
+      setManualSubmitError('Title and category are required')
+      return
+    }
+    if (!editingManual && !manualFile) {
+      setManualSubmitError('PDF file is required')
+      return
+    }
+    setManualSubmitLoading(true)
+    setManualSubmitError('')
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) throw new Error('Session expired. Please log in again.')
+
+      if (editingManual) {
+        const headers = { Authorization: `Bearer ${session.access_token}` } as Record<string, string>
+        let body: string | FormData
+        if (manualFile) {
+          const formData = new FormData()
+          formData.set('title', manualForm.title)
+          formData.set('category', manualForm.category)
+          if (manualForm.description) formData.set('description', manualForm.description)
+          formData.set('file', manualFile)
+          body = formData
+        } else {
+          headers['Content-Type'] = 'application/json'
+          body = JSON.stringify({
+            title: manualForm.title,
+            category: manualForm.category,
+            description: manualForm.description || null,
+          })
+        }
+        const res = await fetch(`/api/manuals/${editingManual.id}`, {
+          method: 'PATCH',
+          headers,
+          body,
+        })
+        const data = await res.json()
+        if (!res.ok) throw new Error(data.error || 'Failed to update manual')
+      } else {
+        const formData = new FormData()
+        formData.set('title', manualForm.title)
+        formData.set('category', manualForm.category)
+        if (manualForm.description) formData.set('description', manualForm.description)
+        if (manualFile) formData.set('file', manualFile)
+
+        const res = await fetch('/api/manuals', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${session.access_token}` },
+          body: formData,
+        })
+        const data = await res.json()
+        if (!res.ok) throw new Error(data.error || 'Failed to create manual')
+      }
+      setShowAddManualModal(false)
+      setEditingManual(null)
+      setManualForm({ title: '', category: '', description: '' })
+      setManualFile(null)
+      await fetchManuals()
+    } catch (e: unknown) {
+      setManualSubmitError(e instanceof Error ? e.message : 'Failed to save')
+    } finally {
+      setManualSubmitLoading(false)
+    }
+  }
+
+  const handleSaveNews = async () => {
+    if (!newsForm.title.trim() || !newsForm.published_at) {
+      setNewsSubmitError('Title and published date are required')
+      return
+    }
+    setNewsSubmitLoading(true)
+    setNewsSubmitError('')
+    try {
+      const headers = await getAuthHeaders()
+      if (editingNews) {
+        const res = await fetch(`/api/news/${editingNews.id}`, {
+          method: 'PATCH',
+          headers,
+          body: JSON.stringify({
+            title: newsForm.title,
+            excerpt: newsForm.excerpt || null,
+            content: newsForm.content || null,
+            image_url: newsForm.image_url || null,
+            featured: newsForm.featured,
+            published_at: newsForm.published_at,
+          }),
+        })
+        const data = await res.json()
+        if (!res.ok) throw new Error(data.error || 'Failed to update article')
+      } else {
+        const res = await fetch('/api/news', {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({
+            title: newsForm.title,
+            excerpt: newsForm.excerpt || null,
+            content: newsForm.content || null,
+            image_url: newsForm.image_url || null,
+            featured: newsForm.featured,
+            published_at: newsForm.published_at,
+          }),
+        })
+        const data = await res.json()
+        if (!res.ok) throw new Error(data.error || 'Failed to create article')
+      }
+      setShowAddNewsModal(false)
+      setEditingNews(null)
+      setNewsForm({ title: '', excerpt: '', content: '', image_url: '', featured: false, published_at: '' })
+      await fetchNews()
+    } catch (e: unknown) {
+      setNewsSubmitError(e instanceof Error ? e.message : 'Failed to save')
+    } finally {
+      setNewsSubmitLoading(false)
+    }
+  }
+
+  const handleDeleteCourse = async (course: Course) => {
+    if (!confirm(`Delete course "${course.title}"?`)) return
+    try {
+      const headers = await getAuthHeaders()
+      const res = await fetch(`/api/courses/${course.id}`, { method: 'DELETE', headers })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed to delete')
+      await fetchCourses()
+    } catch (e: unknown) {
+      alert(e instanceof Error ? e.message : 'Failed to delete')
+    }
+  }
+
+  const handleDeleteManual = async (manual: Manual) => {
+    if (!confirm(`Delete manual "${manual.title}"?`)) return
+    try {
+      const headers = await getAuthHeaders()
+      const res = await fetch(`/api/manuals/${manual.id}`, { method: 'DELETE', headers })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed to delete')
+      await fetchManuals()
+    } catch (e: unknown) {
+      alert(e instanceof Error ? e.message : 'Failed to delete')
+    }
+  }
+
+  const handleUploadImage = async (file: File, folder: 'news' | 'training'): Promise<string | null> => {
+    setImageUploading(true)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) throw new Error('Session expired')
+      const formData = new FormData()
+      formData.set('file', file)
+      formData.set('folder', folder)
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${session.access_token}` },
+        body: formData,
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Upload failed')
+      return data.url as string
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Upload failed')
+      return null
+    } finally {
+      setImageUploading(false)
+    }
+  }
+
+  const handleDeleteNews = async (article: NewsArticle) => {
+    if (!confirm(`Delete article "${article.title}"?`)) return
+    try {
+      const headers = await getAuthHeaders()
+      const res = await fetch(`/api/news/${article.id}`, { method: 'DELETE', headers })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed to delete')
+      await fetchNews()
+    } catch (e: unknown) {
+      alert(e instanceof Error ? e.message : 'Failed to delete')
+    }
+  }
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'active': return 'bg-emerald-100 text-emerald-700 border-emerald-200'
@@ -574,15 +851,6 @@ export default function AdminPage() {
       case 'quoted': return 'bg-purple-100 text-purple-700 border-purple-200'
       case 'approved': return 'bg-emerald-100 text-emerald-700 border-emerald-200'
       case 'rejected': return 'bg-red-100 text-red-700 border-red-200'
-      default: return 'bg-slate-100 text-slate-700 border-slate-200'
-    }
-  }
-
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'high': return 'bg-red-100 text-red-700 border-red-200'
-      case 'medium': return 'bg-amber-100 text-amber-700 border-amber-200'
-      case 'low': return 'bg-emerald-100 text-emerald-700 border-emerald-200'
       default: return 'bg-slate-100 text-slate-700 border-slate-200'
     }
   }
@@ -663,75 +931,16 @@ export default function AdminPage() {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Stats Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card className="border-0 shadow-lg bg-white bg-gradient-to-br from-blue-50 to-blue-100/50 hover:shadow-xl transition-all">
-            <CardContent className="p-6 bg-transparent">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-slate-600 mb-1">Total Users</p>
-                  <p className="text-3xl font-bold text-slate-900">{users.length}</p>
-                </div>
-                <div className="p-3 bg-blue-500 rounded-xl shadow-lg">
-                  <Users className="h-6 w-6 text-white" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card className="border-0 shadow-lg bg-white bg-gradient-to-br from-emerald-50 to-emerald-100/50 hover:shadow-xl transition-all">
-            <CardContent className="p-6 bg-transparent">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-slate-600 mb-1">Active Trainings</p>
-                  <p className="text-3xl font-bold text-slate-900">{trainings.filter(t => t.status === 'published').length}</p>
-                </div>
-                <div className="p-3 bg-emerald-500 rounded-xl shadow-lg">
-                  <GraduationCap className="h-6 w-6 text-white" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card className="border-0 shadow-lg bg-white bg-gradient-to-br from-orange-50 to-orange-100/50 hover:shadow-xl transition-all">
-            <CardContent className="p-6 bg-transparent">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-slate-600 mb-1">Pending RFQs</p>
-                  <p className="text-3xl font-bold text-slate-900">{rfqs.filter(r => r.status === 'pending').length}</p>
-                </div>
-                <div className="p-3 bg-orange-500 rounded-xl shadow-lg">
-                  <FileText className="h-6 w-6 text-white" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card className="border-0 shadow-lg bg-white bg-gradient-to-br from-purple-50 to-purple-100/50 hover:shadow-xl transition-all">
-            <CardContent className="p-6 bg-transparent">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-slate-600 mb-1">Published News</p>
-                  <p className="text-3xl font-bold text-slate-900">{newsArticles.filter(n => n.status === 'published').length}</p>
-                </div>
-                <div className="p-3 bg-purple-500 rounded-xl shadow-lg">
-                  <Newspaper className="h-6 w-6 text-white" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Tab Navigation - hidden */}
-        <div className="mb-8 hidden">
-          <div className="flex space-x-2 bg-white p-1.5 rounded-xl shadow-lg border border-slate-200 w-fit">
+        {/* Tab Navigation */}
+        <div className="mb-8">
+          <div className="flex flex-wrap gap-2 bg-white p-1.5 rounded-xl shadow-lg border border-slate-200 w-fit">
             <Button
               variant={activeTab === 'users' ? 'default' : 'ghost'}
               onClick={() => setActiveTab('users')}
               className={`px-6 ${activeTab === 'users' ? 'bg-gradient-to-r from-red-600 to-red-700 text-white shadow-md hover:from-red-700 hover:to-red-800' : 'bg-transparent hover:bg-primary-50 hover:text-primary-700'} transition-all duration-200`}
             >
               <Users className="h-4 w-4 mr-2" />
-              Users
+              Users ({users.length})
             </Button>
             <Button
               variant={activeTab === 'training' ? 'default' : 'ghost'}
@@ -739,15 +948,15 @@ export default function AdminPage() {
               className={`px-6 ${activeTab === 'training' ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-white shadow-md hover:from-purple-700 hover:to-purple-800' : 'bg-transparent hover:bg-purple-50 hover:text-purple-700'} transition-all duration-200`}
             >
               <GraduationCap className="h-4 w-4 mr-2" />
-              Training
+              Training ({courses.length})
             </Button>
             <Button
-              variant={activeTab === 'rfqs' ? 'default' : 'ghost'}
-              onClick={() => setActiveTab('rfqs')}
-              className={`px-6 ${activeTab === 'rfqs' ? 'bg-gradient-to-r from-orange-600 to-orange-700 text-white shadow-md hover:from-orange-700 hover:to-orange-800' : 'bg-transparent hover:bg-orange-50 hover:text-orange-700'} transition-all duration-200`}
+              variant={activeTab === 'manuals' ? 'default' : 'ghost'}
+              onClick={() => setActiveTab('manuals')}
+              className={`px-6 ${activeTab === 'manuals' ? 'bg-gradient-to-r from-teal-600 to-teal-700 text-white shadow-md hover:from-teal-700 hover:to-teal-800' : 'bg-transparent hover:bg-teal-50 hover:text-teal-700'} transition-all duration-200`}
             >
-              <FileText className="h-4 w-4 mr-2" />
-              RFQs
+              <BookOpen className="h-4 w-4 mr-2" />
+              Manuals ({manuals.length})
             </Button>
             <Button
               variant={activeTab === 'news' ? 'default' : 'ghost'}
@@ -755,7 +964,7 @@ export default function AdminPage() {
               className={`px-6 ${activeTab === 'news' ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-md hover:from-blue-700 hover:to-blue-800' : 'bg-transparent hover:bg-blue-50 hover:text-blue-700'} transition-all duration-200`}
             >
               <Newspaper className="h-4 w-4 mr-2" />
-              News
+              News ({newsArticles.length})
             </Button>
           </div>
         </div>
@@ -794,22 +1003,49 @@ export default function AdminPage() {
               </>
             )}
             {activeTab === 'training' && (
-              <Button
-                onClick={() => setShowAddTrainingModal(true)}
-                className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white shadow-lg hover:shadow-xl transition-all duration-200"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Add Training
-              </Button>
+              <>
+                <Button variant="outline" onClick={fetchCourses} disabled={coursesLoading} className="flex items-center gap-2">
+                  <RefreshCw className={`h-4 w-4 ${coursesLoading ? 'animate-spin' : ''}`} />
+                  Refresh
+                </Button>
+                <Button
+                  onClick={() => { setEditingCourse(null); setCourseForm({ id: '', title: '', description: '', duration: 'In Person', thumbnail: '', instructor: 'OMNI Training', featured: false, sort_order: 0 }); setShowAddTrainingModal(true) }}
+                  className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white shadow-lg hover:shadow-xl transition-all duration-200"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Course
+                </Button>
+              </>
+            )}
+            {activeTab === 'manuals' && (
+              <>
+                <Button variant="outline" onClick={fetchManuals} disabled={manualsLoading} className="flex items-center gap-2">
+                  <RefreshCw className={`h-4 w-4 ${manualsLoading ? 'animate-spin' : ''}`} />
+                  Refresh
+                </Button>
+                <Button
+                  onClick={() => { setEditingManual(null); setManualForm({ title: '', category: '', description: '' }); setManualFile(null); setShowAddManualModal(true) }}
+                  className="bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white shadow-lg hover:shadow-xl transition-all duration-200"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Manual
+                </Button>
+              </>
             )}
             {activeTab === 'news' && (
-              <Button
-                onClick={() => setShowAddNewsModal(true)}
-                className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl transition-all duration-200"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Add News
-              </Button>
+              <>
+                <Button variant="outline" onClick={fetchNews} disabled={newsLoading} className="flex items-center gap-2">
+                  <RefreshCw className={`h-4 w-4 ${newsLoading ? 'animate-spin' : ''}`} />
+                  Refresh
+                </Button>
+                <Button
+                  onClick={() => { setEditingNews(null); setNewsForm({ title: '', excerpt: '', content: '', image_url: '', featured: false, published_at: new Date().toISOString().slice(0, 10) }); setShowAddNewsModal(true) }}
+                  className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl transition-all duration-200"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add News
+                </Button>
+              </>
             )}
           </div>
         </div>
@@ -1021,96 +1257,172 @@ export default function AdminPage() {
 
         {activeTab === 'training' && (
           <div className="space-y-4">
-            {trainings.map((training) => (
-              <Card key={training.id} className="border-0 shadow-lg hover:shadow-xl transition-all duration-200 bg-white">
+            {coursesLoading ? (
+              <Card className="border-0 shadow-lg bg-white">
+                <CardContent className="p-12 text-center">
+                  <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary-600 mb-4" />
+                  <p className="text-slate-600">Loading courses...</p>
+                </CardContent>
+              </Card>
+            ) : coursesError ? (
+              <Card className="border-0 shadow-lg border-red-200 bg-red-50">
                 <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <h3 className="text-lg font-semibold text-slate-900 mb-2">{training.title}</h3>
-                      <p className="text-sm text-slate-600 mb-3">{training.description}</p>
-                      <div className="flex items-center gap-4 text-sm text-slate-500">
-                        <span>Duration: {training.duration}</span>
-                        <span>Level: {training.level}</span>
-                        <span>Category: {training.category}</span>
-                        <span>Instructor: {training.instructor}</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Badge className={`${getStatusColor(training.status)} border`}>
-                        {training.status}
-                      </Badge>
-                      <Button variant="outline" size="sm" className="transition-all duration-200 hover:bg-slate-100">
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                    </div>
+                  <div className="flex items-center gap-3 text-red-700">
+                    <XCircle className="h-5 w-5" />
+                    <span>{coursesError}</span>
                   </div>
                 </CardContent>
               </Card>
-            ))}
+            ) : courses.length === 0 ? (
+              <Card className="border-0 shadow-lg bg-white">
+                <CardContent className="p-12 text-center">
+                  <GraduationCap className="h-12 w-12 mx-auto text-slate-400 mb-4" />
+                  <p className="text-slate-600">No courses yet. Add one to get started.</p>
+                </CardContent>
+              </Card>
+            ) : (
+              courses.map((course) => (
+                <Card key={course.id} className="border-0 shadow-lg hover:shadow-xl transition-all duration-200 bg-white">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <h3 className="text-lg font-semibold text-slate-900 mb-2">{course.title}</h3>
+                        <p className="text-sm text-slate-600 mb-3">{course.description || '—'}</p>
+                        <div className="flex items-center gap-4 text-sm text-slate-500">
+                          <span>Duration: {course.duration}</span>
+                          <span>Instructor: {course.instructor || '—'}</span>
+                          {course.featured && <Badge className="bg-amber-100 text-amber-700 border-amber-200">Featured</Badge>}
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Button variant="outline" size="sm" onClick={() => { setEditingCourse(course); setCourseForm({ id: course.id, title: course.title, description: course.description || '', duration: course.duration, thumbnail: course.thumbnail || '', instructor: course.instructor || '', featured: course.featured, sort_order: course.sort_order }); setShowAddTrainingModal(true) }} className="transition-all duration-200 hover:bg-slate-100">
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => handleDeleteCourse(course)} className="text-red-600 hover:bg-red-50 hover:border-red-200">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
           </div>
         )}
 
-        {activeTab === 'rfqs' && (
+        {activeTab === 'manuals' && (
           <div className="space-y-4">
-            {rfqs.map((rfq) => (
-              <Card key={rfq.id} className="border-0 shadow-lg hover:shadow-xl transition-all duration-200 bg-white">
+            {manualsLoading ? (
+              <Card className="border-0 shadow-lg bg-white">
+                <CardContent className="p-12 text-center">
+                  <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary-600 mb-4" />
+                  <p className="text-slate-600">Loading manuals...</p>
+                </CardContent>
+              </Card>
+            ) : manualsError ? (
+              <Card className="border-0 shadow-lg border-red-200 bg-red-50">
                 <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <h3 className="text-lg font-semibold text-slate-900 mb-2">{rfq.title}</h3>
-                      <p className="text-sm text-slate-600 mb-3">{rfq.client} - {rfq.email}</p>
-                      <div className="flex items-center gap-4 text-sm text-slate-500">
-                        <span>Value: {rfq.estimatedValue}</span>
-                        <span>Due: {formatDate(rfq.dueDate)}</span>
-                        <span>Submitted: {formatDate(rfq.submittedAt)}</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Badge className={`${getStatusColor(rfq.status)} border`}>
-                        {rfq.status}
-                      </Badge>
-                      <Badge className={`${getPriorityColor(rfq.priority)} border`}>
-                        {rfq.priority}
-                      </Badge>
-                      <Button variant="outline" size="sm" className="transition-all duration-200 hover:bg-slate-100">
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                    </div>
+                  <div className="flex items-center gap-3 text-red-700">
+                    <XCircle className="h-5 w-5" />
+                    <span>{manualsError}</span>
                   </div>
                 </CardContent>
               </Card>
-            ))}
+            ) : manuals.length === 0 ? (
+              <Card className="border-0 shadow-lg bg-white">
+                <CardContent className="p-12 text-center">
+                  <BookOpen className="h-12 w-12 mx-auto text-slate-400 mb-4" />
+                  <p className="text-slate-600">No manuals yet. Add one with a PDF file to get started.</p>
+                </CardContent>
+              </Card>
+            ) : (
+              manuals.map((manual) => (
+                <Card key={manual.id} className="border-0 shadow-lg hover:shadow-xl transition-all duration-200 bg-white">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <h3 className="text-lg font-semibold text-slate-900 mb-2">{manual.title}</h3>
+                        <p className="text-sm text-slate-600 mb-3">{manual.description || '—'}</p>
+                        <div className="flex items-center gap-4 text-sm text-slate-500">
+                          <span>Category: {manual.category}</span>
+                          <span>File: {manual.filename}</span>
+                          {manual.size && <span>{manual.size}</span>}
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        {manual.download_url && (
+                          <Button variant="outline" size="sm" asChild>
+                            <a href={manual.download_url} target="_blank" rel="noopener noreferrer">
+                              <Eye className="h-4 w-4" />
+                            </a>
+                          </Button>
+                        )}
+                        <Button variant="outline" size="sm" onClick={() => { setEditingManual(manual); setManualForm({ title: manual.title, category: manual.category, description: manual.description || '' }); setManualFile(null); setShowAddManualModal(true) }} className="transition-all duration-200 hover:bg-slate-100">
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => handleDeleteManual(manual)} className="text-red-600 hover:bg-red-50 hover:border-red-200">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
           </div>
         )}
 
         {activeTab === 'news' && (
           <div className="space-y-4">
-            {newsArticles.map((article) => (
-              <Card key={article.id} className="border-0 shadow-lg hover:shadow-xl transition-all duration-200 bg-white">
+            {newsLoading ? (
+              <Card className="border-0 shadow-lg bg-white">
+                <CardContent className="p-12 text-center">
+                  <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary-600 mb-4" />
+                  <p className="text-slate-600">Loading news...</p>
+                </CardContent>
+              </Card>
+            ) : newsError ? (
+              <Card className="border-0 shadow-lg border-red-200 bg-red-50">
                 <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <h3 className="text-lg font-semibold text-slate-900 mb-2">{article.title}</h3>
-                      <p className="text-sm text-slate-600 mb-3">{article.excerpt}</p>
-                      <div className="flex items-center gap-4 text-sm text-slate-500">
-                        <span>Author: {article.author}</span>
-                        <span>Category: {article.category}</span>
-                        <span>Created: {formatDate(article.createdAt)}</span>
-                        {article.publishedAt && <span>Published: {formatDate(article.publishedAt)}</span>}
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Badge className={`${getStatusColor(article.status)} border`}>
-                        {article.status}
-                      </Badge>
-                      <Button variant="outline" size="sm" className="transition-all duration-200 hover:bg-slate-100">
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                    </div>
+                  <div className="flex items-center gap-3 text-red-700">
+                    <XCircle className="h-5 w-5" />
+                    <span>{newsError}</span>
                   </div>
                 </CardContent>
               </Card>
-            ))}
+            ) : newsArticles.length === 0 ? (
+              <Card className="border-0 shadow-lg bg-white">
+                <CardContent className="p-12 text-center">
+                  <Newspaper className="h-12 w-12 mx-auto text-slate-400 mb-4" />
+                  <p className="text-slate-600">No news articles yet. Add one to get started.</p>
+                </CardContent>
+              </Card>
+            ) : (
+              newsArticles.map((article) => (
+                <Card key={article.id} className="border-0 shadow-lg hover:shadow-xl transition-all duration-200 bg-white">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <h3 className="text-lg font-semibold text-slate-900 mb-2">{article.title}</h3>
+                        <p className="text-sm text-slate-600 mb-3">{article.excerpt || '—'}</p>
+                        <div className="flex items-center gap-4 text-sm text-slate-500">
+                          <span>Published: {formatDate(article.published_at)}</span>
+                          {article.featured && <Badge className="bg-amber-100 text-amber-700 border-amber-200">Featured</Badge>}
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Button variant="outline" size="sm" onClick={() => { setEditingNews(article); setNewsForm({ title: article.title, excerpt: article.excerpt || '', content: article.content || '', image_url: article.image_url || '', featured: article.featured, published_at: article.published_at }); setShowAddNewsModal(true) }} className="transition-all duration-200 hover:bg-slate-100">
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => handleDeleteNews(article)} className="text-red-600 hover:bg-red-50 hover:border-red-200">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
           </div>
         )}
       </div>
@@ -1258,7 +1570,7 @@ export default function AdminPage() {
         </div>
       )}
 
-      {/* Add Training Modal */}
+      {/* Add/Edit Training Modal */}
       {showAddTrainingModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <Card className="w-full max-w-lg shadow-2xl border-0 bg-white">
@@ -1268,64 +1580,74 @@ export default function AdminPage() {
                   <div className="p-2 bg-gradient-to-br from-slate-900 to-slate-800 rounded-lg">
                     <Plus className="h-5 w-5 text-white" />
                   </div>
-                  Add Training
+                  {editingCourse ? 'Edit Course' : 'Add Course'}
                 </CardTitle>
                 <CardDescription className="mt-1">
-                  Create a new training course
+                  {editingCourse ? 'Update training course' : 'Create a new training course'}
                 </CardDescription>
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowAddTrainingModal(false)}
-                className="hover:bg-slate-100"
-              >
+              <Button variant="ghost" size="sm" onClick={() => { setShowAddTrainingModal(false); setEditingCourse(null); setCourseSubmitError('') }} className="hover:bg-slate-100">
                 <X className="h-4 w-4" />
               </Button>
             </CardHeader>
             <CardContent className="space-y-5 pt-6">
+              {!editingCourse && (
+                <div>
+                  <label className="text-sm font-medium text-slate-700 mb-2 block">Course ID</label>
+                  <Input placeholder="e.g. TR7000" value={courseForm.id} onChange={(e) => setCourseForm(f => ({ ...f, id: e.target.value }))} className="h-11" disabled={courseSubmitLoading} />
+                </div>
+              )}
               <div>
                 <label className="text-sm font-medium text-slate-700 mb-2 block">Title</label>
-                <Input placeholder="Training course title" className="h-11" />
+                <Input placeholder="Course title" value={courseForm.title} onChange={(e) => setCourseForm(f => ({ ...f, title: e.target.value }))} className="h-11" disabled={courseSubmitLoading} />
               </div>
               <div>
                 <label className="text-sm font-medium text-slate-700 mb-2 block">Description</label>
-                <textarea 
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-900 focus:border-slate-900"
-                  rows={3}
-                  placeholder="Course description"
-                />
+                <textarea className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-900 focus:border-slate-900" rows={3} placeholder="Course description" value={courseForm.description} onChange={(e) => setCourseForm(f => ({ ...f, description: e.target.value }))} disabled={courseSubmitLoading} />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium text-slate-700 mb-2 block">Duration</label>
-                  <Input placeholder="4 hours" className="h-11" />
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-slate-700 mb-2 block">Level</label>
-                  <select className="w-full h-11 px-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-900 focus:border-slate-900 bg-white">
-                    <option value="Beginner">Beginner</option>
-                    <option value="Intermediate">Intermediate</option>
-                    <option value="Advanced">Advanced</option>
-                  </select>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-slate-700 mb-2 block">Category</label>
-                  <Input placeholder="Operations" className="h-11" />
+                  <Input placeholder="In Person" value={courseForm.duration} onChange={(e) => setCourseForm(f => ({ ...f, duration: e.target.value }))} className="h-11" disabled={courseSubmitLoading} />
                 </div>
                 <div>
                   <label className="text-sm font-medium text-slate-700 mb-2 block">Instructor</label>
-                  <Input placeholder="Instructor name" className="h-11" />
+                  <Input placeholder="OMNI Training" value={courseForm.instructor} onChange={(e) => setCourseForm(f => ({ ...f, instructor: e.target.value }))} className="h-11" disabled={courseSubmitLoading} />
                 </div>
               </div>
+              <div>
+                <label className="text-sm font-medium text-slate-700 mb-2 block">Thumbnail</label>
+                <div className="flex gap-2">
+                  <Input placeholder="/images/tr7000.png or upload" value={courseForm.thumbnail} onChange={(e) => setCourseForm(f => ({ ...f, thumbnail: e.target.value }))} className="h-11 flex-1" disabled={courseSubmitLoading} />
+                  <label className={`inline-flex items-center justify-center h-11 px-4 border rounded-lg border-slate-200 bg-white hover:bg-slate-50 cursor-pointer ${(imageUploading || courseSubmitLoading) ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                    <input type="file" accept="image/*" className="hidden" onChange={async (e) => { const f = e.target.files?.[0]; if (f) { const url = await handleUploadImage(f, 'training'); if (url) setCourseForm(c => ({ ...c, thumbnail: url })); e.target.value = '' } }} disabled={imageUploading || courseSubmitLoading} />
+                    {imageUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Image className="h-4 w-4" />}
+                  </label>
+                </div>
+                <p className="text-xs text-slate-500 mt-1">Paste URL or click to upload (JPEG, PNG, GIF, WebP, max 5 MB)</p>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" checked={courseForm.featured} onChange={(e) => setCourseForm(f => ({ ...f, featured: e.target.checked }))} disabled={courseSubmitLoading} className="rounded" />
+                    <span className="text-sm text-slate-700">Featured</span>
+                  </label>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-slate-700 mb-2 block">Sort order</label>
+                  <Input type="number" value={courseForm.sort_order} onChange={(e) => setCourseForm(f => ({ ...f, sort_order: parseInt(e.target.value, 10) || 0 }))} className="h-11 w-24" disabled={courseSubmitLoading} />
+                </div>
+              </div>
+              {courseSubmitError && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm flex items-center gap-2">
+                  <XCircle className="h-4 w-4 flex-shrink-0" />
+                  <span>{courseSubmitError}</span>
+                </div>
+              )}
               <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">
-                <Button variant="outline" onClick={() => setShowAddTrainingModal(false)} className="hover:bg-slate-100">
-                  Cancel
-                </Button>
-                <Button className="bg-gradient-to-r from-slate-900 to-slate-800 hover:from-slate-800 hover:to-slate-700 text-white shadow-lg hover:shadow-xl transition-all duration-200">
-                  Create Training
+                <Button variant="outline" onClick={() => { setShowAddTrainingModal(false); setEditingCourse(null); setCourseSubmitError('') }} disabled={courseSubmitLoading} className="hover:bg-slate-100">Cancel</Button>
+                <Button onClick={handleSaveCourse} disabled={courseSubmitLoading} className="bg-gradient-to-r from-slate-900 to-slate-800 hover:from-slate-800 hover:to-slate-700 text-white shadow-lg hover:shadow-xl transition-all duration-200">
+                  {courseSubmitLoading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Saving...</> : (editingCourse ? 'Update' : 'Create')}
                 </Button>
               </div>
             </CardContent>
@@ -1333,65 +1655,130 @@ export default function AdminPage() {
         </div>
       )}
 
-      {/* Add News Modal */}
-      {showAddNewsModal && (
+      {/* Add/Edit Manual Modal */}
+      {showAddManualModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <Card className="w-full max-w-lg shadow-2xl border-0 bg-white">
             <CardHeader className="flex flex-row items-center justify-between border-b border-slate-200 pb-4">
               <div>
                 <CardTitle className="flex items-center gap-2 text-xl">
-                  <div className="p-2 bg-gradient-to-br from-slate-900 to-slate-800 rounded-lg">
-                    <Plus className="h-5 w-5 text-white" />
+                  <div className="p-2 bg-gradient-to-br from-teal-600 to-teal-700 rounded-lg">
+                    <Upload className="h-5 w-5 text-white" />
                   </div>
-                  Add News Article
+                  {editingManual ? 'Edit Manual' : 'Add Manual'}
                 </CardTitle>
                 <CardDescription className="mt-1">
-                  Create a new news article
+                  {editingManual ? 'Update metadata or replace PDF (max 50 MB)' : 'Upload a PDF manual (max 50 MB)'}
                 </CardDescription>
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowAddNewsModal(false)}
-                className="hover:bg-slate-100"
-              >
+              <Button variant="ghost" size="sm" onClick={() => { setShowAddManualModal(false); setEditingManual(null); setManualSubmitError(''); setManualFile(null) }} className="hover:bg-slate-100">
                 <X className="h-4 w-4" />
               </Button>
             </CardHeader>
             <CardContent className="space-y-5 pt-6">
               <div>
                 <label className="text-sm font-medium text-slate-700 mb-2 block">Title</label>
-                <Input placeholder="Article title" className="h-11" />
+                <Input placeholder="User Manual Volume 1" value={manualForm.title} onChange={(e) => setManualForm(f => ({ ...f, title: e.target.value }))} className="h-11" disabled={manualSubmitLoading} />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-slate-700 mb-2 block">Category</label>
+                <Input placeholder="e.g. OMNI-3000-6000" value={manualForm.category} onChange={(e) => setManualForm(f => ({ ...f, category: e.target.value }))} className="h-11" disabled={manualSubmitLoading} />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-slate-700 mb-2 block">Description</label>
+                <textarea className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-900 focus:border-slate-900" rows={2} placeholder="Brief description" value={manualForm.description} onChange={(e) => setManualForm(f => ({ ...f, description: e.target.value }))} disabled={manualSubmitLoading} />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-slate-700 mb-2 block">PDF File {editingManual && '(optional – replace existing)'}</label>
+                <div className="border-2 border-dashed border-slate-200 rounded-lg p-6 text-center hover:border-teal-300 transition-colors">
+                  <input type="file" accept=".pdf,application/pdf" onChange={(e) => setManualFile(e.target.files?.[0] ?? null)} className="hidden" id="manual-file" />
+                  <label htmlFor="manual-file" className="cursor-pointer flex flex-col items-center gap-2">
+                    <Upload className="h-10 w-10 text-slate-400" />
+                    <span className="text-sm text-slate-600">{manualFile ? manualFile.name : (editingManual ? 'Click to replace PDF' : 'Click to select PDF')}</span>
+                  </label>
+                </div>
+              </div>
+              {manualSubmitError && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm flex items-center gap-2">
+                  <XCircle className="h-4 w-4 flex-shrink-0" />
+                  <span>{manualSubmitError}</span>
+                </div>
+              )}
+              <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">
+                <Button variant="outline" onClick={() => { setShowAddManualModal(false); setEditingManual(null); setManualSubmitError(''); setManualFile(null) }} disabled={manualSubmitLoading} className="hover:bg-slate-100">Cancel</Button>
+                <Button onClick={handleSaveManual} disabled={manualSubmitLoading} className="bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white shadow-lg hover:shadow-xl transition-all duration-200">
+                  {manualSubmitLoading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Uploading...</> : (editingManual ? 'Update' : 'Upload')}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Add/Edit News Modal */}
+      {showAddNewsModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <Card className="w-full max-w-lg shadow-2xl border-0 bg-white max-h-[90vh] overflow-y-auto">
+            <CardHeader className="flex flex-row items-center justify-between border-b border-slate-200 pb-4">
+              <div>
+                <CardTitle className="flex items-center gap-2 text-xl">
+                  <div className="p-2 bg-gradient-to-br from-slate-900 to-slate-800 rounded-lg">
+                    <Plus className="h-5 w-5 text-white" />
+                  </div>
+                  {editingNews ? 'Edit Article' : 'Add News Article'}
+                </CardTitle>
+                <CardDescription className="mt-1">
+                  {editingNews ? 'Update news article' : 'Create a new news article'}
+                </CardDescription>
+              </div>
+              <Button variant="ghost" size="sm" onClick={() => { setShowAddNewsModal(false); setEditingNews(null); setNewsSubmitError('') }} className="hover:bg-slate-100">
+                <X className="h-4 w-4" />
+              </Button>
+            </CardHeader>
+            <CardContent className="space-y-5 pt-6">
+              <div>
+                <label className="text-sm font-medium text-slate-700 mb-2 block">Title</label>
+                <Input placeholder="Article title" value={newsForm.title} onChange={(e) => setNewsForm(f => ({ ...f, title: e.target.value }))} className="h-11" disabled={newsSubmitLoading} />
               </div>
               <div>
                 <label className="text-sm font-medium text-slate-700 mb-2 block">Excerpt</label>
-                <textarea 
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-900 focus:border-slate-900"
-                  rows={3}
-                  placeholder="Article excerpt"
-                />
+                <textarea className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-900 focus:border-slate-900" rows={2} placeholder="Short summary" value={newsForm.excerpt} onChange={(e) => setNewsForm(f => ({ ...f, excerpt: e.target.value }))} disabled={newsSubmitLoading} />
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-slate-700 mb-2 block">Category</label>
-                  <select className="w-full h-11 px-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-900 focus:border-slate-900 bg-white">
-                    <option value="Product Updates">Product Updates</option>
-                    <option value="Company News">Company News</option>
-                    <option value="Awards">Awards</option>
-                    <option value="Sustainability">Sustainability</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-slate-700 mb-2 block">Author</label>
-                  <Input placeholder="Author name" className="h-11" />
-                </div>
+              <div>
+                <label className="text-sm font-medium text-slate-700 mb-2 block">Content</label>
+                <textarea className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-900 focus:border-slate-900" rows={4} placeholder="Full article content" value={newsForm.content} onChange={(e) => setNewsForm(f => ({ ...f, content: e.target.value }))} disabled={newsSubmitLoading} />
               </div>
+              <div>
+                <label className="text-sm font-medium text-slate-700 mb-2 block">Image</label>
+                <div className="flex gap-2">
+                  <Input placeholder="/news-1.jpg or upload" value={newsForm.image_url} onChange={(e) => setNewsForm(f => ({ ...f, image_url: e.target.value }))} className="h-11 flex-1" disabled={newsSubmitLoading} />
+                  <label className={`inline-flex items-center justify-center h-11 px-4 border rounded-lg border-slate-200 bg-white hover:bg-slate-50 cursor-pointer ${(imageUploading || newsSubmitLoading) ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                    <input type="file" accept="image/*" className="hidden" onChange={async (e) => { const f = e.target.files?.[0]; if (f) { const url = await handleUploadImage(f, 'news'); if (url) setNewsForm(n => ({ ...n, image_url: url })); e.target.value = '' } }} disabled={imageUploading || newsSubmitLoading} />
+                    {imageUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Image className="h-4 w-4" />}
+                  </label>
+                </div>
+                <p className="text-xs text-slate-500 mt-1">Paste URL or click to upload (JPEG, PNG, GIF, WebP, max 5 MB)</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-slate-700 mb-2 block">Published Date</label>
+                <Input type="date" value={newsForm.published_at} onChange={(e) => setNewsForm(f => ({ ...f, published_at: e.target.value }))} className="h-11" disabled={newsSubmitLoading} />
+              </div>
+              <div>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" checked={newsForm.featured} onChange={(e) => setNewsForm(f => ({ ...f, featured: e.target.checked }))} disabled={newsSubmitLoading} className="rounded" />
+                  <span className="text-sm text-slate-700">Featured</span>
+                </label>
+              </div>
+              {newsSubmitError && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm flex items-center gap-2">
+                  <XCircle className="h-4 w-4 flex-shrink-0" />
+                  <span>{newsSubmitError}</span>
+                </div>
+              )}
               <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">
-                <Button variant="outline" onClick={() => setShowAddNewsModal(false)} className="hover:bg-slate-100">
-                  Cancel
-                </Button>
-                <Button className="bg-gradient-to-r from-slate-900 to-slate-800 hover:from-slate-800 hover:to-slate-700 text-white shadow-lg hover:shadow-xl transition-all duration-200">
-                  Create Article
+                <Button variant="outline" onClick={() => { setShowAddNewsModal(false); setEditingNews(null); setNewsSubmitError('') }} disabled={newsSubmitLoading} className="hover:bg-slate-100">Cancel</Button>
+                <Button onClick={handleSaveNews} disabled={newsSubmitLoading} className="bg-gradient-to-r from-slate-900 to-slate-800 hover:from-slate-800 hover:to-slate-700 text-white shadow-lg hover:shadow-xl transition-all duration-200">
+                  {newsSubmitLoading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Saving...</> : (editingNews ? 'Update' : 'Create')}
                 </Button>
               </div>
             </CardContent>

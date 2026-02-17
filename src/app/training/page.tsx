@@ -1,12 +1,11 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { ScrollArea } from '@/components/ui/scroll-area'
-import { Logo } from '@/components/Logo'
 import Image from 'next/image'
 import { 
   ArrowLeft, 
@@ -16,15 +15,54 @@ import {
   BookOpen, 
   Calendar,
   Video,
-  FileText,
-  Zap,
-  TrendingUp
+  Loader2
 } from 'lucide-react'
-import { courses, featuredCourse } from './courses-data'
+
+interface Course {
+  id: string
+  title: string
+  description: string
+  duration: string
+  thumbnail: string | null
+  instructor: string | null
+  featured: boolean
+}
 
 export default function TrainingPage() {
   const router = useRouter()
+  const [courses, setCourses] = useState<Course[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
+  useEffect(() => {
+    fetch('/api/courses')
+      .then((res) => {
+        if (!res.ok) throw new Error('Failed to load courses')
+        return res.json()
+      })
+      .then((data) => setCourses(Array.isArray(data) ? data : []))
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false))
+  }, [])
+
+  const featuredCourse = courses.find((c) => c.featured) ?? courses[0]
+  const otherCourses = featuredCourse ? courses.filter((c) => c.id !== featuredCourse.id) : courses
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 flex items-center justify-center">
+        <Loader2 className="h-10 w-10 animate-spin text-purple-600" />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 flex items-center justify-center">
+        <p className="text-red-600">{error}</p>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
@@ -70,9 +108,11 @@ export default function TrainingPage() {
               </p>
             </div>
             <div className="mt-4 sm:mt-0">
-              <Button className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white shadow-lg hover:shadow-xl transition-all">
-                <Calendar className="h-4 w-4 mr-2" />
-                Schedule Training
+              <Button asChild className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white shadow-lg hover:shadow-xl transition-all">
+                <Link href="/training/request">
+                  <Calendar className="h-4 w-4 mr-2" />
+                  Schedule Training
+                </Link>
               </Button>
             </div>
           </div>
@@ -97,6 +137,7 @@ export default function TrainingPage() {
 
         <div className="space-y-6">
             {/* Featured Course */}
+            {featuredCourse && (
             <Card className="border-0 shadow-lg bg-gradient-to-r from-purple-50 to-blue-50">
               <CardContent className="p-8">
                 <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
@@ -128,7 +169,7 @@ export default function TrainingPage() {
                   </div>
                   <div className="mt-6 lg:mt-0 lg:ml-8">
                     <div className="w-64 h-40 rounded-lg overflow-hidden bg-slate-100">
-                      {featuredCourse.thumbnail ? (
+                      {featuredCourse?.thumbnail ? (
                         <Image
                           src="/images/tr7000-featured.png"
                           alt={featuredCourse.title}
@@ -146,10 +187,11 @@ export default function TrainingPage() {
                 </div>
               </CardContent>
             </Card>
+            )}
 
             {/* Course Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {courses.filter((course) => course.id !== featuredCourse.id).map((course) => (
+              {otherCourses.map((course) => (
                 <Card key={course.id} className="border-0 shadow-sm hover:shadow-lg transition-all group cursor-pointer">
                   <CardContent className="p-0">
                     <div className="relative">
@@ -168,15 +210,6 @@ export default function TrainingPage() {
                           <Video className="h-12 w-12 text-slate-400" />
                         </div>
                       )}
-                      <div className="absolute top-4 right-4">
-                      </div>
-                      {course.completed && (
-                        <div className="absolute top-4 left-4">
-                          <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
-                            <CheckCircle className="h-5 w-5 text-white" />
-                          </div>
-                        </div>
-                      )}
                     </div>
                     
                     <div className="p-6">
@@ -191,21 +224,6 @@ export default function TrainingPage() {
                       </p>
                       
                       <div className="mb-4" />
-                      {course.progress > 0 && !course.completed && (
-                        <div className="mb-4">
-                          <div className="flex items-center justify-between text-sm mb-2">
-                            <span className="text-slate-600">Progress</span>
-                            <span className="text-slate-900 font-medium">{course.progress}%</span>
-                          </div>
-                          <div className="w-full bg-slate-200 rounded-full h-2">
-                            <div 
-                              className="bg-purple-600 h-2 rounded-full transition-all duration-300"
-                              style={{ width: `${course.progress}%` }}
-                            ></div>
-                          </div>
-                        </div>
-                      )}
-                      
                       <Button 
                         asChild
                         className="w-full bg-purple-600 hover:bg-purple-700 text-white"

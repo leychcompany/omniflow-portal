@@ -3,7 +3,7 @@ import { createServerClient } from "@supabase/ssr";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   const pathname = req.nextUrl.pathname;
 
   // Define public routes that don't require authentication
@@ -108,7 +108,7 @@ export async function middleware(req: NextRequest) {
       return response;
     } catch (error) {
       // If Supabase fails, allow access to public routes anyway
-      console.error("Middleware error for public route:", error);
+      console.error("Proxy error for public route:", error);
       return NextResponse.next();
     }
   }
@@ -184,7 +184,7 @@ export async function middleware(req: NextRequest) {
   } catch (error) {
     // If Supabase fails, log error but continue
     // Unauthenticated users will be redirected to login for protected routes
-    console.error("Middleware error:", error);
+    console.error("Proxy error:", error);
   }
 
   // Redirect root to home if authenticated, otherwise to login

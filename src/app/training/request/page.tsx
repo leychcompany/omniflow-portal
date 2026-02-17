@@ -1,21 +1,25 @@
 'use client'
 
-import { Suspense, useEffect, useMemo, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { courses, featuredCourse } from '@/app/training/courses-data'
 import { Logo } from '@/components/Logo'
-import { ArrowLeft, Send } from 'lucide-react'
+import { ArrowLeft, Send, Loader2 } from 'lucide-react'
 
 type Status = 'idle' | 'submitting' | 'success' | 'error'
 
+interface Course {
+  id: string
+  title: string
+}
+
 export default function TrainingRequestPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-slate-50" />}>
+    <Suspense fallback={<div className="min-h-screen bg-slate-50 flex items-center justify-center"><Loader2 className="h-10 w-10 animate-spin text-purple-600" /></div>}>
       <TrainingRequestInner />
     </Suspense>
   )
@@ -24,6 +28,8 @@ export default function TrainingRequestPage() {
 function TrainingRequestInner() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const [courseOptions, setCourseOptions] = useState<Course[]>([])
+  const [coursesLoading, setCoursesLoading] = useState(true)
   const [status, setStatus] = useState<Status>('idle')
   const [error, setError] = useState<string | null>(null)
   const [form, setForm] = useState({
@@ -35,14 +41,26 @@ function TrainingRequestInner() {
     message: '',
   })
 
-  const courseOptions = useMemo(() => courses, [])
+  useEffect(() => {
+    fetch('/api/courses')
+      .then((res) => {
+        if (!res.ok) throw new Error('Failed to load courses')
+        return res.json()
+      })
+      .then((data) => setCourseOptions(Array.isArray(data) ? data : []))
+      .catch(() => setCourseOptions([]))
+      .finally(() => setCoursesLoading(false))
+  }, [])
 
   useEffect(() => {
+    if (!courseOptions.length) return
     const initialCourse = searchParams.get('course')
-    if (initialCourse && courseOptions.find(c => c.id === initialCourse)) {
-      setForm(prev => ({ ...prev, courseId: initialCourse }))
-    } else {
-      setForm(prev => ({ ...prev, courseId: featuredCourse.id }))
+    const featured = courseOptions.find((c) => (c as { featured?: boolean }).featured) ?? courseOptions[0]
+    const defaultId = featured?.id ?? courseOptions[0]?.id ?? ''
+    if (initialCourse && courseOptions.find((c) => c.id === initialCourse)) {
+      setForm((prev) => ({ ...prev, courseId: initialCourse }))
+    } else if (defaultId) {
+      setForm((prev) => ({ ...prev, courseId: prev.courseId || defaultId }))
     }
   }, [searchParams, courseOptions])
 
@@ -69,12 +87,13 @@ function TrainingRequestInner() {
       }
 
       setStatus('success')
+      const defaultCourseId = courseOptions.find((c) => (c as { featured?: boolean }).featured)?.id ?? courseOptions[0]?.id ?? ''
       setForm({
         name: '',
         email: '',
         phone: '',
         company: '',
-        courseId: featuredCourse.id,
+        courseId: defaultCourseId,
         message: '',
       })
       // Redirect to training page after successful submission
@@ -176,12 +195,17 @@ function TrainingRequestInner() {
                   onChange={handleChange}
                   className="w-full p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                   required
+                  disabled={coursesLoading}
                 >
-                  {courseOptions.map((course) => (
-                    <option key={course.id} value={course.id}>
-                      {course.title}
-                    </option>
-                  ))}
+                  {coursesLoading ? (
+                    <option>Loading courses...</option>
+                  ) : (
+                    courseOptions.map((course) => (
+                      <option key={course.id} value={course.id}>
+                        {course.title}
+                      </option>
+                    ))
+                  )}
                 </select>
               </div>
 

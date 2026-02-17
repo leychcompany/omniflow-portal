@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation'
 import { ArrowLeft, Calendar, Newspaper } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { getNewsArticleBySlug } from '@/app/news/articles'
+import { supabaseAdmin } from '@/lib/supabase-admin'
 
 interface NewsArticlePageProps {
   params: Promise<{
@@ -21,9 +21,20 @@ const formatDate = (dateString: string) => {
 
 export default async function NewsArticlePage({ params }: NewsArticlePageProps) {
   const { slug } = await params
-  const article = getNewsArticleBySlug(slug)
+  const normalizedSlug = decodeURIComponent(slug)
+    .toLowerCase()
+    .trim()
+    .replace(/['"]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)+/g, '')
 
-  if (!article) {
+  const { data: article, error } = await supabaseAdmin
+    .from('news_articles')
+    .select('*')
+    .eq('slug', normalizedSlug)
+    .maybeSingle()
+
+  if (error || !article) {
     notFound()
   }
 
@@ -59,8 +70,19 @@ export default async function NewsArticlePage({ params }: NewsArticlePageProps) 
 
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Card className="border-0 shadow-lg overflow-hidden">
-          <div className="h-64 bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
-            <Newspaper className="h-16 w-16 text-white opacity-80" />
+          <div className="relative h-64 bg-gradient-to-br from-indigo-500 to-purple-600">
+            {article.image_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={article.image_url}
+                alt={article.title}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <div className="h-full flex items-center justify-center">
+                <Newspaper className="h-16 w-16 text-white opacity-80" />
+              </div>
+            )}
           </div>
           <CardContent className="p-8">
             <h2 className="text-2xl font-bold text-slate-900 mb-3">{article.title}</h2>
@@ -68,7 +90,7 @@ export default async function NewsArticlePage({ params }: NewsArticlePageProps) 
             <div className="flex items-center gap-6 text-sm text-slate-500 mb-6">
               <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4" />
-                {formatDate(article.publishedAt)}
+                {formatDate(article.published_at)}
               </div>
             </div>
             <div className="prose prose-slate max-w-none">

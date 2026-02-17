@@ -1,21 +1,56 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { newsArticles, getNewsArticleSlug, type NewsArticle } from '@/app/news/articles'
 import { 
   ArrowLeft, 
   Newspaper, 
   Calendar, 
-  TrendingUp
+  TrendingUp,
+  Loader2
 } from 'lucide-react'
+
+const normalizeSlug = (value: string) =>
+  value
+    .toLowerCase()
+    .trim()
+    .replace(/['"]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)+/g, '')
+
+interface NewsArticle {
+  id: string
+  title: string
+  slug: string
+  excerpt: string
+  content: string
+  image_url: string | null
+  featured: boolean
+  published_at: string
+}
 
 export default function NewsPage() {
   const router = useRouter()
-  const featuredArticle = newsArticles.find((article: NewsArticle) => article.featured) ?? newsArticles[0]
+  const [articles, setArticles] = useState<NewsArticle[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    fetch('/api/news')
+      .then((res) => {
+        if (!res.ok) throw new Error('Failed to load news')
+        return res.json()
+      })
+      .then((data) => setArticles(Array.isArray(data) ? data : []))
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false))
+  }, [])
+
+  const featuredArticle = articles.find((a) => a.featured) ?? articles[0]
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -23,6 +58,22 @@ export default function NewsPage() {
       month: 'long',
       day: 'numeric'
     })
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <Loader2 className="h-10 w-10 animate-spin text-indigo-600" />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <p className="text-red-600">{error}</p>
+      </div>
+    )
   }
 
   return (
@@ -64,8 +115,19 @@ export default function NewsPage() {
             <Card className="border-0 shadow-lg overflow-hidden">
               <div className="md:flex">
                 <div className="md:w-1/2">
-                  <div className="h-64 md:h-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
-                    <Newspaper className="h-16 w-16 text-white opacity-80" />
+                  <div className="relative h-64 md:min-h-64 md:h-full bg-gradient-to-br from-indigo-500 to-purple-600">
+                    {featuredArticle.image_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={featuredArticle.image_url}
+                        alt={featuredArticle.title}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <div className="h-full flex items-center justify-center">
+                        <Newspaper className="h-16 w-16 text-white opacity-80" />
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div className="md:w-1/2 p-6">
@@ -79,7 +141,7 @@ export default function NewsPage() {
                   <div className="flex items-center gap-4 text-sm text-slate-500 mb-4">
                     <div className="flex items-center gap-1">
                       <Calendar className="h-4 w-4" />
-                      {formatDate(featuredArticle.publishedAt)}
+                      {formatDate(featuredArticle.published_at)}
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
@@ -87,7 +149,7 @@ export default function NewsPage() {
                       asChild
                       className="bg-indigo-600 hover:bg-indigo-700 text-white transition-all duration-200"
                     >
-                      <Link href={`/news/${getNewsArticleSlug(featuredArticle)}`}>Read More</Link>
+                      <Link href={`/news/${featuredArticle.slug}`}>Read More</Link>
                     </Button>
                   </div>
                 </div>
