@@ -124,10 +124,10 @@ export async function POST(req: NextRequest) {
         size?: string;
         description?: string;
       };
-      title = b.title?.trim();
-      category = b.category?.trim();
-      filename = b.filename?.trim();
-      storage_path = b.storage_path?.trim();
+      title = b.title?.trim() ?? "";
+      category = b.category?.trim() ?? "";
+      filename = b.filename?.trim() ?? "";
+      storage_path = b.storage_path?.trim() ?? "";
       size = b.size ?? null;
       description = b.description ?? null;
 
