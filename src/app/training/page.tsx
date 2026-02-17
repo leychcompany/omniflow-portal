@@ -6,13 +6,11 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import Image from 'next/image'
 import { 
   ArrowLeft, 
   GraduationCap, 
   Play, 
   CheckCircle, 
-  BookOpen, 
   Calendar,
   Video,
   Loader2
@@ -118,23 +116,6 @@ export default function TrainingPage() {
           </div>
         </div>
 
-        {/* Stats Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card className="border-0 shadow-sm hover:shadow-lg transition-all">
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-4">
-                <div className="p-3 bg-blue-100 rounded-xl">
-                  <BookOpen className="h-6 w-6 text-blue-600" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-slate-900">{courses.length}</p>
-                  <p className="text-sm text-slate-600">Available Courses</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
         <div className="space-y-6">
             {/* Featured Course */}
             {featuredCourse && (
@@ -170,11 +151,10 @@ export default function TrainingPage() {
                   <div className="mt-6 lg:mt-0 lg:ml-8">
                     <div className="w-64 h-40 rounded-lg overflow-hidden bg-slate-100">
                       {featuredCourse?.thumbnail ? (
-                        <Image
-                          src="/images/tr7000-featured.png"
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={featuredCourse.thumbnail}
                           alt={featuredCourse.title}
-                          width={640}
-                          height={360}
                           className="w-full h-full object-cover"
                         />
                       ) : (
@@ -197,11 +177,10 @@ export default function TrainingPage() {
                     <div className="relative">
                       {course.thumbnail ? (
                         <div className="w-full h-48 overflow-hidden rounded-t-lg bg-slate-100">
-                          <Image
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
                             src={course.thumbnail}
                             alt={course.title}
-                            width={640}
-                            height={360}
                             className="w-full h-full object-cover"
                           />
                         </div>

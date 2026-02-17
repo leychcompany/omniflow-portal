@@ -26,8 +26,8 @@ interface NewsArticle {
   id: string
   title: string
   slug: string
-  excerpt: string
-  content: string
+  excerpt: string | null
+  content: string | null
   image_url: string | null
   featured: boolean
   published_at: string
@@ -50,7 +50,13 @@ export default function NewsPage() {
       .finally(() => setLoading(false))
   }, [])
 
-  const featuredArticle = articles.find((a) => a.featured) ?? articles[0]
+  const featuredArticle = articles.find((a) => a.featured) ?? null
+  const otherArticles = featuredArticle
+    ? articles.filter((a) => a.id !== featuredArticle.id)
+    : [...articles]
+  const sortedArticles = [...otherArticles].sort(
+    (a, b) => new Date(b.published_at).getTime() - new Date(a.published_at).getTime()
+  )
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -106,7 +112,7 @@ export default function NewsPage() {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {featuredArticle ? (
+        {featuredArticle && (
           <div className="mb-8">
             <h2 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
               <TrendingUp className="h-5 w-5 text-indigo-600" />
@@ -137,7 +143,7 @@ export default function NewsPage() {
                     </Badge>
                   </div>
                   <h3 className="text-xl font-bold text-slate-900 mb-3">{featuredArticle.title}</h3>
-                  <p className="text-slate-600 mb-4">{featuredArticle.excerpt}</p>
+                  <p className="text-slate-600 mb-4">{featuredArticle.excerpt || ''}</p>
                   <div className="flex items-center gap-4 text-sm text-slate-500 mb-4">
                     <div className="flex items-center gap-1">
                       <Calendar className="h-4 w-4" />
@@ -156,13 +162,51 @@ export default function NewsPage() {
               </div>
             </Card>
           </div>
-        ) : (
+        )}
+
+        {sortedArticles.length > 0 ? (
+          <div>
+            <h2 className="text-lg font-semibold text-slate-900 mb-4">
+              {featuredArticle ? 'More Articles' : 'Latest Articles'}
+            </h2>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {sortedArticles.map((article) => (
+                <Card key={article.id} className="border-0 shadow-md hover:shadow-lg transition-all overflow-hidden">
+                  <div className="relative h-40 bg-gradient-to-br from-indigo-500 to-purple-600">
+                    {article.image_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={article.image_url}
+                        alt={article.title}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <div className="h-full flex items-center justify-center">
+                        <Newspaper className="h-10 w-10 text-white opacity-80" />
+                      </div>
+                    )}
+                  </div>
+                  <CardContent className="p-4">
+                    <h3 className="font-semibold text-slate-900 mb-2 line-clamp-2">{article.title}</h3>
+                    <p className="text-sm text-slate-600 mb-3 line-clamp-2">{article.excerpt || ''}</p>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-slate-500">{formatDate(article.published_at)}</span>
+                      <Button asChild size="sm" variant="ghost" className="text-indigo-600 hover:text-indigo-700">
+                        <Link href={`/news/${article.slug}`}>Read More</Link>
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        ) : !featuredArticle ? (
           <div className="text-center py-12">
             <Newspaper className="h-12 w-12 text-slate-400 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-slate-900 mb-2">No articles found</h3>
             <p className="text-slate-600">Please check back later.</p>
           </div>
-        )}
+        ) : null}
       </div>
     </div>
   )

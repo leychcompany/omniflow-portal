@@ -890,8 +890,27 @@ export default function AdminPage() {
     (u.name && u.name.toLowerCase().includes(searchTerm.toLowerCase()))
   )
 
+  const tabItems = [
+    { id: 'users' as const, label: 'Users', count: users.length, icon: Users },
+    { id: 'training' as const, label: 'Training', count: courses.length, icon: GraduationCap },
+    { id: 'manuals' as const, label: 'Manuals', count: manuals.length, icon: BookOpen },
+    { id: 'news' as const, label: 'News', count: newsArticles.length, icon: Newspaper },
+  ]
+
+  const getTabButtonClass = (id: typeof activeTab) => {
+    const base = 'px-6 transition-all duration-200'
+    if (activeTab !== id) return `${base} bg-transparent hover:bg-slate-50`
+    switch (id) {
+      case 'users': return `${base} bg-gradient-to-r from-red-600 to-red-700 text-white shadow-md hover:from-red-700 hover:to-red-800`
+      case 'training': return `${base} bg-gradient-to-r from-purple-600 to-purple-700 text-white shadow-md hover:from-purple-700 hover:to-purple-800`
+      case 'manuals': return `${base} bg-gradient-to-r from-teal-600 to-teal-700 text-white shadow-md hover:from-teal-700 hover:to-teal-800`
+      case 'news': return `${base} bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-md hover:from-blue-700 hover:to-blue-800`
+      default: return base
+    }
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 pb-20 md:pb-0">
       {/* Header */}
       <header className="bg-white/80 backdrop-blur-lg border-b border-slate-200/50 shadow-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -931,41 +950,20 @@ export default function AdminPage() {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Tab Navigation */}
-        <div className="mb-8">
+        {/* Tab Navigation - Desktop */}
+        <div className="mb-8 hidden md:block">
           <div className="flex flex-wrap gap-2 bg-white p-1.5 rounded-xl shadow-lg border border-slate-200 w-fit">
-            <Button
-              variant={activeTab === 'users' ? 'default' : 'ghost'}
-              onClick={() => setActiveTab('users')}
-              className={`px-6 ${activeTab === 'users' ? 'bg-gradient-to-r from-red-600 to-red-700 text-white shadow-md hover:from-red-700 hover:to-red-800' : 'bg-transparent hover:bg-primary-50 hover:text-primary-700'} transition-all duration-200`}
-            >
-              <Users className="h-4 w-4 mr-2" />
-              Users ({users.length})
-            </Button>
-            <Button
-              variant={activeTab === 'training' ? 'default' : 'ghost'}
-              onClick={() => setActiveTab('training')}
-              className={`px-6 ${activeTab === 'training' ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-white shadow-md hover:from-purple-700 hover:to-purple-800' : 'bg-transparent hover:bg-purple-50 hover:text-purple-700'} transition-all duration-200`}
-            >
-              <GraduationCap className="h-4 w-4 mr-2" />
-              Training ({courses.length})
-            </Button>
-            <Button
-              variant={activeTab === 'manuals' ? 'default' : 'ghost'}
-              onClick={() => setActiveTab('manuals')}
-              className={`px-6 ${activeTab === 'manuals' ? 'bg-gradient-to-r from-teal-600 to-teal-700 text-white shadow-md hover:from-teal-700 hover:to-teal-800' : 'bg-transparent hover:bg-teal-50 hover:text-teal-700'} transition-all duration-200`}
-            >
-              <BookOpen className="h-4 w-4 mr-2" />
-              Manuals ({manuals.length})
-            </Button>
-            <Button
-              variant={activeTab === 'news' ? 'default' : 'ghost'}
-              onClick={() => setActiveTab('news')}
-              className={`px-6 ${activeTab === 'news' ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-md hover:from-blue-700 hover:to-blue-800' : 'bg-transparent hover:bg-blue-50 hover:text-blue-700'} transition-all duration-200`}
-            >
-              <Newspaper className="h-4 w-4 mr-2" />
-              News ({newsArticles.length})
-            </Button>
+            {tabItems.map(({ id, label, count, icon: Icon }) => (
+              <Button
+                key={id}
+                variant={activeTab === id ? 'default' : 'ghost'}
+                onClick={() => setActiveTab(id)}
+                className={getTabButtonClass(id)}
+              >
+                <Icon className="h-4 w-4 mr-2" />
+                {label} ({count})
+              </Button>
+            ))}
           </div>
         </div>
 
@@ -1838,6 +1836,29 @@ export default function AdminPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Mobile Bottom Tab Bar */}
+      <nav className="fixed bottom-0 left-0 right-0 md:hidden bg-white border-t border-slate-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-40 pb-[env(safe-area-inset-bottom)]">
+        <div className="grid grid-cols-4 h-14">
+          {tabItems.map(({ id, label, count, icon: Icon }) => {
+            const isActive = activeTab === id
+            const activeColor = id === 'users' ? 'text-red-600' : id === 'training' ? 'text-purple-600' : id === 'manuals' ? 'text-teal-600' : 'text-blue-600'
+            return (
+              <button
+                key={id}
+                type="button"
+                onClick={() => setActiveTab(id)}
+                className={`flex flex-col items-center justify-center gap-0.5 py-2 px-1 transition-colors touch-manipulation ${
+                  isActive ? activeColor : 'text-slate-400'
+                }`}
+              >
+                <Icon className="h-5 w-5 shrink-0" />
+                <span className="text-[10px] font-medium truncate w-full text-center">{label} ({count})</span>
+              </button>
+            )
+          })}
+        </div>
+      </nav>
     </div>
   )
 }

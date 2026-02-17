@@ -10,7 +10,6 @@ import {
   FileText, 
   Download,
   BookOpen,
-  Calendar,
   File,
   Loader2
 } from 'lucide-react'
@@ -111,51 +110,6 @@ export default function ManualsPage() {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card className="border-0 shadow-sm">
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-4">
-                <div className="p-3 bg-orange-100 rounded-xl">
-                  <FileText className="h-6 w-6 text-orange-600" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-slate-900">{manuals.length}</p>
-                  <p className="text-sm text-slate-600">Total Manuals</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card className="border-0 shadow-sm">
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-4">
-                <div className="p-3 bg-blue-100 rounded-xl">
-                  <File className="h-6 w-6 text-blue-600" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-slate-900">2</p>
-                  <p className="text-sm text-slate-600">Product Series</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card className="border-0 shadow-sm">
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-4">
-                <div className="p-3 bg-green-100 rounded-xl">
-                  <Calendar className="h-6 w-6 text-green-600" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-slate-900">2024</p>
-                  <p className="text-sm text-slate-600">Latest Update</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
         {/* Manuals List */}
         <div className="space-y-6">
           <div>
