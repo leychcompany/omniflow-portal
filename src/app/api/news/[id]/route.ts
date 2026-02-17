@@ -2,6 +2,34 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { verifyAdmin } from "@/lib/admin-auth";
 
+export async function GET(
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const auth = await verifyAdmin(_req);
+  if (!auth.ok) return auth.response;
+
+  try {
+    const { id } = await params;
+    const { data, error } = await supabaseAdmin
+      .from("news_articles")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (error || !data) {
+      return NextResponse.json({ error: "Article not found" }, { status: 404 });
+    }
+    return NextResponse.json(data);
+  } catch (error: unknown) {
+    console.error("Error fetching article:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch article" },
+      { status: 500 }
+    );
+  }
+}
+
 const normalizeSlug = (value: string) =>
   value
     .toLowerCase()

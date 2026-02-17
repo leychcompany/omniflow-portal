@@ -56,12 +56,12 @@ export function Dialog({ open, onOpenChange, children }: DialogProps) {
 
   return (
     <DialogContext.Provider value={{ open, onOpenChange }}>
-      <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
         <div
           className="fixed inset-0 bg-black/50 backdrop-blur-sm"
           onClick={() => onOpenChange(false)}
         />
-        <div className="relative z-50">{children}</div>
+        <div className="relative z-50 my-auto">{children}</div>
       </div>
     </DialogContext.Provider>
   )
@@ -70,7 +70,7 @@ export function Dialog({ open, onOpenChange, children }: DialogProps) {
 export function DialogContent({ children, className = "" }: DialogContentProps) {
   return (
     <div
-      className={`bg-white rounded-xl shadow-2xl p-6 w-full max-w-md mx-4 ${className}`}
+      className={`bg-white rounded-xl shadow-2xl p-6 w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto ${className}`}
       onClick={(e) => e.stopPropagation()}
     >
       {children}

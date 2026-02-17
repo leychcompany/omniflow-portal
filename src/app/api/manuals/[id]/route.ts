@@ -2,6 +2,51 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { verifyAdmin } from "@/lib/admin-auth";
 
+const SIGNED_URL_EXPIRY = 3600;
+
+export async function GET(
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const auth = await verifyAdmin(_req);
+  if (!auth.ok) return auth.response;
+
+  try {
+    const { id } = await params;
+    const { data: manual, error } = await supabaseAdmin
+      .from("manuals")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (error || !manual) {
+      return NextResponse.json({ error: "Manual not found" }, { status: 404 });
+    }
+
+    let downloadUrl = manual.storage_path;
+    try {
+      const { data: signed } = await supabaseAdmin.storage
+        .from("manuals")
+        .createSignedUrl(manual.storage_path, SIGNED_URL_EXPIRY);
+      if (signed?.signedUrl) downloadUrl = signed.signedUrl;
+    } catch {
+      // keep storage_path if bucket/file missing
+    }
+
+    return NextResponse.json({
+      ...manual,
+      path: downloadUrl,
+      download_url: downloadUrl,
+    });
+  } catch (error: unknown) {
+    console.error("Error fetching manual:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch manual" },
+      { status: 500 }
+    );
+  }
+}
+
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50 MB
 const ALLOWED_TYPES = ["application/pdf"];
 

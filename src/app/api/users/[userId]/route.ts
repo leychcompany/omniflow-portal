@@ -58,6 +58,36 @@ async function assertAdmin(
   return { userId: user.id };
 }
 
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ userId: string }> }
+) {
+  const adminCheck = await assertAdmin(request);
+  if ("errorResponse" in adminCheck) {
+    return adminCheck.errorResponse;
+  }
+
+  try {
+    const { userId } = await params;
+    const { data, error } = await supabaseAdmin
+      .from("users")
+      .select("id, email, name, role, created_at")
+      .eq("id", userId)
+      .single();
+
+    if (error || !data) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+    return NextResponse.json(data);
+  } catch (error: unknown) {
+    console.error("Error fetching user:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch user" },
+      { status: 500 }
+    );
+  }
+}
+
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ userId: string }> }

@@ -1,48 +1,32 @@
 'use client'
 
-import { useState, useEffect, useMemo, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect, useMemo, useCallback, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
 import { supabase } from '@/lib/supabase'
-import { 
-  ArrowLeft, 
-  Users, 
-  Plus, 
+import {
+  Users,
+  Plus,
   Search,
   Edit,
   Trash2,
   Crown,
   UserCheck,
-  UserX,
-  CheckCircle,
-  Newspaper,
-  GraduationCap,
-  X,
   Send,
-  LogOut,
   Loader2,
   XCircle,
   RefreshCw,
   Mail,
   Calendar,
   Shield,
-  Eye,
   Clock,
-  Key,
-  Upload,
   BookOpen,
-  Image
+  Newspaper,
+  GraduationCap,
+  Eye,
 } from 'lucide-react'
 
 interface User {
@@ -102,19 +86,19 @@ interface Invite {
   created_by?: string
 }
 
-export default function AdminPage() {
+const VALID_TABS = ['users', 'training', 'manuals', 'news'] as const
+type TabId = (typeof VALID_TABS)[number]
+
+function AdminDashboardContent() {
   const router = useRouter()
-  const [activeTab, setActiveTab] = useState<'users' | 'training' | 'manuals' | 'news'>('users')
+  const searchParams = useSearchParams()
+  const tabFromUrl = searchParams.get('tab')
+  const [activeTab, setActiveTab] = useState<TabId>(() =>
+    tabFromUrl && VALID_TABS.includes(tabFromUrl as TabId) ? (tabFromUrl as TabId) : 'users'
+  )
   const [userSubTab, setUserSubTab] = useState<'active' | 'invites'>('active')
-  const [showAddUserModal, setShowAddUserModal] = useState(false)
-  const [showAddTrainingModal, setShowAddTrainingModal] = useState(false)
-  const [showAddManualModal, setShowAddManualModal] = useState(false)
-  const [showAddNewsModal, setShowAddNewsModal] = useState(false)
-  const [editingCourse, setEditingCourse] = useState<Course | null>(null)
-  const [editingManual, setEditingManual] = useState<Manual | null>(null)
-  const [editingNews, setEditingNews] = useState<NewsArticle | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
-  
+
   // Users state
   const [users, setUsers] = useState<User[]>([])
   const [usersLoading, setUsersLoading] = useState(true)
@@ -124,22 +108,7 @@ export default function AdminPage() {
   const [invites, setInvites] = useState<Invite[]>([])
   const [invitesLoading, setInvitesLoading] = useState(false)
   const [invitesError, setInvitesError] = useState('')
-  
-  // Invite user modal state
-  const [inviteEmail, setInviteEmail] = useState('')
-  const [inviteRole, setInviteRole] = useState<'admin' | 'client'>('client')
-  const [invitePassword, setInvitePassword] = useState('')
-  const [addUserMode, setAddUserMode] = useState<'invite' | 'password'>('invite')
-  const [inviteSuccessMessage, setInviteSuccessMessage] = useState('')
-  const [inviteLoading, setInviteLoading] = useState(false)
-  const [inviteError, setInviteError] = useState('')
-  const [inviteSuccess, setInviteSuccess] = useState(false)
-  
-  // Delete confirmation modal state
-  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
-  const [userToDelete, setUserToDelete] = useState<User | null>(null)
-  const [deleteLoading, setDeleteLoading] = useState(false)
-  
+
   // Resend invite state
   const [resendingInviteId, setResendingInviteId] = useState<string | null>(null)
   
@@ -160,25 +129,6 @@ export default function AdminPage() {
   const [newsArticles, setNewsArticles] = useState<NewsArticle[]>([])
   const [newsLoading, setNewsLoading] = useState(false)
   const [newsError, setNewsError] = useState('')
-
-  // Course form state
-  const [courseForm, setCourseForm] = useState({ id: '', title: '', description: '', duration: 'In Person', thumbnail: '', instructor: 'OMNI Training', featured: false, sort_order: 0 })
-  const [courseSubmitLoading, setCourseSubmitLoading] = useState(false)
-  const [courseSubmitError, setCourseSubmitError] = useState('')
-
-  // Manual form state
-  const [manualForm, setManualForm] = useState({ title: '', category: '', description: '' })
-  const [manualFile, setManualFile] = useState<File | null>(null)
-  const [manualSubmitLoading, setManualSubmitLoading] = useState(false)
-  const [manualSubmitError, setManualSubmitError] = useState('')
-
-  // News form state
-  const [newsForm, setNewsForm] = useState({ title: '', excerpt: '', content: '', image_url: '', featured: false, published_at: '' })
-  const [newsSubmitLoading, setNewsSubmitLoading] = useState(false)
-  const [newsSubmitError, setNewsSubmitError] = useState('')
-
-  // Image upload state
-  const [imageUploading, setImageUploading] = useState(false)
 
   const adminCount = useMemo(
     () => users.filter((userItem) => userItem.role === 'admin').length,
@@ -317,6 +267,13 @@ export default function AdminPage() {
   }, [])
 
   useEffect(() => {
+    const tab = searchParams.get('tab')
+    if (tab && VALID_TABS.includes(tab as TabId)) {
+      setActiveTab(tab as TabId)
+    }
+  }, [searchParams])
+
+  useEffect(() => {
     fetchUsers()
     fetchInvites()
   }, [fetchUsers, fetchInvites])
@@ -346,98 +303,6 @@ export default function AdminPage() {
   }
 
 
-  const handleSendInvite = async () => {
-    if (!inviteEmail) {
-      setInviteError('Please enter an email address')
-      return
-    }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(inviteEmail.trim())) {
-      setInviteError('Please enter a valid email address')
-      return
-    }
-
-    if (addUserMode === 'password') {
-      if (!invitePassword.trim()) {
-        setInviteError('Please enter a password')
-        return
-      }
-      if (invitePassword.trim().length < 6) {
-        setInviteError('Password must be at least 6 characters')
-        return
-      }
-    }
-
-    setInviteLoading(true)
-    setInviteError('')
-    setInviteSuccess(false)
-    setInviteSuccessMessage('')
-
-    try {
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-      
-      if (sessionError || !session) {
-        throw new Error('Session expired. Please log in again.')
-      }
-
-      const payload: { email: string; role: string; password?: string } = {
-        email: inviteEmail.trim(),
-        role: inviteRole,
-      }
-      if (addUserMode === 'password') {
-        payload.password = invitePassword.trim()
-      }
-
-      const response = await fetch('/api/invites', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify(payload),
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || (addUserMode === 'password' ? 'Failed to create user' : 'Failed to send invite'))
-      }
-
-      setInviteSuccess(true)
-      setInviteSuccessMessage(data.message || (addUserMode === 'password' ? 'User created. They can sign in with their email and the password you set.' : 'Invite sent successfully!'))
-      setInviteEmail('')
-      setInviteRole('client')
-      setInvitePassword('')
-      
-      // Refresh users and invites lists
-      await fetchUsers()
-      await fetchInvites()
-      
-      // Close modal after 2 seconds
-      setTimeout(() => {
-        handleCloseInviteModal()
-      }, 2000)
-    } catch (err: unknown) {
-      const error = err as { message?: string }
-      console.error('Error sending invite:', error)
-      setInviteError(error.message || 'Failed to send invite. Please try again.')
-    } finally {
-      setInviteLoading(false)
-    }
-  }
-
-  const handleCloseInviteModal = () => {
-    setShowAddUserModal(false)
-    setInviteEmail('')
-    setInviteRole('client')
-    setInvitePassword('')
-    setAddUserMode('invite')
-    setInviteError('')
-    setInviteSuccess(false)
-    setInviteSuccessMessage('')
-  }
-
   const toggleUserRole = async (userId: string) => {
     try {
       const userToToggle = users.find(u => u.id === userId)
@@ -466,51 +331,13 @@ export default function AdminPage() {
   }
 
   const handleDeleteClick = (userId: string) => {
-    const user = users.find(u => u.id === userId)
+    const user = users.find((u) => u.id === userId)
     if (!user) return
-    
     if (user.role === 'admin' && adminCount <= 1) {
       alert('At least one admin user is required.')
       return
     }
-    
-    setUserToDelete(user)
-    setDeleteModalOpen(true)
-  }
-
-  const confirmDeleteUser = async () => {
-    if (!userToDelete) return
-
-    setDeleteLoading(true)
-    try {
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-      
-      if (sessionError || !session) {
-        throw new Error('Session expired. Please log in again.')
-      }
-
-      const response = await fetch(`/api/users/${userToDelete.id}`, {
-        method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-        },
-      })
-
-      const result = await response.json()
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to delete user')
-      }
-
-      await fetchUsers()
-      setDeleteModalOpen(false)
-      setUserToDelete(null)
-    } catch (error: any) {
-      console.error('Error deleting user:', error)
-      alert(error.message || 'Failed to delete user')
-    } finally {
-      setDeleteLoading(false)
-    }
+    router.push(`/admin/users/${userId}/delete`)
   }
 
   const resendInvite = async (invite: Invite) => {
@@ -599,183 +426,6 @@ export default function AdminPage() {
     return { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` }
   }
 
-  const handleSaveCourse = async () => {
-    if (!courseForm.title.trim()) {
-      setCourseSubmitError('Title is required')
-      return
-    }
-    setCourseSubmitLoading(true)
-    setCourseSubmitError('')
-    try {
-      const headers = await getAuthHeaders()
-      if (editingCourse) {
-        const res = await fetch(`/api/courses/${editingCourse.id}`, {
-          method: 'PATCH',
-          headers,
-          body: JSON.stringify({
-            title: courseForm.title,
-            description: courseForm.description || null,
-            duration: courseForm.duration,
-            thumbnail: courseForm.thumbnail || null,
-            instructor: courseForm.instructor || null,
-            featured: courseForm.featured,
-            sort_order: courseForm.sort_order,
-          }),
-        })
-        const data = await res.json()
-        if (!res.ok) throw new Error(data.error || 'Failed to update course')
-      } else {
-        if (!courseForm.id.trim()) {
-          setCourseSubmitError('Course ID is required (e.g. TR7000)')
-          setCourseSubmitLoading(false)
-          return
-        }
-        const res = await fetch('/api/courses', {
-          method: 'POST',
-          headers,
-          body: JSON.stringify({
-            id: courseForm.id.trim(),
-            title: courseForm.title,
-            description: courseForm.description || null,
-            duration: courseForm.duration,
-            thumbnail: courseForm.thumbnail || null,
-            instructor: courseForm.instructor || null,
-            featured: courseForm.featured,
-            sort_order: courseForm.sort_order,
-          }),
-        })
-        const data = await res.json()
-        if (!res.ok) throw new Error(data.error || 'Failed to create course')
-      }
-      setShowAddTrainingModal(false)
-      setEditingCourse(null)
-      setCourseForm({ id: '', title: '', description: '', duration: 'In Person', thumbnail: '', instructor: 'OMNI Training', featured: false, sort_order: 0 })
-      await fetchCourses()
-    } catch (e: unknown) {
-      setCourseSubmitError(e instanceof Error ? e.message : 'Failed to save')
-    } finally {
-      setCourseSubmitLoading(false)
-    }
-  }
-
-  const handleSaveManual = async () => {
-    if (!manualForm.title.trim() || !manualForm.category.trim()) {
-      setManualSubmitError('Title and category are required')
-      return
-    }
-    if (!editingManual && !manualFile) {
-      setManualSubmitError('PDF file is required')
-      return
-    }
-    setManualSubmitLoading(true)
-    setManualSubmitError('')
-    try {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) throw new Error('Session expired. Please log in again.')
-
-      if (editingManual) {
-        const headers = { Authorization: `Bearer ${session.access_token}` } as Record<string, string>
-        let body: string | FormData
-        if (manualFile) {
-          const formData = new FormData()
-          formData.set('title', manualForm.title)
-          formData.set('category', manualForm.category)
-          if (manualForm.description) formData.set('description', manualForm.description)
-          formData.set('file', manualFile)
-          body = formData
-        } else {
-          headers['Content-Type'] = 'application/json'
-          body = JSON.stringify({
-            title: manualForm.title,
-            category: manualForm.category,
-            description: manualForm.description || null,
-          })
-        }
-        const res = await fetch(`/api/manuals/${editingManual.id}`, {
-          method: 'PATCH',
-          headers,
-          body,
-        })
-        const data = await res.json()
-        if (!res.ok) throw new Error(data.error || 'Failed to update manual')
-      } else {
-        const formData = new FormData()
-        formData.set('title', manualForm.title)
-        formData.set('category', manualForm.category)
-        if (manualForm.description) formData.set('description', manualForm.description)
-        if (manualFile) formData.set('file', manualFile)
-
-        const res = await fetch('/api/manuals', {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${session.access_token}` },
-          body: formData,
-        })
-        const data = await res.json()
-        if (!res.ok) throw new Error(data.error || 'Failed to create manual')
-      }
-      setShowAddManualModal(false)
-      setEditingManual(null)
-      setManualForm({ title: '', category: '', description: '' })
-      setManualFile(null)
-      await fetchManuals()
-    } catch (e: unknown) {
-      setManualSubmitError(e instanceof Error ? e.message : 'Failed to save')
-    } finally {
-      setManualSubmitLoading(false)
-    }
-  }
-
-  const handleSaveNews = async () => {
-    if (!newsForm.title.trim() || !newsForm.published_at) {
-      setNewsSubmitError('Title and published date are required')
-      return
-    }
-    setNewsSubmitLoading(true)
-    setNewsSubmitError('')
-    try {
-      const headers = await getAuthHeaders()
-      if (editingNews) {
-        const res = await fetch(`/api/news/${editingNews.id}`, {
-          method: 'PATCH',
-          headers,
-          body: JSON.stringify({
-            title: newsForm.title,
-            excerpt: newsForm.excerpt || null,
-            content: newsForm.content || null,
-            image_url: newsForm.image_url || null,
-            featured: newsForm.featured,
-            published_at: newsForm.published_at,
-          }),
-        })
-        const data = await res.json()
-        if (!res.ok) throw new Error(data.error || 'Failed to update article')
-      } else {
-        const res = await fetch('/api/news', {
-          method: 'POST',
-          headers,
-          body: JSON.stringify({
-            title: newsForm.title,
-            excerpt: newsForm.excerpt || null,
-            content: newsForm.content || null,
-            image_url: newsForm.image_url || null,
-            featured: newsForm.featured,
-            published_at: newsForm.published_at,
-          }),
-        })
-        const data = await res.json()
-        if (!res.ok) throw new Error(data.error || 'Failed to create article')
-      }
-      setShowAddNewsModal(false)
-      setEditingNews(null)
-      setNewsForm({ title: '', excerpt: '', content: '', image_url: '', featured: false, published_at: '' })
-      await fetchNews()
-    } catch (e: unknown) {
-      setNewsSubmitError(e instanceof Error ? e.message : 'Failed to save')
-    } finally {
-      setNewsSubmitLoading(false)
-    }
-  }
-
   const handleDeleteCourse = async (course: Course) => {
     if (!confirm(`Delete course "${course.title}"?`)) return
     try {
@@ -799,30 +449,6 @@ export default function AdminPage() {
       await fetchManuals()
     } catch (e: unknown) {
       alert(e instanceof Error ? e.message : 'Failed to delete')
-    }
-  }
-
-  const handleUploadImage = async (file: File, folder: 'news' | 'training'): Promise<string | null> => {
-    setImageUploading(true)
-    try {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) throw new Error('Session expired')
-      const formData = new FormData()
-      formData.set('file', file)
-      formData.set('folder', folder)
-      const res = await fetch('/api/upload', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${session.access_token}` },
-        body: formData,
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Upload failed')
-      return data.url as string
-    } catch (e) {
-      alert(e instanceof Error ? e.message : 'Upload failed')
-      return null
-    } finally {
-      setImageUploading(false)
     }
   }
 
@@ -910,46 +536,7 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 pb-20 md:pb-0">
-      {/* Header */}
-      <header className="bg-white/80 backdrop-blur-lg border-b border-slate-200/50 shadow-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between py-4">
-            <div className="flex items-center space-x-4">
-              <Button
-                variant="ghost"
-                onClick={() => router.push('/home')}
-                className="flex items-center gap-2 px-3 hover:bg-slate-100"
-              >
-                <ArrowLeft className="h-4 w-4" />
-              </Button>
-              <div className="flex items-center space-x-3">
-                <div className="p-2.5 bg-red-600 rounded-xl shadow-lg">
-                  <Crown className="h-6 w-6 text-white" />
-                </div>
-                <div>
-                  <h1 className="text-xl font-bold text-slate-900">Admin Panel</h1>
-                  <p className="text-sm text-slate-600">Manage users, content, and system settings</p>
-                </div>
-              </div>
-            </div>
-            
-            <div className="flex items-center space-x-3">
-              <Button
-                variant="outline"
-                onClick={handleSignOut}
-                className="flex items-center gap-2 hover:bg-red-50 hover:border-red-200 hover:text-red-700 transition-all"
-              >
-                <LogOut className="h-4 w-4" />
-                Logout
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="pb-20 md:pb-0">
         {/* Tab Navigation - Desktop */}
         <div className="mb-8 hidden md:block">
           <div className="flex flex-wrap gap-2 bg-white p-1.5 rounded-xl shadow-lg border border-slate-200 w-fit">
@@ -992,7 +579,7 @@ export default function AdminPage() {
                   Refresh
                 </Button>
                 <Button
-                  onClick={() => setShowAddUserModal(true)}
+                  onClick={() => router.push('/admin/users/add')}
                   className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white shadow-lg hover:shadow-xl transition-all duration-200"
                 >
                   <Plus className="h-4 w-4 mr-2" />
@@ -1007,7 +594,7 @@ export default function AdminPage() {
                   Refresh
                 </Button>
                 <Button
-                  onClick={() => { setEditingCourse(null); setCourseForm({ id: '', title: '', description: '', duration: 'In Person', thumbnail: '', instructor: 'OMNI Training', featured: false, sort_order: 0 }); setShowAddTrainingModal(true) }}
+                  onClick={() => router.push('/admin/training/add')}
                   className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white shadow-lg hover:shadow-xl transition-all duration-200"
                 >
                   <Plus className="h-4 w-4 mr-2" />
@@ -1022,7 +609,7 @@ export default function AdminPage() {
                   Refresh
                 </Button>
                 <Button
-                  onClick={() => { setEditingManual(null); setManualForm({ title: '', category: '', description: '' }); setManualFile(null); setShowAddManualModal(true) }}
+                  onClick={() => router.push('/admin/manuals/add')}
                   className="bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white shadow-lg hover:shadow-xl transition-all duration-200"
                 >
                   <Plus className="h-4 w-4 mr-2" />
@@ -1037,7 +624,7 @@ export default function AdminPage() {
                   Refresh
                 </Button>
                 <Button
-                  onClick={() => { setEditingNews(null); setNewsForm({ title: '', excerpt: '', content: '', image_url: '', featured: false, published_at: new Date().toISOString().slice(0, 10) }); setShowAddNewsModal(true) }}
+                  onClick={() => router.push('/admin/news/add')}
                   className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl transition-all duration-200"
                 >
                   <Plus className="h-4 w-4 mr-2" />
@@ -1293,7 +880,7 @@ export default function AdminPage() {
                         </div>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <Button variant="outline" size="sm" onClick={() => { setEditingCourse(course); setCourseForm({ id: course.id, title: course.title, description: course.description || '', duration: course.duration, thumbnail: course.thumbnail || '', instructor: course.instructor || '', featured: course.featured, sort_order: course.sort_order }); setShowAddTrainingModal(true) }} className="transition-all duration-200 hover:bg-slate-100">
+                        <Button variant="outline" size="sm" onClick={() => router.push(`/admin/training/${course.id}/edit`)} className="transition-all duration-200 hover:bg-slate-100">
                           <Edit className="h-4 w-4" />
                         </Button>
                         <Button variant="outline" size="sm" onClick={() => handleDeleteCourse(course)} className="text-red-600 hover:bg-red-50 hover:border-red-200">
@@ -1355,7 +942,7 @@ export default function AdminPage() {
                             </a>
                           </Button>
                         )}
-                        <Button variant="outline" size="sm" onClick={() => { setEditingManual(manual); setManualForm({ title: manual.title, category: manual.category, description: manual.description || '' }); setManualFile(null); setShowAddManualModal(true) }} className="transition-all duration-200 hover:bg-slate-100">
+                        <Button variant="outline" size="sm" onClick={() => router.push(`/admin/manuals/${manual.id}/edit`)} className="transition-all duration-200 hover:bg-slate-100">
                           <Edit className="h-4 w-4" />
                         </Button>
                         <Button variant="outline" size="sm" onClick={() => handleDeleteManual(manual)} className="text-red-600 hover:bg-red-50 hover:border-red-200">
@@ -1409,7 +996,7 @@ export default function AdminPage() {
                         </div>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <Button variant="outline" size="sm" onClick={() => { setEditingNews(article); setNewsForm({ title: article.title, excerpt: article.excerpt || '', content: article.content || '', image_url: article.image_url || '', featured: article.featured, published_at: article.published_at }); setShowAddNewsModal(true) }} className="transition-all duration-200 hover:bg-slate-100">
+                        <Button variant="outline" size="sm" onClick={() => router.push(`/admin/news/${article.id}/edit`)} className="transition-all duration-200 hover:bg-slate-100">
                           <Edit className="h-4 w-4" />
                         </Button>
                         <Button variant="outline" size="sm" onClick={() => handleDeleteNews(article)} className="text-red-600 hover:bg-red-50 hover:border-red-200">
@@ -1423,419 +1010,6 @@ export default function AdminPage() {
             )}
           </div>
         )}
-      </div>
-
-      {/* Add User Modal */}
-      {showAddUserModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <Card className="w-full max-w-md shadow-2xl border-0 bg-white">
-            <CardHeader className="flex flex-row items-center justify-between border-b border-slate-200 pb-4">
-              <div>
-                <CardTitle className="flex items-center gap-2 text-xl">
-                  <div className="p-2 bg-gradient-to-br from-slate-900 to-slate-800 rounded-lg">
-                    <Plus className="h-5 w-5 text-white" />
-                  </div>
-                  Add User
-                </CardTitle>
-                <CardDescription className="mt-1">
-                  {addUserMode === 'invite' ? 'Invite a new user by email' : 'Create a user with a password (no email verification)'}
-                </CardDescription>
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleCloseInviteModal}
-                className="hover:bg-slate-100"
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </CardHeader>
-            <CardContent className="space-y-5 pt-6">
-              <div className="flex rounded-lg border border-slate-200 p-1 bg-slate-50">
-                <button
-                  type="button"
-                  onClick={() => { setAddUserMode('invite'); setInviteError(''); setInvitePassword('') }}
-                  className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-sm font-medium transition-colors ${addUserMode === 'invite' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-600 hover:text-slate-900'}`}
-                  disabled={inviteLoading}
-                >
-                  <Mail className="h-4 w-4" />
-                  Send invite email
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { setAddUserMode('password'); setInviteError('') }}
-                  className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-sm font-medium transition-colors ${addUserMode === 'password' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-600 hover:text-slate-900'}`}
-                  disabled={inviteLoading}
-                >
-                  <Key className="h-4 w-4" />
-                  Set password
-                </button>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-slate-700 mb-2 block">Email Address</label>
-                <Input 
-                  placeholder="user@example.com" 
-                  value={inviteEmail}
-                  onChange={(e) => {
-                    setInviteEmail(e.target.value)
-                    setInviteError('')
-                  }}
-                  disabled={inviteLoading}
-                  className="h-11 border-slate-200 focus:border-slate-900 focus:ring-slate-900"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium text-slate-700 mb-2 block">Role</label>
-                <select 
-                  className="w-full h-11 px-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-900 focus:border-slate-900 bg-white"
-                  value={inviteRole}
-                  onChange={(e) => setInviteRole(e.target.value as 'admin' | 'client')}
-                  disabled={inviteLoading}
-                >
-                  <option value="client">Client</option>
-                  <option value="admin">Admin</option>
-                </select>
-              </div>
-              {addUserMode === 'password' && (
-                <div>
-                  <label className="text-sm font-medium text-slate-700 mb-2 block">Password</label>
-                  <Input 
-                    type="password"
-                    placeholder="Min 6 characters"
-                    value={invitePassword}
-                    onChange={(e) => {
-                      setInvitePassword(e.target.value)
-                      setInviteError('')
-                    }}
-                    disabled={inviteLoading}
-                    className="h-11 border-slate-200 focus:border-slate-900 focus:ring-slate-900"
-                  />
-                </div>
-              )}
-
-              {inviteError && (
-                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm flex items-center gap-2">
-                  <XCircle className="h-4 w-4 flex-shrink-0" />
-                  <span>{inviteError}</span>
-                </div>
-              )}
-
-              {inviteSuccess && (
-                <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-lg text-sm flex items-center gap-2">
-                  <CheckCircle className="h-4 w-4 flex-shrink-0" />
-                  <span>{inviteSuccessMessage}</span>
-                </div>
-              )}
-
-              <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">
-                <Button 
-                  variant="outline" 
-                  onClick={handleCloseInviteModal}
-                  disabled={inviteLoading}
-                  className="hover:bg-slate-100"
-                >
-                  Cancel
-                </Button>
-                <Button 
-                  className="bg-gradient-to-r from-slate-900 to-slate-800 hover:from-slate-800 hover:to-slate-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"
-                  onClick={handleSendInvite}
-                  disabled={inviteLoading || inviteSuccess}
-                >
-                  {inviteLoading ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      {addUserMode === 'password' ? 'Creating...' : 'Sending...'}
-                    </>
-                  ) : (
-                    <>
-                      {addUserMode === 'password' ? (
-                        <>
-                          <Key className="h-4 w-4 mr-2" />
-                          Create User
-                        </>
-                      ) : (
-                        <>
-                          <Send className="h-4 w-4 mr-2" />
-                          Send Invite
-                        </>
-                      )}
-                    </>
-                  )}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {/* Add/Edit Training Modal */}
-      {showAddTrainingModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <Card className="w-full max-w-lg shadow-2xl border-0 bg-white">
-            <CardHeader className="flex flex-row items-center justify-between border-b border-slate-200 pb-4">
-              <div>
-                <CardTitle className="flex items-center gap-2 text-xl">
-                  <div className="p-2 bg-gradient-to-br from-slate-900 to-slate-800 rounded-lg">
-                    <Plus className="h-5 w-5 text-white" />
-                  </div>
-                  {editingCourse ? 'Edit Course' : 'Add Course'}
-                </CardTitle>
-                <CardDescription className="mt-1">
-                  {editingCourse ? 'Update training course' : 'Create a new training course'}
-                </CardDescription>
-              </div>
-              <Button variant="ghost" size="sm" onClick={() => { setShowAddTrainingModal(false); setEditingCourse(null); setCourseSubmitError('') }} className="hover:bg-slate-100">
-                <X className="h-4 w-4" />
-              </Button>
-            </CardHeader>
-            <CardContent className="space-y-5 pt-6">
-              {!editingCourse && (
-                <div>
-                  <label className="text-sm font-medium text-slate-700 mb-2 block">Course ID</label>
-                  <Input placeholder="e.g. TR7000" value={courseForm.id} onChange={(e) => setCourseForm(f => ({ ...f, id: e.target.value }))} className="h-11" disabled={courseSubmitLoading} />
-                </div>
-              )}
-              <div>
-                <label className="text-sm font-medium text-slate-700 mb-2 block">Title</label>
-                <Input placeholder="Course title" value={courseForm.title} onChange={(e) => setCourseForm(f => ({ ...f, title: e.target.value }))} className="h-11" disabled={courseSubmitLoading} />
-              </div>
-              <div>
-                <label className="text-sm font-medium text-slate-700 mb-2 block">Description</label>
-                <textarea className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-900 focus:border-slate-900" rows={3} placeholder="Course description" value={courseForm.description} onChange={(e) => setCourseForm(f => ({ ...f, description: e.target.value }))} disabled={courseSubmitLoading} />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-slate-700 mb-2 block">Duration</label>
-                  <Input placeholder="In Person" value={courseForm.duration} onChange={(e) => setCourseForm(f => ({ ...f, duration: e.target.value }))} className="h-11" disabled={courseSubmitLoading} />
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-slate-700 mb-2 block">Instructor</label>
-                  <Input placeholder="OMNI Training" value={courseForm.instructor} onChange={(e) => setCourseForm(f => ({ ...f, instructor: e.target.value }))} className="h-11" disabled={courseSubmitLoading} />
-                </div>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-slate-700 mb-2 block">Thumbnail</label>
-                <div className="flex gap-2">
-                  <Input placeholder="/images/tr7000.png or upload" value={courseForm.thumbnail} onChange={(e) => setCourseForm(f => ({ ...f, thumbnail: e.target.value }))} className="h-11 flex-1" disabled={courseSubmitLoading} />
-                  <label className={`inline-flex items-center justify-center h-11 px-4 border rounded-lg border-slate-200 bg-white hover:bg-slate-50 cursor-pointer ${(imageUploading || courseSubmitLoading) ? 'opacity-50 cursor-not-allowed' : ''}`}>
-                    <input type="file" accept="image/*" className="hidden" onChange={async (e) => { const f = e.target.files?.[0]; if (f) { const url = await handleUploadImage(f, 'training'); if (url) setCourseForm(c => ({ ...c, thumbnail: url })); e.target.value = '' } }} disabled={imageUploading || courseSubmitLoading} />
-                    {imageUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Image className="h-4 w-4" />}
-                  </label>
-                </div>
-                <p className="text-xs text-slate-500 mt-1">Paste URL or click to upload (JPEG, PNG, GIF, WebP, max 5 MB)</p>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" checked={courseForm.featured} onChange={(e) => setCourseForm(f => ({ ...f, featured: e.target.checked }))} disabled={courseSubmitLoading} className="rounded" />
-                    <span className="text-sm text-slate-700">Featured</span>
-                  </label>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-slate-700 mb-2 block">Sort order</label>
-                  <Input type="number" value={courseForm.sort_order} onChange={(e) => setCourseForm(f => ({ ...f, sort_order: parseInt(e.target.value, 10) || 0 }))} className="h-11 w-24" disabled={courseSubmitLoading} />
-                </div>
-              </div>
-              {courseSubmitError && (
-                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm flex items-center gap-2">
-                  <XCircle className="h-4 w-4 flex-shrink-0" />
-                  <span>{courseSubmitError}</span>
-                </div>
-              )}
-              <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">
-                <Button variant="outline" onClick={() => { setShowAddTrainingModal(false); setEditingCourse(null); setCourseSubmitError('') }} disabled={courseSubmitLoading} className="hover:bg-slate-100">Cancel</Button>
-                <Button onClick={handleSaveCourse} disabled={courseSubmitLoading} className="bg-gradient-to-r from-slate-900 to-slate-800 hover:from-slate-800 hover:to-slate-700 text-white shadow-lg hover:shadow-xl transition-all duration-200">
-                  {courseSubmitLoading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Saving...</> : (editingCourse ? 'Update' : 'Create')}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {/* Add/Edit Manual Modal */}
-      {showAddManualModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <Card className="w-full max-w-lg shadow-2xl border-0 bg-white">
-            <CardHeader className="flex flex-row items-center justify-between border-b border-slate-200 pb-4">
-              <div>
-                <CardTitle className="flex items-center gap-2 text-xl">
-                  <div className="p-2 bg-gradient-to-br from-teal-600 to-teal-700 rounded-lg">
-                    <Upload className="h-5 w-5 text-white" />
-                  </div>
-                  {editingManual ? 'Edit Manual' : 'Add Manual'}
-                </CardTitle>
-                <CardDescription className="mt-1">
-                  {editingManual ? 'Update metadata or replace PDF (max 50 MB)' : 'Upload a PDF manual (max 50 MB)'}
-                </CardDescription>
-              </div>
-              <Button variant="ghost" size="sm" onClick={() => { setShowAddManualModal(false); setEditingManual(null); setManualSubmitError(''); setManualFile(null) }} className="hover:bg-slate-100">
-                <X className="h-4 w-4" />
-              </Button>
-            </CardHeader>
-            <CardContent className="space-y-5 pt-6">
-              <div>
-                <label className="text-sm font-medium text-slate-700 mb-2 block">Title</label>
-                <Input placeholder="User Manual Volume 1" value={manualForm.title} onChange={(e) => setManualForm(f => ({ ...f, title: e.target.value }))} className="h-11" disabled={manualSubmitLoading} />
-              </div>
-              <div>
-                <label className="text-sm font-medium text-slate-700 mb-2 block">Category</label>
-                <Input placeholder="e.g. OMNI-3000-6000" value={manualForm.category} onChange={(e) => setManualForm(f => ({ ...f, category: e.target.value }))} className="h-11" disabled={manualSubmitLoading} />
-              </div>
-              <div>
-                <label className="text-sm font-medium text-slate-700 mb-2 block">Description</label>
-                <textarea className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-900 focus:border-slate-900" rows={2} placeholder="Brief description" value={manualForm.description} onChange={(e) => setManualForm(f => ({ ...f, description: e.target.value }))} disabled={manualSubmitLoading} />
-              </div>
-              <div>
-                <label className="text-sm font-medium text-slate-700 mb-2 block">PDF File {editingManual && '(optional – replace existing)'}</label>
-                <div className="border-2 border-dashed border-slate-200 rounded-lg p-6 text-center hover:border-teal-300 transition-colors">
-                  <input type="file" accept=".pdf,application/pdf" onChange={(e) => setManualFile(e.target.files?.[0] ?? null)} className="hidden" id="manual-file" />
-                  <label htmlFor="manual-file" className="cursor-pointer flex flex-col items-center gap-2">
-                    <Upload className="h-10 w-10 text-slate-400" />
-                    <span className="text-sm text-slate-600">{manualFile ? manualFile.name : (editingManual ? 'Click to replace PDF' : 'Click to select PDF')}</span>
-                  </label>
-                </div>
-              </div>
-              {manualSubmitError && (
-                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm flex items-center gap-2">
-                  <XCircle className="h-4 w-4 flex-shrink-0" />
-                  <span>{manualSubmitError}</span>
-                </div>
-              )}
-              <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">
-                <Button variant="outline" onClick={() => { setShowAddManualModal(false); setEditingManual(null); setManualSubmitError(''); setManualFile(null) }} disabled={manualSubmitLoading} className="hover:bg-slate-100">Cancel</Button>
-                <Button onClick={handleSaveManual} disabled={manualSubmitLoading} className="bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white shadow-lg hover:shadow-xl transition-all duration-200">
-                  {manualSubmitLoading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Uploading...</> : (editingManual ? 'Update' : 'Upload')}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {/* Add/Edit News Modal */}
-      {showAddNewsModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <Card className="w-full max-w-lg shadow-2xl border-0 bg-white max-h-[90vh] overflow-y-auto">
-            <CardHeader className="flex flex-row items-center justify-between border-b border-slate-200 pb-4">
-              <div>
-                <CardTitle className="flex items-center gap-2 text-xl">
-                  <div className="p-2 bg-gradient-to-br from-slate-900 to-slate-800 rounded-lg">
-                    <Plus className="h-5 w-5 text-white" />
-                  </div>
-                  {editingNews ? 'Edit Article' : 'Add News Article'}
-                </CardTitle>
-                <CardDescription className="mt-1">
-                  {editingNews ? 'Update news article' : 'Create a new news article'}
-                </CardDescription>
-              </div>
-              <Button variant="ghost" size="sm" onClick={() => { setShowAddNewsModal(false); setEditingNews(null); setNewsSubmitError('') }} className="hover:bg-slate-100">
-                <X className="h-4 w-4" />
-              </Button>
-            </CardHeader>
-            <CardContent className="space-y-5 pt-6">
-              <div>
-                <label className="text-sm font-medium text-slate-700 mb-2 block">Title</label>
-                <Input placeholder="Article title" value={newsForm.title} onChange={(e) => setNewsForm(f => ({ ...f, title: e.target.value }))} className="h-11" disabled={newsSubmitLoading} />
-              </div>
-              <div>
-                <label className="text-sm font-medium text-slate-700 mb-2 block">Excerpt</label>
-                <textarea className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-900 focus:border-slate-900" rows={2} placeholder="Short summary" value={newsForm.excerpt} onChange={(e) => setNewsForm(f => ({ ...f, excerpt: e.target.value }))} disabled={newsSubmitLoading} />
-              </div>
-              <div>
-                <label className="text-sm font-medium text-slate-700 mb-2 block">Content</label>
-                <textarea className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-900 focus:border-slate-900" rows={4} placeholder="Full article content" value={newsForm.content} onChange={(e) => setNewsForm(f => ({ ...f, content: e.target.value }))} disabled={newsSubmitLoading} />
-              </div>
-              <div>
-                <label className="text-sm font-medium text-slate-700 mb-2 block">Image</label>
-                <div className="flex gap-2">
-                  <Input placeholder="/news-1.jpg or upload" value={newsForm.image_url} onChange={(e) => setNewsForm(f => ({ ...f, image_url: e.target.value }))} className="h-11 flex-1" disabled={newsSubmitLoading} />
-                  <label className={`inline-flex items-center justify-center h-11 px-4 border rounded-lg border-slate-200 bg-white hover:bg-slate-50 cursor-pointer ${(imageUploading || newsSubmitLoading) ? 'opacity-50 cursor-not-allowed' : ''}`}>
-                    <input type="file" accept="image/*" className="hidden" onChange={async (e) => { const f = e.target.files?.[0]; if (f) { const url = await handleUploadImage(f, 'news'); if (url) setNewsForm(n => ({ ...n, image_url: url })); e.target.value = '' } }} disabled={imageUploading || newsSubmitLoading} />
-                    {imageUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Image className="h-4 w-4" />}
-                  </label>
-                </div>
-                <p className="text-xs text-slate-500 mt-1">Paste URL or click to upload (JPEG, PNG, GIF, WebP, max 5 MB)</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-slate-700 mb-2 block">Published Date</label>
-                <Input type="date" value={newsForm.published_at} onChange={(e) => setNewsForm(f => ({ ...f, published_at: e.target.value }))} className="h-11" disabled={newsSubmitLoading} />
-              </div>
-              <div>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" checked={newsForm.featured} onChange={(e) => setNewsForm(f => ({ ...f, featured: e.target.checked }))} disabled={newsSubmitLoading} className="rounded" />
-                  <span className="text-sm text-slate-700">Featured</span>
-                </label>
-              </div>
-              {newsSubmitError && (
-                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm flex items-center gap-2">
-                  <XCircle className="h-4 w-4 flex-shrink-0" />
-                  <span>{newsSubmitError}</span>
-                </div>
-              )}
-              <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">
-                <Button variant="outline" onClick={() => { setShowAddNewsModal(false); setEditingNews(null); setNewsSubmitError('') }} disabled={newsSubmitLoading} className="hover:bg-slate-100">Cancel</Button>
-                <Button onClick={handleSaveNews} disabled={newsSubmitLoading} className="bg-gradient-to-r from-slate-900 to-slate-800 hover:from-slate-800 hover:to-slate-700 text-white shadow-lg hover:shadow-xl transition-all duration-200">
-                  {newsSubmitLoading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Saving...</> : (editingNews ? 'Update' : 'Create')}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {/* Delete Confirmation Modal */}
-      <Dialog open={deleteModalOpen} onOpenChange={setDeleteModalOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
-                <Trash2 className="h-6 w-6 text-red-600" />
-              </div>
-              <DialogTitle>Delete User</DialogTitle>
-            </div>
-            <DialogDescription>
-              Are you sure you want to delete <strong>{userToDelete?.name || userToDelete?.email || 'this user'}</strong>? 
-              This action cannot be undone and will permanently remove:
-              <ul className="list-disc list-inside mt-3 space-y-1 text-slate-600">
-                <li>User account and authentication</li>
-                <li>User profile and data</li>
-                <li>Associated invites</li>
-              </ul>
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setDeleteModalOpen(false)
-                setUserToDelete(null)
-              }}
-              disabled={deleteLoading}
-              className="hover:bg-slate-100"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={confirmDeleteUser}
-              disabled={deleteLoading}
-              className="bg-red-600 hover:bg-red-700 text-white"
-            >
-              {deleteLoading ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Deleting...
-                </>
-              ) : (
-                <>
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Delete User
-                </>
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       {/* Mobile Bottom Tab Bar */}
       <nav className="fixed bottom-0 left-0 right-0 md:hidden bg-white border-t border-slate-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-40 pb-[env(safe-area-inset-bottom)]">
@@ -1860,5 +1034,17 @@ export default function AdminPage() {
         </div>
       </nav>
     </div>
+  )
+}
+
+export default function AdminPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-slate-600" />
+      </div>
+    }>
+      <AdminDashboardContent />
+    </Suspense>
   )
 }
