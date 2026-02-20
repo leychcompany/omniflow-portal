@@ -195,7 +195,7 @@ export default function HomePage() {
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center space-x-4">
             
-              <Logo width={140} height={49} />
+              <Logo width={140} height={49} href="https://www.omniflow.com" />
             </div>
             
             <div className="flex items-center space-x-3">

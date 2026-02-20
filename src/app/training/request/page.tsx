@@ -120,7 +120,7 @@ function TrainingRequestInner() {
                 <ArrowLeft className="h-4 w-4" />
               </Button>
               <div className="flex items-center space-x-3">
-                <Logo width={140} height={49} />
+                <Logo width={140} height={49} href="https://www.omniflow.com" />
               </div>
             </div>
           </div>
