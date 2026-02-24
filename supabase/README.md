@@ -41,3 +41,39 @@ Create a storage bucket named `images` for news and training thumbnails:
 3. Set to **Public** – images are served directly
 
 The admin uploads images to `images/news/` and `images/training/` via the News and Training forms.
+
+## Password Reset & Invite – OTP Fallback (Corporate Email)
+
+Corporate email systems (e.g. Microsoft 365, Outlook, Proofpoint) often prefetch links in emails for security scanning. This consumes the one-time token before the user clicks, causing "link has expired" errors.
+
+To fix this, add the 6-digit OTP code (`{{ .Token }}`) to both **Reset Password** and **Invite** email templates in Supabase. Users can then enter the code manually when the link is consumed by their corporate firewall.
+
+### Setup
+
+1. Go to [Supabase Dashboard](https://supabase.com/dashboard) → your project → **Authentication** → **Email Templates**
+2. Edit both **Reset Password** and **Invite** templates (see below)
+3. Save each template
+
+### Reset Password template
+
+```html
+<h2>Reset Your Password</h2>
+<p>Click the link below to reset your password:</p>
+<p><a href="{{ .ConfirmationURL }}">Reset Password</a></p>
+<p><strong>If the link doesn't work</strong> (e.g. with Outlook or corporate email), use this 6-digit code on the reset page: <strong>{{ .Token }}</strong></p>
+<p>This code expires in 24 hours.</p>
+```
+
+Users enter the code at `/forgot-password` (shown after requesting a reset, or via "Enter 6-digit code from email" on the expired link page).
+
+### Invite template
+
+```html
+<h2>You Have Been Invited</h2>
+<p>You have been invited to join. Click the link below to set your password:</p>
+<p><a href="{{ .ConfirmationURL }}">Accept Invite</a></p>
+<p><strong>If the link doesn't work</strong> (e.g. with Outlook or corporate email), use this 6-digit code on the reset page: <strong>{{ .Token }}</strong></p>
+<p>This code expires in 24 hours.</p>
+```
+
+Invited users enter their email and the 6-digit code at `/forgot-password` (add `?mode=otp` to show the code field, or use "Enter 6-digit code from email" on the expired link page). The app detects whether the code is from a reset or invite email.

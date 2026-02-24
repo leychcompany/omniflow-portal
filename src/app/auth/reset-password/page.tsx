@@ -4,7 +4,7 @@ import { useEffect, Suspense, useState, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { Logo } from "@/components/Logo";
-import { Loader2, XCircle, ArrowLeft, Key } from "lucide-react";
+import { Loader2, XCircle, ArrowLeft, Key, Hash } from "lucide-react";
 import Link from "next/link";
 
 function ResetPasswordHandler() {
@@ -504,6 +504,13 @@ function ResetPasswordHandler() {
                 >
                   <Key className="h-5 w-5" />
                   Request new reset link
+                </Link>
+                <Link
+                  href="/forgot-password?mode=otp"
+                  className="inline-flex items-center justify-center gap-2 w-full h-12 px-4 rounded-lg border border-slate-300 text-slate-700 font-medium hover:bg-slate-50 transition-colors"
+                >
+                  <Hash className="h-5 w-5" />
+                  Enter 6-digit code from email
                 </Link>
                 <Link
                   href="/login"

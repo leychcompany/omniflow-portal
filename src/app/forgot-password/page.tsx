@@ -1,21 +1,30 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Logo } from '@/components/Logo'
 import { useAuth } from '@/hooks/use-auth'
-import { ArrowLeft, Loader2, Mail, CheckCircle, XCircle, Key } from 'lucide-react'
+import { supabase } from '@/lib/supabase'
+import { ArrowLeft, Loader2, Mail, CheckCircle, XCircle, Key, Hash } from 'lucide-react'
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('')
+  const [otpCode, setOtpCode] = useState('')
   const [loading, setLoading] = useState(false)
+  const [otpLoading, setOtpLoading] = useState(false)
+  const [showOtpEntry, setShowOtpEntry] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { resetPassword } = useAuth()
+
+  useEffect(() => {
+    if (searchParams.get('mode') === 'otp') setShowOtpEntry(true)
+  }, [searchParams])
 
   const handleSendResetLink = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -38,12 +47,10 @@ export default function ForgotPasswordPage() {
       await resetPassword(email.trim())
       setMessage({ 
         type: 'success', 
-        text: 'Password reset link sent! Check your email to reset your password.' 
+        text: 'Check your email! You\'ll receive a link and a 6-digit code. If the link says "expired", use the code below instead.' 
       })
-      // Clear email after success
-      setTimeout(() => {
-        setEmail('')
-      }, 2000)
+      setShowOtpEntry(true)
+      // Keep email for OTP entry
     } catch (error: any) {
       setMessage({ 
         type: 'error', 
@@ -51,6 +58,66 @@ export default function ForgotPasswordPage() {
       })
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setMessage(null)
+
+    const trimmedEmail = email.trim()
+    const trimmedCode = otpCode.replace(/\s/g, '')
+
+    if (!trimmedEmail) {
+      setMessage({ type: 'error', text: 'Please enter your email address' })
+      return
+    }
+    if (!trimmedCode || trimmedCode.length !== 6) {
+      setMessage({ type: 'error', text: 'Please enter the 6-digit code from your email' })
+      return
+    }
+
+    setOtpLoading(true)
+    try {
+      // Try recovery first (password reset), then invite (new user)
+      const types = ['recovery', 'invite'] as const
+      let session: { access_token: string; refresh_token: string } | null = null
+      let verifiedType: 'recovery' | 'invite' = 'recovery'
+      let userEmail: string | null = null
+
+      for (const type of types) {
+        const { data, error } = await supabase.auth.verifyOtp({
+          email: trimmedEmail,
+          token: trimmedCode,
+          type,
+        })
+        if (!error && data.session) {
+          session = data.session
+          verifiedType = type
+          userEmail = data.user?.email ?? trimmedEmail
+          break
+        }
+      }
+
+      if (session) {
+        const params = new URLSearchParams({
+          access_token: session.access_token,
+          refresh_token: session.refresh_token,
+          type: verifiedType,
+        })
+        if (userEmail) params.append('email', userEmail)
+        window.location.replace(`/set-password?${params.toString()}`)
+        return
+      }
+
+      setMessage({ type: 'error', text: 'Invalid or expired code. Please request a new reset link.' })
+    } catch (error: any) {
+      setMessage({
+        type: 'error',
+        text: error.message || 'Invalid or expired code. Please request a new reset link.',
+      })
+    } finally {
+      setOtpLoading(false)
     }
   }
 
@@ -82,35 +149,35 @@ export default function ForgotPasswordPage() {
             </CardHeader>
             
             <CardContent className="space-y-6">
-              <form onSubmit={handleSendResetLink} className="space-y-6">
-                <div className="space-y-2">
-                  <label htmlFor="email" className="text-sm font-medium text-slate-700 flex items-center space-x-2">
-                    <Mail className="h-4 w-4" />
-                    <span>Email Address</span>
-                  </label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="your@email.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    className="h-12 border-slate-200 focus:border-blue-500 focus:ring-blue-500"
-                  />
-                </div>
-
-                {message && (
-                  <div className={`px-4 py-3 rounded-lg text-sm flex items-center gap-2 ${
-                    message.type === 'success' ? 'bg-green-50 border border-green-200 text-green-700' :
-                    'bg-red-50 border border-red-200 text-red-700'
-                  }`}>
-                    {message.type === 'success' && <CheckCircle className="h-5 w-5" />}
-                    {message.type === 'error' && <XCircle className="h-5 w-5" />}
-                    <span>{message.text}</span>
+              {!showOtpEntry ? (
+                <form onSubmit={handleSendResetLink} className="space-y-6">
+                  <div className="space-y-2">
+                    <label htmlFor="email" className="text-sm font-medium text-slate-700 flex items-center space-x-2">
+                      <Mail className="h-4 w-4" />
+                      <span>Email Address</span>
+                    </label>
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="your@email.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                      className="h-12 border-slate-200 focus:border-blue-500 focus:ring-blue-500"
+                    />
                   </div>
-                )}
 
-                {message?.type !== 'success' && (
+                  {message && (
+                    <div className={`px-4 py-3 rounded-lg text-sm flex items-center gap-2 ${
+                      message.type === 'success' ? 'bg-green-50 border border-green-200 text-green-700' :
+                      'bg-red-50 border border-red-200 text-red-700'
+                    }`}>
+                      {message.type === 'success' && <CheckCircle className="h-5 w-5" />}
+                      {message.type === 'error' && <XCircle className="h-5 w-5" />}
+                      <span>{message.text}</span>
+                    </div>
+                  )}
+
                   <Button
                     type="submit"
                     className="w-full h-12 bg-gradient-to-r from-slate-900 to-slate-800 hover:from-slate-800 hover:to-slate-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
@@ -128,8 +195,71 @@ export default function ForgotPasswordPage() {
                       </>
                     )}
                   </Button>
-                )}
-              </form>
+                </form>
+              ) : (
+                <>
+                  {message && (
+                    <div className={`px-4 py-3 rounded-lg text-sm flex items-center gap-2 ${
+                      message.type === 'success' ? 'bg-green-50 border border-green-200 text-green-700' :
+                      'bg-red-50 border border-red-200 text-red-700'
+                    }`}>
+                      {message.type === 'success' && <CheckCircle className="h-5 w-5" />}
+                      {message.type === 'error' && <XCircle className="h-5 w-5" />}
+                      <span>{message.text}</span>
+                    </div>
+                  )}
+                  <form onSubmit={handleVerifyOtp} className="space-y-4">
+                    <div className="space-y-2">
+                      <label htmlFor="otp-email" className="text-sm font-medium text-slate-700 flex items-center space-x-2">
+                        <Mail className="h-4 w-4" />
+                        <span>Email</span>
+                      </label>
+                      <Input
+                        id="otp-email"
+                        type="email"
+                        placeholder="your@email.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                        disabled={!!email}
+                        className={`h-11 border-slate-200 ${email ? 'bg-slate-50 cursor-not-allowed' : ''}`}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label htmlFor="otp-code" className="text-sm font-medium text-slate-700 flex items-center gap-2">
+                        <Hash className="h-4 w-4" />
+                        6-digit code
+                      </label>
+                      <Input
+                        id="otp-code"
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        maxLength={6}
+                        placeholder="123456"
+                        value={otpCode}
+                        onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
+                        className="h-11 border-slate-200 font-mono text-lg tracking-widest"
+                      />
+                    </div>
+                    <Button
+                      type="submit"
+                      variant="outline"
+                      className="w-full h-11"
+                      disabled={otpLoading}
+                    >
+                      {otpLoading ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Verifying...
+                        </>
+                      ) : (
+                        'Verify code & reset password'
+                      )}
+                    </Button>
+                  </form>
+                </>
+              )}
 
               <div className="text-center space-y-3">
                 <button
