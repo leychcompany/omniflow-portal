@@ -30,7 +30,7 @@ Create a storage bucket named `manuals` in Supabase Dashboard:
 2. Create new bucket: `manuals`
 3. Set to **Private** – the API generates signed download URLs
 
-PDFs can be uploaded via the Admin → Manuals screen, or manually to match `storage_path` values (e.g. `OMNI-3000-6000/filename.pdf`).
+PDFs can be uploaded via the Admin → Documents screen, or manually to match `storage_path` values (e.g. `OMNI-3000-6000/filename.pdf`).
 
 ### images (Public)
 
@@ -46,7 +46,7 @@ The admin uploads images to `images/news/` and `images/training/` via the News a
 
 Corporate email systems (e.g. Microsoft 365, Outlook, Proofpoint) often prefetch links in emails for security scanning. This consumes the one-time token before the user clicks, causing "link has expired" errors.
 
-To fix this, add the 6-digit OTP code (`{{ .Token }}`) to both **Reset Password** and **Invite** email templates in Supabase. Users can then enter the code manually when the link is consumed by their corporate firewall.
+To fix this, add the 6-digit OTP code (`{{ .Token }}`) to both **Reset Password** and **Invite** email templates in Supabase. Users can then enter the gitcode manually when the link is consumed by their corporate firewall.
 
 ### Setup
 

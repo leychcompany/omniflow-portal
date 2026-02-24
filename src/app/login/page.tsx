@@ -139,7 +139,7 @@ function LoginForm() {
     {
       icon: BookOpen,
       title: 'Resources',
-      description: 'Access manuals, training, and documentation',
+      description: 'Access documents, training, and documentation',
       color: 'text-green-600',
       bgColor: 'bg-green-50'
     },

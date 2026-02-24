@@ -161,10 +161,10 @@ function AdminDashboardContent() {
         headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {},
       })
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Failed to load manuals')
+      if (!res.ok) throw new Error(data.error || 'Failed to load documents')
       setManuals(Array.isArray(data) ? data : [])
     } catch (e: unknown) {
-      setManualsError(e instanceof Error ? e.message : 'Failed to load manuals')
+      setManualsError(e instanceof Error ? e.message : 'Failed to load documents')
     } finally {
       setManualsLoading(false)
     }
@@ -440,7 +440,7 @@ function AdminDashboardContent() {
   }
 
   const handleDeleteManual = async (manual: Manual) => {
-    if (!confirm(`Delete manual "${manual.title}"?`)) return
+    if (!confirm(`Delete document "${manual.title}"?`)) return
     try {
       const headers = await getAuthHeaders()
       const res = await fetch(`/api/manuals/${manual.id}`, { method: 'DELETE', headers })
@@ -519,7 +519,7 @@ function AdminDashboardContent() {
   const tabItems = [
     { id: 'users' as const, label: 'Users', count: users.length, icon: Users },
     { id: 'training' as const, label: 'Training', count: courses.length, icon: GraduationCap },
-    { id: 'manuals' as const, label: 'Manuals', count: manuals.length, icon: BookOpen },
+    { id: 'manuals' as const, label: 'Documents', count: manuals.length, icon: BookOpen },
     { id: 'news' as const, label: 'News', count: newsArticles.length, icon: Newspaper },
   ]
 
@@ -613,7 +613,7 @@ function AdminDashboardContent() {
                   className="bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white shadow-lg hover:shadow-xl transition-all duration-200"
                 >
                   <Plus className="h-4 w-4 mr-2" />
-                  Add Manual
+                  Add Document
                 </Button>
               </>
             )}
@@ -901,7 +901,7 @@ function AdminDashboardContent() {
               <Card className="border-0 shadow-lg bg-white">
                 <CardContent className="p-12 text-center">
                   <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary-600 mb-4" />
-                  <p className="text-slate-600">Loading manuals...</p>
+                  <p className="text-slate-600">Loading documents...</p>
                 </CardContent>
               </Card>
             ) : manualsError ? (
@@ -917,7 +917,7 @@ function AdminDashboardContent() {
               <Card className="border-0 shadow-lg bg-white">
                 <CardContent className="p-12 text-center">
                   <BookOpen className="h-12 w-12 mx-auto text-slate-400 mb-4" />
-                  <p className="text-slate-600">No manuals yet. Add one with a PDF file to get started.</p>
+                  <p className="text-slate-600">No documents yet. Add one with a PDF file to get started.</p>
                 </CardContent>
               </Card>
             ) : (

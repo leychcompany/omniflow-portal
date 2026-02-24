@@ -343,7 +343,7 @@ export default function SupportPage() {
               <h3 className="font-semibold text-slate-900 mb-2">Knowledge Base</h3>
               <p className="text-sm text-slate-600 mb-4">Self-help resources</p>
               <Button asChild variant="outline" size="sm">
-                <a href="/manuals">Browse Manuals</a>
+                <a href="/documents">Browse Documents</a>
               </Button>
             </CardContent>
           </Card>

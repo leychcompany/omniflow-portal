@@ -38,10 +38,10 @@ export default function EditManualPage() {
           headers: { Authorization: `Bearer ${session.access_token}` },
         })
         const data = await res.json()
-        if (!res.ok) throw new Error(data.error || 'Failed to load manual')
+        if (!res.ok) throw new Error(data.error || 'Failed to load document')
         setForm(data)
       } catch (e) {
-        setError(e instanceof Error ? e.message : 'Failed to load manual')
+        setError(e instanceof Error ? e.message : 'Failed to load document')
       } finally {
         setLoading(false)
       }
@@ -85,7 +85,7 @@ export default function EditManualPage() {
         body,
       })
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Failed to update manual')
+      if (!res.ok) throw new Error(data.error || 'Failed to update document')
       router.push('/admin?tab=manuals')
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to save')
@@ -111,7 +111,7 @@ export default function EditManualPage() {
         <CardContent className="p-6">
           <div className="flex items-center gap-3 text-red-700 mb-4">
             <XCircle className="h-5 w-5" />
-            <span>{error || 'Manual not found'}</span>
+            <span>{error || 'Document not found'}</span>
           </div>
           <Button variant="outline" onClick={() => router.push('/admin?tab=manuals')}>Back to Admin</Button>
         </CardContent>
@@ -126,9 +126,9 @@ export default function EditManualPage() {
           <div className="p-2 bg-gradient-to-br from-teal-600 to-teal-700 rounded-lg">
             <Upload className="h-5 w-5 text-white" />
           </div>
-          Edit Manual
+          Edit Document
         </CardTitle>
-        <CardDescription>Update metadata or replace PDF (max 50 MB)</CardDescription>
+        <CardDescription>Update metadata or replace PDF document (max 50 MB)</CardDescription>
       </CardHeader>
       <CardContent className="space-y-5 pt-6">
         <div>

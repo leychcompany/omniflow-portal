@@ -28,7 +28,7 @@ export async function proxy(req: NextRequest) {
     "/training",
     "/rfq",
     "/support",
-    "/manuals",
+    "/documents",
     "/news",
   ];
   const isProtectedRoute = protectedRoutes.some((route) =>

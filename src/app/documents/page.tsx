@@ -25,9 +25,9 @@ interface Manual {
   description: string
 }
 
-export default function ManualsPage() {
+export default function DocumentsPage() {
   const router = useRouter()
-  const [manuals, setManuals] = useState<Manual[]>([])
+  const [documents, setDocuments] = useState<Manual[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [selectedSeries, setSelectedSeries] = useState<'all' | 'OMNI-3000-6000' | 'OMNI-4000-7000'>('all')
@@ -35,10 +35,10 @@ export default function ManualsPage() {
   useEffect(() => {
     fetch('/api/manuals')
       .then((res) => {
-        if (!res.ok) throw new Error('Failed to load manuals')
+        if (!res.ok) throw new Error('Failed to load documents')
         return res.json()
       })
-      .then((data) => setManuals(Array.isArray(data) ? data : []))
+      .then((data) => setDocuments(Array.isArray(data) ? data : []))
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false))
   }, [])
@@ -49,16 +49,16 @@ export default function ManualsPage() {
     { id: '4000-7000', label: '4000/7000', value: 'OMNI-4000-7000' }
   ] as const
 
-  const filteredManuals = manuals.filter(manual =>
-    selectedSeries === 'all' ? true : manual.category === selectedSeries
+  const filteredDocuments = documents.filter((doc) =>
+    selectedSeries === 'all' ? true : doc.category === selectedSeries
   )
 
-  const handleDownload = (manual: Manual) => {
-    const url = manual.download_url ?? manual.path
+  const handleDownload = (doc: Manual) => {
+    const url = doc.download_url ?? doc.path
     if (!url) return
     const link = document.createElement('a')
     link.href = url
-    link.download = manual.filename
+    link.download = doc.filename
     link.target = '_blank'
     link.rel = 'noopener noreferrer'
     link.click()
@@ -99,7 +99,7 @@ export default function ManualsPage() {
                   <BookOpen className="h-6 w-6 text-orange-600" />
                 </div>
                 <div>
-                  <h1 className="text-xl font-semibold text-slate-900">Manuals</h1>
+                  <h1 className="text-xl font-semibold text-slate-900">Documents</h1>
                   <p className="text-sm text-slate-600">Technical documentation and guides</p>
                 </div>
               </div>
@@ -110,10 +110,10 @@ export default function ManualsPage() {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {/* Manuals List */}
+        {/* Documents List */}
         <div className="space-y-6">
           <div>
-            <h2 className="text-2xl font-bold text-slate-900 mb-2">Available Manuals</h2>
+            <h2 className="text-2xl font-bold text-slate-900 mb-2">Available Documents</h2>
             <p className="text-slate-600">Download technical documentation and guides</p>
           </div>
 
@@ -131,22 +131,22 @@ export default function ManualsPage() {
           </div>
           
           <div className="grid grid-cols-1 gap-6">
-            {filteredManuals.map((manual) => (
-              <Card key={manual.id} className="border-0 shadow-sm hover:shadow-lg transition-all">
+            {filteredDocuments.map((doc) => (
+              <Card key={doc.id} className="border-0 shadow-sm hover:shadow-lg transition-all">
                 <CardContent className="p-6">
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-lg font-semibold text-slate-900">{manual.title}</h3>
+                        <h3 className="text-lg font-semibold text-slate-900">{doc.title}</h3>
                         <Badge variant="secondary" className="text-xs">
-                          {manual.category}
+                          {doc.category}
                         </Badge>
                       </div>
-                      <p className="text-slate-600 mb-3">{manual.description}</p>
+                      <p className="text-slate-600 mb-3">{doc.description}</p>
                       <div className="flex items-center gap-4 text-sm text-slate-500">
                         <div className="flex items-center gap-1">
                           <FileText className="h-4 w-4" />
-                          {manual.size}
+                          {doc.size}
                         </div>
                         <div className="flex items-center gap-1">
                           <File className="h-4 w-4" />
@@ -158,7 +158,7 @@ export default function ManualsPage() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleDownload(manual)}
+                        onClick={() => handleDownload(doc)}
                         className="transition-all duration-200"
                       >
                         <Download className="h-4 w-4 mr-2" />
@@ -171,9 +171,9 @@ export default function ManualsPage() {
             ))}
           </div>
 
-          {filteredManuals.length === 0 && (
+          {filteredDocuments.length === 0 && (
             <div className="text-center py-10 text-slate-600">
-              No manuals found for this series.
+              No documents found for this series.
             </div>
           )}
         </div>

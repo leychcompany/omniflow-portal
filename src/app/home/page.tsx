@@ -9,8 +9,6 @@ import { Logo } from '@/components/Logo'
 import { useAuthStore } from '@/store/auth-store'
 import { supabase } from '@/lib/supabase'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { manuals } from '../manuals/manuals-data'
-import { courses } from '../training/courses-data'
 import { 
   Bot, 
   GraduationCap, 
@@ -38,19 +36,19 @@ import {
   ChevronDown
 } from 'lucide-react'
 
-const dashboardStats = [
+const getDashboardStats = (documentsCount: number, trainingCount: number) => [
   { 
-    label: 'Manuals', 
-    value: manuals.length.toString(), 
+    label: 'Documents', 
+    value: documentsCount.toString(), 
     color: 'text-green-600', 
     bgColor: 'bg-green-50', 
     borderColor: 'border-green-200',
     icon: FileText,
-    href: '/manuals'
+    href: '/documents'
   },
   { 
     label: 'Training Classes', 
-    value: courses.length.toString(), 
+    value: trainingCount.toString(), 
     color: 'text-purple-600', 
     bgColor: 'bg-purple-50', 
     borderColor: 'border-purple-200',
@@ -101,12 +99,12 @@ const menuItems = [
     badgeColor: 'bg-red-100 text-red-800'
   },
   {
-    id: 'view-manuals',
-    title: 'Manuals',
-    subtitle: 'Download manuals and guides',
+    id: 'view-documents',
+    title: 'Documents',
+    subtitle: 'Download documents and guides',
     icon: BookOpen,
     gradient: 'from-orange-500 via-orange-600 to-amber-600',
-    href: '/manuals',
+    href: '/documents',
     badge: null,
     badgeColor: ''
   },
@@ -128,7 +126,23 @@ export default function HomePage() {
   const { user } = useAuthStore()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false)
+  const [documentsCount, setDocumentsCount] = useState(0)
+  const [trainingCount, setTrainingCount] = useState(0)
   const hashHandledRef = useRef(false)
+
+  useEffect(() => {
+    fetch('/api/manuals')
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) => setDocumentsCount(Array.isArray(data) ? data.length : 0))
+      .catch(() => setDocumentsCount(0))
+  }, [])
+
+  useEffect(() => {
+    fetch('/api/courses')
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) => setTrainingCount(Array.isArray(data) ? data.length : 0))
+      .catch(() => setTrainingCount(0))
+  }, [])
 
   useEffect(() => {
     if (typeof window === 'undefined' || hashHandledRef.current) {
@@ -312,7 +326,7 @@ export default function HomePage() {
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {dashboardStats.map((stat, index) => {
+          {getDashboardStats(documentsCount, trainingCount).map((stat, index) => {
             const Icon = stat.icon
             return (
               <Card

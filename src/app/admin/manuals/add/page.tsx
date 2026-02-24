@@ -42,7 +42,7 @@ export default function AddManualPage() {
         body: formData,
       })
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Failed to upload manual')
+      if (!res.ok) throw new Error(data.error || 'Failed to upload document')
       router.push('/admin?tab=manuals')
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to save')
@@ -58,9 +58,9 @@ export default function AddManualPage() {
           <div className="p-2 bg-gradient-to-br from-teal-600 to-teal-700 rounded-lg">
             <Upload className="h-5 w-5 text-white" />
           </div>
-          Add Manual
+          Add Document
         </CardTitle>
-        <CardDescription>Upload a PDF manual (max 50 MB)</CardDescription>
+        <CardDescription>Upload a PDF document (max 50 MB)</CardDescription>
       </CardHeader>
       <CardContent className="space-y-5 pt-6">
         <div>
