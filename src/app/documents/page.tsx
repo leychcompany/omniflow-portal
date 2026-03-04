@@ -195,8 +195,8 @@ export default function DocumentsPage() {
 
               {/* Mobile: bottom sheet */}
               <Dialog open={filterSheetOpen} onOpenChange={setFilterSheetOpen}>
-                <DialogContent className="fixed bottom-0 left-0 right-0 top-auto max-w-none mx-0 w-full rounded-t-2xl max-h-[70vh] overflow-y-auto md:hidden">
-                  <div className="mb-4">
+                <DialogContent className="fixed bottom-0 inset-x-0 top-auto m-0 w-full min-w-0 max-w-full m-0 rounded-t-2xl max-h-[70vh] overflow-y-auto overflow-x-hidden md:hidden">
+                  <div className="mb-4 min-w-0">
                     <h3 className="text-lg font-semibold text-slate-900">Filter by tags</h3>
                     {selectedTags.length > 0 && (
                       <p className="text-sm text-slate-500 mt-1">
@@ -204,39 +204,8 @@ export default function DocumentsPage() {
                       </p>
                     )}
                   </div>
-                  {selectedTags.length > 0 && (
-                    <div className="mb-4">
-                      <span className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2 block">
-                        Active filters
-                      </span>
-                      <div className="flex flex-wrap gap-2">
-                        {selectedTags.map((tag) => (
-                          <Badge
-                            key={tag.toLowerCase()}
-                            className="bg-orange-100 text-orange-800 border-orange-200 hover:bg-orange-200/80 cursor-pointer gap-1.5 pl-2.5 pr-1.5 py-1"
-                            onClick={() => toggleTag(tag)}
-                          >
-                            {tag}
-                            <span className="rounded-full p-0.5 hover:bg-orange-300/50">
-                              <X className="h-3 w-3" />
-                            </span>
-                          </Badge>
-                        ))}
-                      </div>
-                      <button
-                        type="button"
-                        onClick={clearFilters}
-                        className="mt-2 text-xs font-medium text-orange-600 hover:text-orange-700"
-                      >
-                        Clear all
-                      </button>
-                    </div>
-                  )}
                   <div>
-                    <span className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2 block">
-                      {selectedTags.length > 0 ? 'Add more filters' : 'All tags'}
-                    </span>
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-wrap gap-2 min-w-0">
                       {allTags.map((tag) => {
                         const selected = isTagSelected(tag)
                         const count = tagCounts.get(tag) ?? 0
@@ -299,31 +268,7 @@ export default function DocumentsPage() {
                     </div>
                   </div>
                   <CardContent className="p-4">
-                    {selectedTags.length > 0 && (
-                      <div className="mb-3">
-                        <span className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2 block">
-                          Active filters
-                        </span>
-                        <div className="flex flex-wrap gap-2">
-                          {selectedTags.map((tag) => (
-                            <Badge
-                              key={tag.toLowerCase()}
-                              className="bg-orange-100 text-orange-800 border-orange-200 hover:bg-orange-200/80 cursor-pointer gap-1.5 pl-2.5 pr-1.5 py-1"
-                              onClick={() => toggleTag(tag)}
-                            >
-                              {tag}
-                              <span className="rounded-full p-0.5 hover:bg-orange-300/50 transition-colors">
-                                <X className="h-3 w-3" />
-                              </span>
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    )}
                     <div>
-                      <span className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2 block">
-                        {selectedTags.length > 0 ? 'Add more filters' : 'All tags'}
-                      </span>
                       <div className="flex flex-wrap gap-2">
                         {allTags.map((tag) => {
                           const selected = isTagSelected(tag)
@@ -358,51 +303,54 @@ export default function DocumentsPage() {
 
           <div className="grid grid-cols-1 gap-6">
             {filteredDocuments.map((doc) => (
-              <Card key={doc.id} className="border-0 shadow-sm hover:shadow-lg transition-all">
-                <CardContent className="p-6">
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <div className="flex flex-wrap items-center gap-2 mb-2">
-                        <h3 className="text-lg font-semibold text-slate-900">{doc.title}</h3>
-                        {(() => {
-                          const seen = new Set<string>()
-                          return (doc.tags || [])
-                            .filter((tag) => {
-                              const key = tag.toLowerCase()
-                              if (seen.has(key)) return false
-                              seen.add(key)
-                              return true
-                            })
-                            .map((tag) => (
-                              <Badge key={tag.toLowerCase()} variant="secondary" className="text-xs">
-                                {tag}
-                              </Badge>
-                            ))
-                        })()}
+              <Card key={doc.id} className="border-0 shadow-sm hover:shadow-lg transition-all flex flex-col">
+                <CardContent className="p-6 flex flex-col flex-1 min-h-0">
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-slate-900 w-full mb-2 truncate" title={doc.title}>
+                      {doc.title}
+                    </h3>
+                    <div className="flex flex-wrap items-center gap-1.5 mb-3">
+                      {(() => {
+                        const seen = new Set<string>()
+                        return (doc.tags || [])
+                          .filter((tag) => {
+                            const key = tag.toLowerCase()
+                            if (seen.has(key)) return false
+                            seen.add(key)
+                            return true
+                          })
+                          .map((tag) => (
+                            <span
+                              key={tag.toLowerCase()}
+                              className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-slate-100 text-slate-700 whitespace-nowrap"
+                            >
+                              {tag}
+                            </span>
+                          ))
+                      })()}
+                    </div>
+                    <p className="text-slate-600 mb-3 line-clamp-2">{doc.description}</p>
+                    <div className="flex items-center gap-4 text-sm text-slate-500">
+                      <div className="flex items-center gap-1">
+                        <FileText className="h-4 w-4 shrink-0" />
+                        {doc.size}
                       </div>
-                      <p className="text-slate-600 mb-3">{doc.description}</p>
-                      <div className="flex items-center gap-4 text-sm text-slate-500">
-                        <div className="flex items-center gap-1">
-                          <FileText className="h-4 w-4" />
-                          {doc.size}
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <File className="h-4 w-4" />
-                          PDF Document
-                        </div>
+                      <div className="flex items-center gap-1">
+                        <File className="h-4 w-4 shrink-0" />
+                        PDF Document
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDownload(doc)}
-                        className="transition-all duration-200"
-                      >
-                        <Download className="h-4 w-4 mr-2" />
-                        Download
-                      </Button>
-                    </div>
+                  </div>
+                  <div className="mt-4 pt-4 border-t border-slate-100">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDownload(doc)}
+                      className="w-full transition-all duration-200"
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Download
+                    </Button>
                   </div>
                 </CardContent>
               </Card>

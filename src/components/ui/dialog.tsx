@@ -70,7 +70,7 @@ export function Dialog({ open, onOpenChange, children }: DialogProps) {
 export function DialogContent({ children, className = "" }: DialogContentProps) {
   return (
     <div
-      className={`bg-white rounded-xl shadow-2xl p-6 w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto ${className}`}
+      className={`bg-white rounded-xl shadow-2xl p-6 w-full max-w-md mx-4 ml-0 mlr-0 max-h-[90vh] overflow-y-auto ${className}`}
       onClick={(e) => e.stopPropagation()}
     >
       {children}
