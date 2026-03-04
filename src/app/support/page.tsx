@@ -280,15 +280,6 @@ export default function SupportPage() {
               </div>
             </div>
             
-            <div className="flex items-center space-x-2">
-              <Button
-                onClick={() => ticketFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-                className="bg-red-600 hover:bg-red-700 text-white transition-all duration-200"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                New Ticket
-              </Button>
-            </div>
           </div>
         </div>
       </header>
@@ -306,43 +297,50 @@ export default function SupportPage() {
                 Get help from our expert support team
               </p>
             </div>
-            <div className="mt-4 sm:mt-0">
+            <div className="mt-4 sm:mt-0 flex flex-wrap gap-3">
               <Button
                 asChild
-                className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white shadow-lg hover:shadow-xl transition-all"
+                className="bg-red-600 hover:bg-red-700 text-white transition-all duration-200"
               >
                 <a href="tel:+12812406161">
                   <Phone className="h-4 w-4 mr-2" />
                   Call Support
                 </a>
               </Button>
+              <Button
+                onClick={() => ticketFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                className="bg-red-600 hover:bg-red-700 text-white transition-all duration-200"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                New Ticket
+              </Button>
             </div>
           </div>
         </div>
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card className="border-0 shadow-sm hover:shadow-lg transition-all cursor-pointer">
-            <CardContent className="p-6 text-center">
-              <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mx-auto mb-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
+          <Card className="border-0 shadow-sm hover:shadow-lg transition-all cursor-pointer h-full">
+            <CardContent className="p-6 text-center flex flex-col h-full">
+              <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mx-auto mb-4 shrink-0">
                 <Phone className="h-6 w-6 text-blue-600" />
               </div>
               <h3 className="font-semibold text-slate-900 mb-2">Phone Support</h3>
               <p className="text-sm text-slate-600 mb-2">+1 (281) 240-6161</p>
-              <Button asChild variant="outline" size="sm">
+              <Button asChild variant="outline" size="sm" className="mt-auto">
                 <a href="tel:+12812406161">Call Now</a>
               </Button>
             </CardContent>
           </Card>
-          <Card className="border-0 shadow-sm hover:shadow-lg transition-all cursor-pointer">
-            <CardContent className="p-6 text-center">
-              <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center mx-auto mb-4">
+          <Card className="border-0 shadow-sm hover:shadow-lg transition-all cursor-pointer h-full">
+            <CardContent className="p-6 text-center flex flex-col h-full">
+              <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center mx-auto mb-4 shrink-0">
                 <FileText className="h-6 w-6 text-orange-600" />
               </div>
-              <h3 className="font-semibold text-slate-900 mb-2">Knowledge Base</h3>
+              <h3 className="font-semibold text-slate-900 mb-2">Documents</h3>
               <p className="text-sm text-slate-600 mb-4">Self-help resources</p>
-              <Button asChild variant="outline" size="sm">
-                <a href="/documents">Browse Documents</a>
+              <Button asChild variant="outline" size="sm" className="mt-auto">
+                <a href="/documents">Browse</a>
               </Button>
             </CardContent>
           </Card>

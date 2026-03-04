@@ -2,11 +2,9 @@
 
 import { Suspense, useEffect, useState } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
-import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
 import { Logo } from '@/components/Logo'
 import { ArrowLeft, Send, Loader2 } from 'lucide-react'
 
@@ -130,14 +128,9 @@ function TrainingRequestInner() {
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <Card className="border-0 shadow-lg">
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="text-xl">Request Training</CardTitle>
-                <CardDescription>Tell us which training you want and how to reach you.</CardDescription>
-              </div>
-              <Badge variant="secondary" className="bg-purple-100 text-purple-800">
-                Training Request
-              </Badge>
+            <div>
+              <CardTitle className="text-xl">Request Training</CardTitle>
+              <CardDescription>Tell us which training you want and how to reach you.</CardDescription>
             </div>
           </CardHeader>
           <CardContent>
@@ -236,9 +229,6 @@ function TrainingRequestInner() {
                 >
                   <Send className="h-4 w-4 mr-2" />
                   {status === 'submitting' ? 'Sending...' : 'Submit Request'}
-                </Button>
-                <Button variant="outline" asChild>
-                  <Link href="/training">Back to Training</Link>
                 </Button>
               </div>
             </form>
