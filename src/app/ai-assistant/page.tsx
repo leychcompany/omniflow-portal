@@ -157,7 +157,7 @@ export default function AIAssistantPage() {
   }
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden bg-slate-50 md:min-h-screen md:h-auto md:overflow-visible">
+    <div className="h-screen flex flex-col overflow-hidden bg-slate-50 md:min-h-screen md:h-auto">
       {/* Header - fixed on mobile, in-flow on desktop */}
       <header className="fixed top-0 left-0 right-0 shrink-0 bg-white border-b border-slate-200/50 shadow-sm z-50 md:relative md:top-auto">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -200,7 +200,7 @@ export default function AIAssistantPage() {
             <Card className="flex-1 flex flex-col min-h-0 border-0 shadow-sm md:rounded-lg h-full">
               <CardContent className="p-0 flex-1 flex flex-col min-h-0">
                 {/* Messages - scrollable only, pb-20 on mobile for fixed input */}
-                <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0 p-4 pb-24 md:pb-8 md:p-8">
+                <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0 p-4 pb-24 md:pb-8 md:p-8 scrollbar-hide">
                   <div className="space-y-6 max-w-5xl mx-auto md:space-y-8">
                     {messages.map((message) => (
                       <div
