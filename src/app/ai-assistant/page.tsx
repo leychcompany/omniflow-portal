@@ -158,8 +158,8 @@ export default function AIAssistantPage() {
 
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-slate-50 md:min-h-screen md:h-auto md:overflow-visible">
-      {/* Header */}
-      <header className="shrink-0 bg-white border-b border-slate-200/50 shadow-sm sticky top-0 z-50">
+      {/* Header - fixed on mobile, in-flow on desktop */}
+      <header className="fixed top-0 left-0 right-0 shrink-0 bg-white border-b border-slate-200/50 shadow-sm z-50 md:relative md:top-auto">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between py-4">
             <div className="flex items-center space-x-4">
@@ -192,15 +192,15 @@ export default function AIAssistantPage() {
         </div>
       </header>
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col min-h-0 md:max-w-7xl md:mx-auto md:px-4 md:py-6 md:min-h-0">
+      {/* Main Content - pt-16 on mobile for fixed header */}
+      <div className="flex-1 flex flex-col min-h-0 pt-16 md:pt-0 md:max-w-7xl md:mx-auto md:px-4 md:py-6 md:min-h-0">
         <div className="flex flex-col lg:flex-row gap-8 flex-1 min-h-0 md:h-[calc(100vh-200px)]">
           {/* Chat Area - full width on mobile, expands to fill */}
           <div className="flex-1 min-w-0 flex flex-col min-h-0 md:min-h-[calc(100vh-200px)]">
-            <Card className="flex-1 flex flex-col min-h-0 border-0 shadow-sm md:rounded-lg">
+            <Card className="flex-1 flex flex-col min-h-0 border-0 shadow-sm md:rounded-lg h-full">
               <CardContent className="p-0 flex-1 flex flex-col min-h-0">
-                {/* Messages - scrollable only */}
-                <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0 p-4 md:p-8">
+                {/* Messages - scrollable only, pb-20 on mobile for fixed input */}
+                <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0 p-4 pb-24 md:pb-8 md:p-8">
                   <div className="space-y-6 max-w-5xl mx-auto md:space-y-8">
                     {messages.map((message) => (
                       <div
@@ -250,7 +250,7 @@ export default function AIAssistantPage() {
                 </div>
 
                 {/* Input Area - fixed at bottom on mobile */}
-                <div className="shrink-0 bg-white border-t border-slate-200 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] md:pb-4">
+                <div className="fixed bottom-0 left-0 right-0 shrink-0 bg-white border-t border-slate-200 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] z-50 md:relative md:bottom-auto md:pb-4">
                   <div className="flex items-center bg-slate-50 rounded-3xl px-4 py-2">
                     <input
                       type="text"
