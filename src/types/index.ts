@@ -5,6 +5,11 @@ export interface User {
   role: "admin" | "client";
   created_at: string;
   updated_at: string;
+  locked?: boolean;
+  first_name?: string;
+  last_name?: string;
+  company?: string;
+  title?: string;
 }
 
 export interface Invite {

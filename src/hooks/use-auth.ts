@@ -30,24 +30,34 @@ export function useAuth() {
   }, []);
 
   const fetchUserProfile = useCallback(
-    async (userId: string) => {
+    async (_userId: string) => {
       try {
-        const { data, error } = await supabase
-          .from("users")
-          .select("*")
-          .eq("id", userId)
-          .single();
-
-        if (error) {
-          console.error("Error fetching user profile:", error);
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        const headers: HeadersInit = { "Content-Type": "application/json" };
+        if (session?.access_token) {
+          headers["Authorization"] = `Bearer ${session.access_token}`;
+        }
+        // Use /api/profile which bypasses RLS and returns correct locked status
+        const res = await fetch(`/api/profile?t=${Date.now()}`, {
+          credentials: "include",
+          headers,
+          cache: "no-store",
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          console.error("Error fetching user profile:", err);
+          setUser(null);
           setLoading(false);
           return;
         }
-
-        setUser(data as User);
+        const data = (await res.json()) as User;
+        setUser(data);
         await markInvitesAsUsed();
       } catch (error) {
         console.error("Error fetching user profile:", error);
+        setUser(null);
       } finally {
         setLoading(false);
       }
@@ -56,22 +66,40 @@ export function useAuth() {
   );
 
   useEffect(() => {
-    // Get initial session
-    supabase.auth
-      .getSession()
-      .then(({ data: { session } }) => {
-        if (session?.user) {
-          fetchUserProfile(session.user.id);
-        } else {
+    const refreshProfile = () => {
+      setLoading(true);
+      supabase.auth
+        .getSession()
+        .then(({ data: { session } }) => {
+          if (session?.user) {
+            fetchUserProfile(session.user.id);
+          } else {
+            setUser(null);
+            setLoading(false);
+          }
+        })
+        .catch((error) => {
+          console.error("useAuth: Error getting session:", error);
+          setUser(null);
           setLoading(false);
-        }
-      })
-      .catch((error) => {
-        console.error("useAuth: Error getting session:", error);
-        setLoading(false);
-      });
+        });
+    };
 
-    // Listen for auth changes
+    // Initial load and on page refresh - fetch immediately
+    refreshProfile();
+
+    // Refetch when user returns to tab (e.g. admin unlocked them while they had tab open)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        refreshProfile();
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    // Listen for manual refresh (e.g. user clicks "Refresh" after admin unlocks)
+    const handleRefreshEvent = () => refreshProfile();
+    document.addEventListener("auth:refreshProfile", handleRefreshEvent);
+
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
@@ -83,7 +111,11 @@ export function useAuth() {
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      document.removeEventListener("auth:refreshProfile", handleRefreshEvent);
+      subscription.unsubscribe();
+    };
   }, [fetchUserProfile, setLoading, setUser]);
 
   const signIn = async (email: string, password: string) => {

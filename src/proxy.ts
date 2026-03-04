@@ -9,6 +9,7 @@ export async function proxy(req: NextRequest) {
   // Define public routes that don't require authentication
   const publicRoutes = [
     "/login",
+    "/register",
     "/forgot-password",
     "/set-password",
     "/auth/reset-password",
@@ -24,6 +25,8 @@ export async function proxy(req: NextRequest) {
   // Define protected routes that require authentication
   const protectedRoutes = [
     "/home",
+    "/settings",
+    "/logout",
     "/ai-assistant",
     "/training",
     "/rfq",
@@ -97,10 +100,10 @@ export async function proxy(req: NextRequest) {
         data: { session },
       } = await supabase.auth.getSession();
 
-      // If authenticated and trying to access login/forgot-password, redirect to portal
+      // If authenticated and trying to access login/register/forgot-password, redirect to portal
       if (
         session &&
-        (pathname === "/login" || pathname === "/forgot-password")
+        (pathname === "/login" || pathname === "/register" || pathname === "/forgot-password")
       ) {
         return NextResponse.redirect(new URL("/home", req.url));
       }

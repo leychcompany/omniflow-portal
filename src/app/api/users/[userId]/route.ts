@@ -71,7 +71,7 @@ export async function GET(
     const { userId } = await params;
     const { data, error } = await supabaseAdmin
       .from("users")
-      .select("id, email, name, role, created_at")
+      .select("id, email, name, role, created_at, locked, first_name, last_name, company, title")
       .eq("id", userId)
       .single();
 
@@ -83,6 +83,50 @@ export async function GET(
     console.error("Error fetching user:", error);
     return NextResponse.json(
       { error: "Failed to fetch user" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ userId: string }> }
+) {
+  const adminCheck = await assertAdmin(request);
+  if ("errorResponse" in adminCheck) {
+    return adminCheck.errorResponse;
+  }
+
+  try {
+    const { userId } = await params;
+    const body = await request.json().catch(() => ({}));
+    const { locked } = body;
+
+    if (typeof locked !== "boolean") {
+      return NextResponse.json(
+        { error: "Invalid request. 'locked' must be a boolean." },
+        { status: 400 }
+      );
+    }
+
+    const { error } = await supabaseAdmin
+      .from("users")
+      .update({ locked })
+      .eq("id", userId);
+
+    if (error) {
+      throw error;
+    }
+
+    return NextResponse.json({
+      success: true,
+      locked,
+      message: locked ? "User locked" : "User unlocked",
+    });
+  } catch (error: unknown) {
+    console.error("Error updating user:", error);
+    return NextResponse.json(
+      { error: "Failed to update user" },
       { status: 500 }
     );
   }

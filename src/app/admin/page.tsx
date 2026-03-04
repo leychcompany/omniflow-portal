@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { supabase } from '@/lib/supabase'
+import { recordAuthEvent } from '@/lib/record-analytics-event'
 import {
   Users,
   Plus,
@@ -29,6 +30,8 @@ import {
   Eye,
   BarChart3,
   Package,
+  Lock,
+  Unlock,
 } from 'lucide-react'
 
 interface User {
@@ -40,6 +43,7 @@ interface User {
   lastLogin?: string
   createdAt: string
   avatarUrl?: string
+  locked?: boolean
 }
 
 interface Course {
@@ -290,12 +294,13 @@ function AdminDashboardContent() {
 
       const transformedUsers: User[] = dbUsers.map((dbUser: any) => ({
         id: dbUser.id,
-        name: dbUser.name || dbUser.email?.split('@')[0] || 'Unknown',
+        name: dbUser.name || [dbUser.first_name, dbUser.last_name].filter(Boolean).join(' ') || dbUser.email?.split('@')[0] || 'Unknown',
         email: dbUser.email,
         role: dbUser.role || 'client',
         status: (dbUser.status as User['status']) || 'active',
         createdAt: dbUser.created_at || dbUser.createdAt || new Date().toISOString(),
-        lastLogin: dbUser.last_login || dbUser.lastLogin
+        lastLogin: dbUser.last_login || dbUser.lastLogin,
+        locked: !!dbUser.locked
       }))
 
       setUsers(transformedUsers)
@@ -372,6 +377,8 @@ function AdminDashboardContent() {
 
   const handleSignOut = async () => {
     try {
+      const { data: { session } } = await supabase.auth.getSession()
+      await recordAuthEvent('logout', session?.access_token)
       const { error } = await supabase.auth.signOut()
       if (error) throw error
       window.location.href = '/login'
@@ -406,6 +413,36 @@ function AdminDashboardContent() {
     } catch (error) {
       console.error('Error toggling user role:', error)
       alert('Failed to update user role. You may need to set up RLS policies.')
+    }
+  }
+
+  const toggleUserLock = async (userId: string) => {
+    try {
+      const userToToggle = users.find((u) => u.id === userId)
+      if (!userToToggle) return
+
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+      if (sessionError || !session) {
+        throw new Error('Session expired. Please log in again.')
+      }
+
+      const newLocked = !userToToggle.locked
+      const res = await fetch(`/api/users/${userId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ locked: newLocked }),
+      })
+
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed to update user')
+
+      await fetchUsers()
+    } catch (error: unknown) {
+      console.error('Error toggling lock:', error)
+      alert(error instanceof Error ? error.message : 'Failed to update user')
     }
   }
 
@@ -633,7 +670,7 @@ function AdminDashboardContent() {
     { id: 'manuals' as const, label: 'Documents', count: manuals.length, icon: BookOpen },
     { id: 'software' as const, label: 'Software', count: softwareItems.length, icon: Package },
     { id: 'news' as const, label: 'News', count: newsArticles.length, icon: Newspaper },
-    { id: 'analytics' as const, label: 'Analytics', count: analyticsEvents.length, icon: BarChart3 },
+    { id: 'analytics' as const, label: 'Analytics', icon: BarChart3 },
   ]
 
   const getTabButtonClass = (id: typeof activeTab) => {
@@ -663,13 +700,14 @@ function AdminDashboardContent() {
                 className={getTabButtonClass(id)}
               >
                 <Icon className="h-4 w-4 mr-2" />
-                {label} ({count})
+                {label}{count != null ? ` (${count})` : ''}
               </Button>
             ))}
           </div>
         </div>
 
         {/* Search and Actions */}
+        {activeTab !== 'analytics' && (
         <div className="flex flex-col sm:flex-row gap-4 mb-6">
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
@@ -762,14 +800,9 @@ function AdminDashboardContent() {
                 </Button>
               </>
             )}
-            {activeTab === 'analytics' && (
-              <Button variant="outline" onClick={fetchAnalytics} disabled={analyticsLoading} className="flex items-center gap-2">
-                <RefreshCw className={`h-4 w-4 ${analyticsLoading ? 'animate-spin' : ''}`} />
-                Refresh
-              </Button>
-            )}
           </div>
         </div>
+        )}
 
         {/* Content */}
         {activeTab === 'users' && (
@@ -848,6 +881,12 @@ function AdminDashboardContent() {
                               <Shield className="h-3 w-3 mr-1" />
                               {userItem.role}
                             </Badge>
+                            {userItem.locked && (
+                              <Badge className="bg-amber-100 text-amber-800 border-amber-200">
+                                <Lock className="h-3 w-3 mr-1" />
+                                Locked
+                              </Badge>
+                            )}
                             {userItem.createdAt && (
                               <Badge variant="outline" className="text-slate-600">
                                 <Calendar className="h-3 w-3 mr-1" />
@@ -858,6 +897,17 @@ function AdminDashboardContent() {
                         </div>
                       </div>
                       <div className="flex items-center space-x-2">
+                        {userItem.role !== 'admin' && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => toggleUserLock(userItem.id)}
+                            className={userItem.locked ? 'text-emerald-600 hover:bg-emerald-50 hover:border-emerald-200' : 'text-amber-600 hover:bg-amber-50 hover:border-amber-200'}
+                            title={userItem.locked ? 'Unlock user' : 'Lock user'}
+                          >
+                            {userItem.locked ? <Unlock className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
+                          </Button>
+                        )}
                         <Button
                           variant="outline"
                           size="sm"
@@ -1227,6 +1277,8 @@ function AdminDashboardContent() {
                 className="p-2 border border-slate-200 rounded-lg text-sm bg-white"
               >
                 <option value="">All events</option>
+                <option value="login">Login</option>
+                <option value="logout">Logout</option>
                 <option value="document_download">Document download</option>
                 <option value="software_download">Software download</option>
               </select>
@@ -1281,7 +1333,15 @@ function AdminDashboardContent() {
                                 {evt.event_type.replace(/_/g, ' ')}
                               </Badge>
                             </td>
-                            <td className="p-4 text-slate-700">{evt.resource_label}</td>
+                            <td className="p-4 text-slate-700">
+                              {evt.event_type === 'login' || evt.event_type === 'logout' ? (
+                                <span className="text-xs" title={JSON.stringify(evt.metadata)}>
+                                  {(evt.metadata as { ip?: string })?.ip || '—'}
+                                </span>
+                              ) : (
+                                evt.resource_label
+                              )}
+                            </td>
                             <td className="p-4 text-slate-600">{formatDate(evt.created_at)}</td>
                           </tr>
                         ))}
@@ -1310,7 +1370,7 @@ function AdminDashboardContent() {
                 }`}
               >
                 <Icon className="h-5 w-5 shrink-0" />
-                <span className="text-[10px] font-medium truncate w-full text-center">{label} ({count})</span>
+                <span className="text-[10px] font-medium truncate w-full text-center">{label}{count != null ? ` (${count})` : ''}</span>
               </button>
             )
           })}

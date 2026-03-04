@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, Suspense, useEffect, useRef } from 'react'
+import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -8,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Logo } from '@/components/Logo'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/auth-store'
+import { recordAuthEvent } from '@/lib/record-analytics-event'
 import { Eye, EyeOff, Loader2, Shield, Users, Zap, BookOpen, ArrowRight } from 'lucide-react'
 
 function LoginForm() {
@@ -84,18 +86,19 @@ function LoginForm() {
 
       if (error) throw error
 
-      console.log('Login successful:', data)
-
       if (data.user) {
-        // Fetch user profile immediately after login
-        const { data: userData, error: profileError } = await supabase
-          .from('users')
-          .select('*')
-          .eq('id', data.user.id)
-          .single()
+        await recordAuthEvent('login', data.session?.access_token)
+        // Fetch user profile via API (bypasses RLS, returns correct locked status)
+        const profileRes = await fetch('/api/profile', {
+          credentials: 'include',
+          headers: data.session?.access_token
+            ? { Authorization: `Bearer ${data.session.access_token}` }
+            : {},
+        })
+        const userData = profileRes.ok ? await profileRes.json() : null
 
-        if (profileError) {
-          console.error('Error fetching user profile:', profileError)
+        if (!userData) {
+          console.error('Error fetching user profile')
           throw new Error('Failed to load user profile')
         }
 
@@ -285,7 +288,7 @@ function LoginForm() {
                   </Button>
                 </form>
 
-                <div className="text-center space-y-3">
+                <div className="text-center space-y-4">
                   <button
                     type="button"
                     onClick={() => router.push('/forgot-password')}
@@ -293,16 +296,20 @@ function LoginForm() {
                   >
                     Forgot your password?
                   </button>
-            
+                  <div className="pt-4 border-t border-slate-200">
+                    <Link href="/register" className="block">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="w-full h-11 border-2 border-slate-300 hover:border-slate-400 hover:bg-slate-50 font-semibold"
+                      >
+                        Create account
+                      </Button>
+                    </Link>
+                  </div>
                 </div>
               </CardContent>
             </Card>
-
-            <div className="mt-8 text-center">
-              <p className="text-sm text-slate-500">
-                Contact your administrator to get access
-              </p>
-            </div>
           </div>
         </div>
       </div>

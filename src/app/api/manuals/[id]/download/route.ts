@@ -21,6 +21,18 @@ export async function GET(
   const auth = await verifyAuth(req);
   if (!auth.ok) return auth.response;
 
+  const { data: userRow } = await supabaseAdmin
+    .from("users")
+    .select("locked")
+    .eq("id", auth.userId)
+    .single();
+  if (userRow?.locked) {
+    return NextResponse.json(
+      { error: "Account pending approval. This feature will be available once an administrator unlocks your account." },
+      { status: 403 }
+    );
+  }
+
   try {
     const { id } = await params;
     const { data: manual, error } = await supabaseAdmin

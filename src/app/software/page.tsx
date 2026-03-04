@@ -4,12 +4,14 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { useAuthStore } from '@/store/auth-store'
 import {
   ArrowLeft,
   Download,
   Package,
   FileArchive,
   Loader2,
+  Shield,
 } from 'lucide-react'
 
 interface SoftwareItem {
@@ -22,6 +24,7 @@ interface SoftwareItem {
 }
 
 export default function SoftwarePage() {
+  const { user } = useAuthStore()
   const [items, setItems] = useState<SoftwareItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -53,6 +56,40 @@ export default function SoftwarePage() {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <p className="text-red-600">{error}</p>
+      </div>
+    )
+  }
+
+  if (user?.locked === true) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex flex-col">
+        <header className="bg-white border-b border-slate-200/50 shadow-sm">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between py-4">
+              <Button variant="ghost" className="flex items-center gap-2" asChild>
+                <Link href="/home" prefetch>
+                  <ArrowLeft className="h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
+          </div>
+        </header>
+        <div className="flex-1 flex items-center justify-center p-8">
+          <Card className="max-w-md w-full border-0 shadow-lg">
+            <CardContent className="pt-8 pb-8 text-center">
+              <div className="mx-auto p-4 bg-amber-100 rounded-full w-fit mb-4">
+                <Shield className="h-12 w-12 text-amber-600" />
+              </div>
+              <h2 className="text-xl font-semibold text-slate-900 mb-2">Account pending approval</h2>
+              <p className="text-slate-600 mb-6">
+                Your account is awaiting admin approval. Software will be available once an administrator unlocks your account.
+              </p>
+              <Button asChild>
+                <Link href="/home">Back to Home</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     )
   }

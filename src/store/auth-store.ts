@@ -8,6 +8,11 @@ export interface User {
   role: "admin" | "client";
   created_at: string;
   updated_at: string;
+  locked?: boolean;
+  first_name?: string;
+  last_name?: string;
+  company?: string;
+  title?: string;
 }
 
 interface AuthState {
@@ -33,8 +38,9 @@ export const useAuthStore = create<AuthState>()(
       signOut: () => set({ user: null, mustChangePassword: false }),
     }),
     {
-      name: "auth-storage",
-      partialize: (state) => ({ user: state.user }),
+      name: "auth-storage-v2",
+      // Don't persist user - always fetch fresh on load so locked status updates on refresh
+      partialize: (state) => ({ mustChangePassword: state.mustChangePassword }),
     }
   )
 );

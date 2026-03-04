@@ -4,6 +4,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Crown, ArrowLeft, LogOut } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { recordAuthEvent } from '@/lib/record-analytics-event'
 
 export default function AdminLayout({
   children,
@@ -16,6 +17,8 @@ export default function AdminLayout({
 
   const handleSignOut = async () => {
     try {
+      const { data: { session } } = await supabase.auth.getSession()
+      await recordAuthEvent('logout', session?.access_token)
       await supabase.auth.signOut()
       window.location.href = '/login'
     } catch {

@@ -35,38 +35,25 @@ import {
   Crown,
   User,
   ChevronDown,
-  Package
+  Package,
+  RefreshCw
 } from 'lucide-react'
 
-const getDashboardStats = (documentsCount: number, trainingCount: number, softwareCount: number) => [
-  { 
-    label: 'Documents', 
-    value: documentsCount.toString(), 
-    color: 'text-green-600', 
-    bgColor: 'bg-green-50', 
-    borderColor: 'border-green-200',
-    icon: FileText,
-    href: '/documents'
-  },
-  { 
-    label: 'Training Classes', 
-    value: trainingCount.toString(), 
-    color: 'text-purple-600', 
-    bgColor: 'bg-purple-50', 
-    borderColor: 'border-purple-200',
-    icon: GraduationCap,
-    href: '/training'
-  },
-  { 
-    label: 'Software', 
-    value: softwareCount.toString(), 
-    color: 'text-cyan-600', 
-    bgColor: 'bg-cyan-50', 
-    borderColor: 'border-cyan-200',
-    icon: Package,
-    href: '/software'
-  },
-]
+const LOCKED_FEATURE_IDS = ['ai-assistant', 'view-documents', 'software']
+
+const getDashboardStats = (
+  documentsCount: number,
+  trainingCount: number,
+  softwareCount: number,
+  isLocked: boolean
+) => {
+  const all = [
+    { label: 'Documents', value: documentsCount.toString(), color: 'text-green-600', bgColor: 'bg-green-50', borderColor: 'border-green-200', icon: FileText, href: '/documents', locked: true },
+    { label: 'Training Classes', value: trainingCount.toString(), color: 'text-purple-600', bgColor: 'bg-purple-50', borderColor: 'border-purple-200', icon: GraduationCap, href: '/training', locked: false },
+    { label: 'Software', value: softwareCount.toString(), color: 'text-cyan-600', bgColor: 'bg-cyan-50', borderColor: 'border-cyan-200', icon: Package, href: '/software', locked: true },
+  ]
+  return isLocked ? all.filter((s) => !s.locked) : all
+}
 
 const menuItems = [
   {
@@ -144,7 +131,7 @@ const menuItems = [
 
 export default function HomePage() {
   const router = useRouter()
-  const { user } = useAuthStore()
+  const { user, loading } = useAuthStore()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false)
   const [documentsCount, setDocumentsCount] = useState(0)
@@ -172,6 +159,13 @@ export default function HomePage() {
       .then((data) => setSoftwareCount(Array.isArray(data) ? data.length : 0))
       .catch(() => setSoftwareCount(0))
   }, [])
+
+  // Redirect to login when auth is resolved and user is null (session expired or invalid)
+  useEffect(() => {
+    if (!loading && user === null) {
+      router.replace('/login?redirect=/home')
+    }
+  }, [loading, user, router])
 
   useEffect(() => {
     if (typeof window === 'undefined' || hashHandledRef.current) {
@@ -211,18 +205,6 @@ export default function HomePage() {
     }
   }, [])
 
-  const handleSignOut = async () => {
-    try {
-      const { error } = await supabase.auth.signOut()
-      if (error) throw error
-      window.location.href = '/login'
-    } catch (error) {
-      console.error('Error signing out:', error)
-      window.location.href = '/login'
-    }
-  }
-
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
       {/* Header */}
@@ -230,7 +212,6 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center space-x-4">
-            
               <Logo width={140} height={49} href="https://www.omniflow.com" />
             </div>
             
@@ -265,27 +246,28 @@ export default function HomePage() {
                       className="fixed inset-0 z-40" 
                       onClick={() => setProfileDropdownOpen(false)}
                     />
-                    <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-slate-200 py-2 z-50">
-                      <div className="px-4 py-3 border-b border-slate-200">
-                        <div className="flex items-center space-x-3">
-                          <Avatar className="h-12 w-12 border-2 border-slate-200">
-                            <AvatarImage src={undefined} alt={user?.email || 'User'} />
-                            <AvatarFallback className="bg-gradient-to-br from-red-500 to-red-600 text-white font-semibold">
-                              {user?.email?.charAt(0).toUpperCase() || 'U'}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1 min-w-0">
-                            <div className="text-sm font-semibold text-slate-900 truncate">
-                              {user?.name || user?.email?.split('@')[0] || 'User'}
-                            </div>
-                            <div className="text-xs text-slate-500 truncate">
-                              {user?.email}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      
+                    <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-slate-200 py-2 z-50">
                       <div className="py-1">
+                        <button
+                          onClick={() => {
+                            setProfileDropdownOpen(false)
+                            router.push('/settings')
+                          }}
+                          className="w-full flex items-center space-x-3 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+                        >
+                          <Settings className="h-4 w-4 text-slate-600" />
+                          <span>User Settings</span>
+                        </button>
+                        <button
+                          onClick={() => {
+                            setProfileDropdownOpen(false)
+                            document.dispatchEvent(new CustomEvent('auth:refreshProfile'))
+                          }}
+                          className="w-full flex items-center space-x-3 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+                        >
+                          <RefreshCw className="h-4 w-4 text-slate-600" />
+                          <span>Refresh profile</span>
+                        </button>
                         {user?.role === 'admin' && (
                           <button
                             onClick={() => {
@@ -298,27 +280,14 @@ export default function HomePage() {
                             <span>Admin Panel</span>
                           </button>
                         )}
-                        {/* <button
-                          onClick={() => {
-                            setProfileDropdownOpen(false)
-                            // TODO: Add settings page
-                          }}
-                          className="w-full flex items-center space-x-3 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
-                        >
-                          <Settings className="h-4 w-4 text-slate-600" />
-                          <span>Settings</span>
-                        </button>
-                        <div className="border-t border-slate-200 my-1" /> */}
-                        <button
-                          onClick={() => {
-                            setProfileDropdownOpen(false)
-                            handleSignOut()
-                          }}
+                        <div className="border-t border-slate-200 my-1" />
+                        <Link
+                          href="/logout"
                           className="w-full flex items-center space-x-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
                         >
                           <LogOut className="h-4 w-4" />
                           <span>Logout</span>
-                        </button>
+                        </Link>
                       </div>
                     </div>
                   </>
@@ -346,9 +315,21 @@ export default function HomePage() {
           </div>
         </div>
 
+        {user?.locked === true && (
+          <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-3">
+            <Shield className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+            <div>
+              <p className="font-medium text-amber-900">Account pending approval</p>
+              <p className="text-sm text-amber-800 mt-1">
+                Your account is awaiting admin approval. AI Assistant, Documents, and Software will be available once an administrator unlocks your account.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Stats Grid */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {getDashboardStats(documentsCount, trainingCount, softwareCount).map((stat, index) => {
+          {getDashboardStats(documentsCount, trainingCount, softwareCount, user?.locked === true).map((stat, index) => {
             const Icon = stat.icon
             return (
               <Link key={index} href={stat.href} prefetch className="block touch-manipulation h-full">
@@ -377,12 +358,13 @@ export default function HomePage() {
               <p className="text-slate-600">Access your most used features</p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pb-6">
-              {menuItems.map((item) => {
+              {menuItems
+                .filter((item) => user?.locked !== true || !LOCKED_FEATURE_IDS.includes(item.id))
+                .map((item) => {
                 const Icon = item.icon
                 const isExternal = item.href.startsWith('http')
                 const cardContent = (
                   <Card 
-                    key={item.id}
                     className="cursor-pointer hover:shadow-xl transition-all duration-300 group border-0 shadow-sm hover:scale-[1.02] active:scale-[0.98] active:opacity-95 touch-manipulation"
                     {...(isExternal && { onClick: () => window.open(item.href, '_blank', 'noopener,noreferrer') })}
                   >
@@ -413,9 +395,9 @@ export default function HomePage() {
                   </Card>
                 )
                 return isExternal ? (
-                  <div>{cardContent}</div>
+                  <div key={item.id}>{cardContent}</div>
                 ) : (
-                  <Link href={item.href} prefetch className="block touch-manipulation">
+                  <Link key={item.id} href={item.href} prefetch className="block touch-manipulation">
                     {cardContent}
                   </Link>
                 )

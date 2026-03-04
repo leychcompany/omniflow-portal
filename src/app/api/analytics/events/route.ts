@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { verifyAdmin } from "@/lib/admin-auth";
+import { verifyAuth } from "@/lib/verify-auth";
+import { getRequestMetadata } from "@/lib/request-metadata";
 
 const DEFAULT_LIMIT = 100;
+const ALLOWED_EVENT_TYPES = ["login", "logout"] as const;
 
 export async function GET(req: NextRequest) {
   const auth = await verifyAdmin(req);
@@ -87,6 +90,55 @@ export async function GET(req: NextRequest) {
     console.error("Analytics error:", error);
     return NextResponse.json(
       { error: "Failed to fetch analytics" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function POST(req: NextRequest) {
+  const auth = await verifyAuth(req);
+  if (!auth.ok) return auth.response;
+
+  try {
+    const body = await req.json().catch(() => ({}));
+    const eventType = typeof body.event_type === "string" ? body.event_type : null;
+    const clientMetadata =
+      typeof body.metadata === "object" && body.metadata !== null ? body.metadata : {};
+
+    if (!eventType || !ALLOWED_EVENT_TYPES.includes(eventType as (typeof ALLOWED_EVENT_TYPES)[number])) {
+      return NextResponse.json(
+        { error: "Invalid or missing event_type. Allowed: login, logout" },
+        { status: 400 }
+      );
+    }
+
+    const requestMeta = getRequestMetadata(req);
+    const metadata: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries({ ...requestMeta, ...clientMetadata })) {
+      if (v != null && v !== "") metadata[k] = v;
+    }
+
+    const { error } = await supabaseAdmin.from("activity_events").insert({
+      event_type: eventType,
+      user_id: auth.userId,
+      resource_type: null,
+      resource_id: null,
+      metadata,
+    });
+
+    if (error) {
+      console.error("Analytics POST error:", error);
+      return NextResponse.json(
+        { error: "Failed to record event" },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error: unknown) {
+    console.error("Analytics POST error:", error);
+    return NextResponse.json(
+      { error: "Failed to record event" },
       { status: 500 }
     );
   }
