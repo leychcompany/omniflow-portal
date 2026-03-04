@@ -159,7 +159,7 @@ export default function AIAssistantPage() {
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-slate-50 md:min-h-screen md:h-auto md:overflow-visible">
       {/* Header */}
-      <header className="shrink-0 bg-white border-b border-slate-200/50 shadow-sm z-50">
+      <header className="shrink-0 bg-white border-b border-slate-200/50 shadow-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between py-4">
             <div className="flex items-center space-x-4">
@@ -258,7 +258,7 @@ export default function AIAssistantPage() {
                       onChange={(e) => setInputText(e.target.value)}
                       onKeyPress={handleKeyPress}
                       placeholder="Type your message..."
-                      className="flex-1 min-w-0 border-0 bg-transparent focus:ring-0 focus:border-0 focus:outline-none text-sm py-2"
+                      className="flex-1 min-w-0 border-0 bg-transparent focus:ring-0 focus:border-0 focus:outline-none text-base py-2 md:text-sm"
                     />
                     <Button
                       onClick={handleSendMessage}

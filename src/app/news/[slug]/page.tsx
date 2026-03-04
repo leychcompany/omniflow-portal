@@ -47,7 +47,7 @@ export default async function NewsArticlePage({ params }: NewsArticlePageProps) 
               <Button
                 asChild
                 variant="ghost"
-                className="flex items-center gap-2 px-3"
+                className="flex items-center gap-2 px-3 touch-manipulation active:opacity-80"
                 aria-label="Back to news"
               >
                 <Link href="/news">
