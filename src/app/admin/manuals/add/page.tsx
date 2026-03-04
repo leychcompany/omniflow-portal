@@ -1,23 +1,58 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import { TagMultiSelect } from '@/components/ui/tag-multi-select'
 import { supabase } from '@/lib/supabase'
 import { Upload, Loader2, XCircle } from 'lucide-react'
 
 export default function AddManualPage() {
   const router = useRouter()
-  const [form, setForm] = useState({ title: '', category: '', description: '' })
+  const [form, setForm] = useState({ title: '', tags: [] as string[], description: '' })
+  const [availableTags, setAvailableTags] = useState<string[]>([])
   const [file, setFile] = useState<File | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
+  const fetchAvailableTags = async () => {
+    try {
+      const res = await fetch('/api/tags')
+      const tags = res.ok ? await res.json() : []
+      setAvailableTags(
+        (Array.isArray(tags) ? tags : [])
+          .map((t: { id: string; name: string }) => t.name)
+          .sort((a: string, b: string) => a.toLowerCase().localeCompare(b.toLowerCase()))
+      )
+    } catch {
+      setAvailableTags([])
+    }
+  }
+
+  useEffect(() => {
+    fetchAvailableTags()
+  }, [])
+
+  const handleDeleteTagFromPool = async (tag: string) => {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) return
+    const res = await fetch('/api/manuals/tags/delete', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({ tag }),
+    })
+    if (!res.ok) throw new Error('Failed to delete tag')
+    await fetchAvailableTags()
+  }
+
   const handleSubmit = async () => {
-    if (!form.title.trim() || !form.category.trim()) {
-      setError('Title and category are required')
+    if (!form.title.trim()) {
+      setError('Title is required')
       return
     }
     if (!file) {
@@ -32,7 +67,7 @@ export default function AddManualPage() {
 
       const formData = new FormData()
       formData.set('title', form.title)
-      formData.set('category', form.category)
+      formData.set('tags', JSON.stringify(form.tags))
       if (form.description) formData.set('description', form.description)
       formData.set('file', file)
 
@@ -68,8 +103,15 @@ export default function AddManualPage() {
           <Input placeholder="User Manual Volume 1" value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} className="h-11" disabled={loading} />
         </div>
         <div>
-          <label className="text-sm font-medium text-slate-700 mb-2 block">Category</label>
-          <Input placeholder="e.g. OMNI-3000-6000" value={form.category} onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))} className="h-11" disabled={loading} />
+          <label className="text-sm font-medium text-slate-700 mb-2 block">Tags</label>
+          <TagMultiSelect
+            value={form.tags}
+            onChange={(tags) => setForm((f) => ({ ...f, tags }))}
+            availableTags={availableTags}
+            placeholder="e.g. OMNI-3000-6000, Installation, User Guide"
+            disabled={loading}
+            onDeleteFromPool={handleDeleteTagFromPool}
+          />
         </div>
         <div>
           <label className="text-sm font-medium text-slate-700 mb-2 block">Description</label>

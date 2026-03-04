@@ -55,7 +55,8 @@ interface Course {
 interface Manual {
   id: string
   title: string
-  category: string
+  category?: string
+  tags: string[]
   filename: string
   storage_path: string
   size: string | null
@@ -516,6 +517,16 @@ function AdminDashboardContent() {
     (u.name && u.name.toLowerCase().includes(searchTerm.toLowerCase()))
   )
 
+  const filteredManuals = manuals.filter(m => {
+    const term = searchTerm.toLowerCase()
+    if (!term) return true
+    const title = (m.title ?? '').toLowerCase()
+    const desc = (m.description ?? '').toLowerCase()
+    const tagsStr = (m.tags ?? []).join(' ').toLowerCase()
+    const filename = (m.filename ?? '').toLowerCase()
+    return title.includes(term) || desc.includes(term) || tagsStr.includes(term) || filename.includes(term)
+  })
+
   const tabItems = [
     { id: 'users' as const, label: 'Users', count: users.length, icon: Users },
     { id: 'training' as const, label: 'Training', count: courses.length, icon: GraduationCap },
@@ -913,15 +924,19 @@ function AdminDashboardContent() {
                   </div>
                 </CardContent>
               </Card>
-            ) : manuals.length === 0 ? (
+            ) : filteredManuals.length === 0 ? (
               <Card className="border-0 shadow-lg bg-white">
                 <CardContent className="p-12 text-center">
                   <BookOpen className="h-12 w-12 mx-auto text-slate-400 mb-4" />
-                  <p className="text-slate-600">No documents yet. Add one with a PDF file to get started.</p>
+                  <p className="text-slate-600">
+                    {manuals.length === 0
+                      ? 'No documents yet. Add one with a PDF file to get started.'
+                      : 'No documents match your search.'}
+                  </p>
                 </CardContent>
               </Card>
             ) : (
-              manuals.map((manual) => (
+              filteredManuals.map((manual) => (
                 <Card key={manual.id} className="border-0 shadow-lg hover:shadow-xl transition-all duration-200 bg-white">
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between">
@@ -929,7 +944,7 @@ function AdminDashboardContent() {
                         <h3 className="text-lg font-semibold text-slate-900 mb-2">{manual.title}</h3>
                         <p className="text-sm text-slate-600 mb-3">{manual.description || '—'}</p>
                         <div className="flex items-center gap-4 text-sm text-slate-500">
-                          <span>Category: {manual.category}</span>
+                          <span>Tags: {manual.tags?.length ? manual.tags.join(', ') : '—'}</span>
                           <span>File: {manual.filename}</span>
                           {manual.size && <span>{manual.size}</span>}
                         </div>

@@ -46,7 +46,7 @@ export interface TrainingItem {
 export interface Manual {
   id: string;
   title: string;
-  category: string;
+  tags: string[];
   size: string;
   date: string;
   filePath: string;

@@ -82,6 +82,7 @@ export default function SupportPage() {
   const [error, setError] = useState<string | null>(null)
 
   const fileInputRef = useRef<HTMLInputElement | null>(null)
+  const ticketFormRef = useRef<HTMLDivElement | null>(null)
 
   const MAX_FILES = 3
   const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
@@ -283,7 +284,7 @@ export default function SupportPage() {
             
             <div className="flex items-center space-x-2">
               <Button
-                onClick={() => setActiveTab('new')}
+                onClick={() => ticketFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
                 className="bg-red-600 hover:bg-red-700 text-white transition-all duration-200"
               >
                 <Plus className="h-4 w-4 mr-2" />
@@ -350,7 +351,7 @@ export default function SupportPage() {
         </div>
 
         {/* Content */}
-        <Card className="border-0 shadow-sm">
+        <Card ref={ticketFormRef} className="border-0 shadow-sm scroll-mt-6">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <Headphones className="h-5 w-5 text-red-600" />

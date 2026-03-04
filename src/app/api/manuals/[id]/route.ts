@@ -4,6 +4,45 @@ import { verifyAdmin } from "@/lib/admin-auth";
 
 const SIGNED_URL_EXPIRY = 3600;
 
+async function getOrCreateTagIds(tagNames: string[]): Promise<string[]> {
+  const ids: string[] = [];
+  const seen = new Set<string>();
+  for (const name of tagNames) {
+    const trimmed = name.trim();
+    if (!trimmed) continue;
+    const key = trimmed.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const { data: all } = await supabaseAdmin
+      .from("tags")
+      .select("id, name");
+    const found = (all ?? []).find(
+      (t: { name: string }) => t.name.toLowerCase() === key
+    );
+    if (found) {
+      ids.push(found.id);
+      continue;
+    }
+    const { data: inserted, error } = await supabaseAdmin
+      .from("tags")
+      .insert({ name: trimmed })
+      .select("id")
+      .single();
+    if (inserted) {
+      ids.push(inserted.id);
+    } else if (error) {
+      const { data: retry } = await supabaseAdmin
+        .from("tags")
+        .select("id, name");
+      const retryFound = (retry ?? []).find(
+        (t: { name: string }) => t.name.toLowerCase() === key
+      );
+      if (retryFound) ids.push(retryFound.id);
+    }
+  }
+  return ids;
+}
+
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -15,7 +54,13 @@ export async function GET(
     const { id } = await params;
     const { data: manual, error } = await supabaseAdmin
       .from("manuals")
-      .select("*")
+      .select(`
+        *,
+        manual_tags (
+          tag_id,
+          tags (id, name)
+        )
+      `)
       .eq("id", id)
       .single();
 
@@ -33,8 +78,14 @@ export async function GET(
       // keep storage_path if bucket/file missing
     }
 
+    const tagNames = ((manual.manual_tags as { tags: { name: string } | null }[]) ?? [])
+      .map((mt) => mt?.tags?.name)
+      .filter(Boolean) as string[];
+    const tags = tagNames.length ? tagNames : (manual.category ? [manual.category] : []);
+    const { manual_tags: _mt, ...rest } = manual as { manual_tags?: unknown };
     return NextResponse.json({
-      ...manual,
+      ...rest,
+      tags,
       path: downloadUrl,
       download_url: downloadUrl,
     });
@@ -67,16 +118,34 @@ export async function PATCH(
     const { id } = await params;
     const contentType = req.headers.get("content-type") ?? "";
     const updates: Record<string, unknown> = {};
+    let tagsToSet: string[] | undefined;
 
     if (contentType.includes("multipart/form-data")) {
       const formData = await req.formData();
       const title = (formData.get("title") as string)?.trim();
-      const category = (formData.get("category") as string)?.trim();
+      const tagsRaw = formData.get("tags");
+      const tags = Array.isArray(tagsRaw)
+        ? tagsRaw.map((t) => String(t).trim()).filter(Boolean)
+        : typeof tagsRaw === "string"
+          ? (() => {
+              try {
+                const parsed = JSON.parse(tagsRaw) as unknown;
+                return Array.isArray(parsed)
+                  ? parsed.map((t) => String(t).trim()).filter(Boolean)
+                  : [];
+              } catch {
+                return tagsRaw ? [tagsRaw.trim()] : [];
+              }
+            })()
+          : [];
       const description = (formData.get("description") as string)?.trim() || null;
       const file = formData.get("file") as File | null;
 
       if (title !== undefined) updates.title = title;
-      if (category !== undefined) updates.category = category;
+      if (tagsRaw !== undefined) {
+        tagsToSet = tags;
+        updates.category = tags.length > 0 ? tags[0] : null;
+      }
       if (description !== undefined) updates.description = description;
 
       if (file && file.size) {
@@ -94,8 +163,10 @@ export async function PATCH(
         }
 
         const filename = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-        const safeCategory = (updates.category as string)?.replace(/[^a-zA-Z0-9_-]/g, "_") ?? "general";
-        const storage_path = `${safeCategory}/${filename}`;
+        const folder = tags[0]
+          ? tags[0].replace(/[^a-zA-Z0-9_-]/g, "_")
+          : "uncategorized";
+        const storage_path = `${folder}/${filename}`;
 
         const { error: uploadError } = await supabaseAdmin.storage
           .from("manuals")
@@ -119,7 +190,11 @@ export async function PATCH(
     } else {
       const body = await req.json();
       if (body.title !== undefined) updates.title = body.title;
-      if (body.category !== undefined) updates.category = body.category;
+      if (body.tags !== undefined) {
+        const tagsArr = Array.isArray(body.tags) ? body.tags : [];
+        tagsToSet = tagsArr;
+        updates.category = tagsArr.length > 0 ? tagsArr[0] : null;
+      }
       if (body.filename !== undefined) updates.filename = body.filename;
       if (body.storage_path !== undefined) updates.storage_path = body.storage_path;
       if (body.size !== undefined) updates.size = body.size;
@@ -134,7 +209,36 @@ export async function PATCH(
       .single();
 
     if (error) throw error;
-    return NextResponse.json(data);
+
+    if (tagsToSet !== undefined) {
+      const { error: delError } = await supabaseAdmin
+        .from("manual_tags")
+        .delete()
+        .eq("manual_id", id);
+      if (delError) throw delError;
+      const tagIds = await getOrCreateTagIds(tagsToSet);
+      if (tagIds.length > 0) {
+        const { error: mtError } = await supabaseAdmin
+          .from("manual_tags")
+          .insert(tagIds.map((tag_id) => ({ manual_id: id, tag_id })));
+        if (mtError) throw mtError;
+      }
+    }
+
+    let tags = tagsToSet;
+    if (tags === undefined) {
+      const { data: mtData } = await supabaseAdmin
+        .from("manual_tags")
+        .select("tag_id, tags(name)")
+        .eq("manual_id", id);
+      tags = ((mtData as { tags: { name: string } | null }[]) ?? [])
+        .map((r) => r?.tags?.name)
+        .filter(Boolean) as string[];
+      if (tags.length === 0 && (data as { category?: string })?.category) {
+        tags = [(data as { category: string }).category];
+      }
+    }
+    return NextResponse.json({ ...data, tags });
   } catch (error: unknown) {
     console.error("Error updating manual:", error);
     return NextResponse.json(

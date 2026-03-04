@@ -4,12 +4,56 @@ import { verifyAdmin } from "@/lib/admin-auth";
 
 const SIGNED_URL_EXPIRY = 3600; // 1 hour
 
-export async function GET() {
+async function getOrCreateTagIds(tagNames: string[]): Promise<string[]> {
+  const ids: string[] = [];
+  const seen = new Set<string>();
+  for (const name of tagNames) {
+    const trimmed = name.trim();
+    if (!trimmed) continue;
+    const key = trimmed.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const { data: all } = await supabaseAdmin
+      .from("tags")
+      .select("id, name");
+    const found = (all ?? []).find(
+      (t: { name: string }) => t.name.toLowerCase() === key
+    );
+    if (found) {
+      ids.push(found.id);
+      continue;
+    }
+    const { data: inserted, error } = await supabaseAdmin
+      .from("tags")
+      .insert({ name: trimmed })
+      .select("id")
+      .single();
+    if (inserted) {
+      ids.push(inserted.id);
+    } else if (error) {
+      const { data: retry } = await supabaseAdmin
+        .from("tags")
+        .select("id, name");
+      const retryFound = (retry ?? []).find(
+        (t: { name: string }) => t.name.toLowerCase() === key
+      );
+      if (retryFound) ids.push(retryFound.id);
+    }
+  }
+  return ids;
+}
+
+export async function GET(req: NextRequest) {
   try {
     const { data: manuals, error } = await supabaseAdmin
       .from("manuals")
-      .select("*")
-      .order("category")
+      .select(`
+        *,
+        manual_tags (
+          tag_id,
+          tags (id, name)
+        )
+      `)
       .order("title");
 
     if (error) throw error;
@@ -25,8 +69,13 @@ export async function GET() {
         } catch {
           // If bucket doesn't exist or file missing, keep storage_path
         }
+        const mtList = (manual as { manual_tags?: { tags: { name: string } | null }[] }).manual_tags ?? [];
+        const tagNames = mtList.map((mt) => mt?.tags?.name).filter(Boolean) as string[];
+        const tags = tagNames.length ? tagNames : (manual.category ? [manual.category] : []);
+        const { manual_tags: _mt, ...rest } = manual as { manual_tags?: unknown };
         return {
-          ...manual,
+          ...rest,
+          tags,
           path: downloadUrl,
           download_url: downloadUrl,
         };
@@ -53,7 +102,7 @@ export async function POST(req: NextRequest) {
   try {
     const contentType = req.headers.get("content-type") ?? "";
     let title: string;
-    let category: string;
+    let tags: string[];
     let filename: string;
     let storage_path: string;
     let size: string | null = null;
@@ -62,13 +111,29 @@ export async function POST(req: NextRequest) {
     if (contentType.includes("multipart/form-data")) {
       const formData = await req.formData();
       title = (formData.get("title") as string)?.trim();
-      category = (formData.get("category") as string)?.trim();
+      const tagsRaw = formData.get("tags");
+      const categoryRaw = (formData.get("category") as string)?.trim();
+      tags = Array.isArray(tagsRaw)
+        ? tagsRaw.map((t) => String(t).trim()).filter(Boolean)
+        : typeof tagsRaw === "string"
+          ? (() => {
+              try {
+                const parsed = JSON.parse(tagsRaw) as unknown;
+                return Array.isArray(parsed)
+                  ? parsed.map((t) => String(t).trim()).filter(Boolean)
+                  : [];
+              } catch {
+                return tagsRaw ? [tagsRaw.trim()] : [];
+              }
+            })()
+          : [];
+      if (tags.length === 0 && categoryRaw) tags = [categoryRaw];
       description = (formData.get("description") as string)?.trim() || null;
       const file = formData.get("file") as File | null;
 
-      if (!title || !category) {
+      if (!title) {
         return NextResponse.json(
-          { error: "title and category are required" },
+          { error: "title is required" },
           { status: 400 }
         );
       }
@@ -95,8 +160,10 @@ export async function POST(req: NextRequest) {
       }
 
       filename = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-      const safeCategory = category.replace(/[^a-zA-Z0-9_-]/g, "_");
-      storage_path = `${safeCategory}/${filename}`;
+      const folder = tags[0]
+        ? tags[0].replace(/[^a-zA-Z0-9_-]/g, "_")
+        : "uncategorized";
+      storage_path = `${folder}/${filename}`;
 
       const { error: uploadError } = await supabaseAdmin.storage
         .from("manuals")
@@ -118,28 +185,33 @@ export async function POST(req: NextRequest) {
       const body = await req.json();
       const b = body as {
         title?: string;
-        category?: string;
+        tags?: string[];
         filename?: string;
         storage_path?: string;
         size?: string;
         description?: string;
       };
       title = b.title?.trim() ?? "";
-      category = b.category?.trim() ?? "";
+      const categoryFromBody = (b as { category?: string }).category?.trim();
+      tags = Array.isArray(b.tags)
+        ? b.tags.map((t) => String(t).trim()).filter(Boolean)
+        : [];
+      if (tags.length === 0 && categoryFromBody) tags = [categoryFromBody];
       filename = b.filename?.trim() ?? "";
       storage_path = b.storage_path?.trim() ?? "";
       size = b.size ?? null;
       description = b.description ?? null;
 
-      if (!title || !category || !filename || !storage_path) {
+      if (!title || !filename || !storage_path) {
         return NextResponse.json(
-          { error: "title, category, filename, and storage_path are required" },
+          { error: "title, filename, and storage_path are required" },
           { status: 400 }
         );
       }
     }
 
-    const { data, error } = await supabaseAdmin
+    const category = tags.length > 0 ? tags[0] : null;
+    const { data: manual, error } = await supabaseAdmin
       .from("manuals")
       .insert({
         title,
@@ -153,7 +225,17 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (error) throw error;
-    return NextResponse.json(data);
+    if (!manual) throw new Error("Insert failed");
+
+    const tagIds = await getOrCreateTagIds(tags);
+    if (tagIds.length > 0) {
+      const { error: mtError } = await supabaseAdmin
+        .from("manual_tags")
+        .insert(tagIds.map((tag_id) => ({ manual_id: manual.id, tag_id })));
+      if (mtError) throw mtError;
+    }
+
+    return NextResponse.json({ ...manual, tags });
   } catch (error: unknown) {
     console.error("Error creating manual:", error);
     return NextResponse.json(

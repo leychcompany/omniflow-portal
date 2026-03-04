@@ -30,7 +30,7 @@ Create a storage bucket named `manuals` in Supabase Dashboard:
 2. Create new bucket: `manuals`
 3. Set to **Private** – the API generates signed download URLs
 
-PDFs can be uploaded via the Admin → Documents screen, or manually to match `storage_path` values (e.g. `OMNI-3000-6000/filename.pdf`).
+PDFs can be uploaded via the Admin → Documents screen, or manually to match `storage_path` values (e.g. `OMNI-3000-6000/filename.pdf`). Documents use tags (array) instead of a single category; assign multiple tags when adding or editing.
 
 ### images (Public)
 

@@ -5,14 +5,17 @@ import { useRouter, useParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import { TagMultiSelect } from '@/components/ui/tag-multi-select'
 import { supabase } from '@/lib/supabase'
-import { Upload, Loader2, XCircle } from 'lucide-react'
+import { Upload, Loader2, XCircle, FileText, ExternalLink } from 'lucide-react'
 
 interface Manual {
   id: string
   title: string
-  category: string
+  tags: string[]
   description: string | null
+  filename?: string
+  download_url?: string
 }
 
 export default function EditManualPage() {
@@ -21,6 +24,7 @@ export default function EditManualPage() {
   const id = params.id as string
 
   const [form, setForm] = useState<Manual | null>(null)
+  const [availableTags, setAvailableTags] = useState<string[]>([])
   const [file, setFile] = useState<File | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -39,7 +43,7 @@ export default function EditManualPage() {
         })
         const data = await res.json()
         if (!res.ok) throw new Error(data.error || 'Failed to load document')
-        setForm(data)
+        setForm({ ...data, tags: data.tags || [] })
       } catch (e) {
         setError(e instanceof Error ? e.message : 'Failed to load document')
       } finally {
@@ -49,9 +53,47 @@ export default function EditManualPage() {
     if (id) fetchManual()
   }, [id, router])
 
+  const fetchAvailableTags = async () => {
+    try {
+      const res = await fetch('/api/tags')
+      const tags = res.ok ? await res.json() : []
+      setAvailableTags(
+        (Array.isArray(tags) ? tags : [])
+          .map((t: { id: string; name: string }) => t.name)
+          .sort((a: string, b: string) => a.toLowerCase().localeCompare(b.toLowerCase()))
+      )
+    } catch {
+      setAvailableTags([])
+    }
+  }
+
+  useEffect(() => {
+    fetchAvailableTags()
+  }, [])
+
+  const handleDeleteTagFromPool = async (tag: string) => {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) return
+    const res = await fetch('/api/manuals/tags/delete', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({ tag }),
+    })
+    if (!res.ok) throw new Error('Failed to delete tag')
+    setForm((f) =>
+      f
+        ? { ...f, tags: (f.tags || []).filter((t) => t.toLowerCase() !== tag.toLowerCase()) }
+        : f
+    )
+    await fetchAvailableTags()
+  }
+
   const handleSubmit = async () => {
-    if (!form || !form.title.trim() || !form.category.trim()) {
-      setError('Title and category are required')
+    if (!form || !form.title.trim()) {
+      setError('Title is required')
       return
     }
     setSaving(true)
@@ -66,7 +108,7 @@ export default function EditManualPage() {
       if (file) {
         const formData = new FormData()
         formData.set('title', form.title)
-        formData.set('category', form.category)
+        formData.set('tags', JSON.stringify(form.tags || []))
         if (form.description) formData.set('description', form.description)
         formData.set('file', file)
         body = formData
@@ -74,7 +116,7 @@ export default function EditManualPage() {
         headers['Content-Type'] = 'application/json'
         body = JSON.stringify({
           title: form.title,
-          category: form.category,
+          tags: form.tags || [],
           description: form.description || null,
         })
       }
@@ -136,8 +178,15 @@ export default function EditManualPage() {
           <Input placeholder="User Manual Volume 1" value={form.title} onChange={(e) => setForm((f) => f ? { ...f, title: e.target.value } : f)} className="h-11" disabled={saving} />
         </div>
         <div>
-          <label className="text-sm font-medium text-slate-700 mb-2 block">Category</label>
-          <Input placeholder="e.g. OMNI-3000-6000" value={form.category} onChange={(e) => setForm((f) => f ? { ...f, category: e.target.value } : f)} className="h-11" disabled={saving} />
+          <label className="text-sm font-medium text-slate-700 mb-2 block">Tags</label>
+          <TagMultiSelect
+            value={form.tags || []}
+            onChange={(tags) => setForm((f) => f ? { ...f, tags } : f)}
+            availableTags={availableTags}
+            placeholder="e.g. OMNI-3000-6000, Installation, User Guide"
+            disabled={saving}
+            onDeleteFromPool={handleDeleteTagFromPool}
+          />
         </div>
         <div>
           <label className="text-sm font-medium text-slate-700 mb-2 block">Description</label>
@@ -145,6 +194,25 @@ export default function EditManualPage() {
         </div>
         <div>
           <label className="text-sm font-medium text-slate-700 mb-2 block">PDF File (optional – replace existing)</label>
+          {(form.filename || form.download_url) && (
+            <div className="mb-3 flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
+              <FileText className="h-5 w-5 text-slate-500" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-slate-900 truncate">{form.filename || 'Current file'}</p>
+                {form.download_url && (
+                  <a
+                    href={form.download_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-sm text-teal-600 hover:text-teal-700 hover:underline"
+                  >
+                    <ExternalLink className="h-3.5 w-3.5" />
+                    Open file
+                  </a>
+                )}
+              </div>
+            </div>
+          )}
           <div className="border-2 border-dashed border-slate-200 rounded-lg p-6 text-center hover:border-teal-300 transition-colors">
             <input type="file" accept=".pdf,application/pdf" onChange={(e) => setFile(e.target.files?.[0] ?? null)} className="hidden" id="manual-file" />
             <label htmlFor="manual-file" className="cursor-pointer flex flex-col items-center gap-2">
