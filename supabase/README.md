@@ -28,9 +28,21 @@ Create a storage bucket named `manuals` in Supabase Dashboard:
 
 1. Go to Storage
 2. Create new bucket: `manuals`
-3. Set to **Private** – the API generates signed download URLs
+3. Set to **Private** – the API streams files through authenticated download endpoints
 
 PDFs can be uploaded via the Admin → Documents screen, or manually to match `storage_path` values (e.g. `OMNI-3000-6000/filename.pdf`). Documents use tags (array) instead of a single category; assign multiple tags when adding or editing.
+
+### software (Private)
+
+Create a storage bucket named `software` in Supabase Dashboard:
+
+1. Go to Storage
+2. Create new bucket: `software`
+3. Set to **Private** – the API streams files through authenticated download endpoints
+
+ZIP files can be uploaded via the Admin → Software screen. Software downloads are streamed through `/api/software/[id]/download` and require authentication.
+
+**File size limits**: Free plan allows max 50 MB per file. Pro plan: increase in Dashboard → Storage → Settings → Global file size limit (up to 500 GB).
 
 ### images (Public)
 

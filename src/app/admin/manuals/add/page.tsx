@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { TagMultiSelect } from '@/components/ui/tag-multi-select'
 import { supabase } from '@/lib/supabase'
+import { uploadWithProgress } from '@/lib/upload-with-progress'
 import { Upload, Loader2, XCircle } from 'lucide-react'
 
 export default function AddManualPage() {
@@ -15,6 +16,7 @@ export default function AddManualPage() {
   const [availableTags, setAvailableTags] = useState<string[]>([])
   const [file, setFile] = useState<File | null>(null)
   const [loading, setLoading] = useState(false)
+  const [uploadPercent, setUploadPercent] = useState<number | null>(null)
   const [error, setError] = useState('')
 
   const fetchAvailableTags = async () => {
@@ -60,6 +62,7 @@ export default function AddManualPage() {
       return
     }
     setLoading(true)
+    setUploadPercent(0)
     setError('')
     try {
       const { data: { session } } = await supabase.auth.getSession()
@@ -71,10 +74,9 @@ export default function AddManualPage() {
       if (form.description) formData.set('description', form.description)
       formData.set('file', file)
 
-      const res = await fetch('/api/manuals', {
-        method: 'POST',
+      const res = await uploadWithProgress('/api/manuals', formData, {
         headers: { Authorization: `Bearer ${session.access_token}` },
-        body: formData,
+        onProgress: (_, __, percent) => setUploadPercent(percent),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed to upload document')
@@ -83,6 +85,7 @@ export default function AddManualPage() {
       setError(e instanceof Error ? e.message : 'Failed to save')
     } finally {
       setLoading(false)
+      setUploadPercent(null)
     }
   }
 
@@ -95,7 +98,7 @@ export default function AddManualPage() {
           </div>
           Add Document
         </CardTitle>
-        <CardDescription>Upload a PDF document (max 50 MB)</CardDescription>
+        <CardDescription>Upload a PDF document (max 1 GB)</CardDescription>
       </CardHeader>
       <CardContent className="space-y-5 pt-6">
         <div>
@@ -127,6 +130,20 @@ export default function AddManualPage() {
             </label>
           </div>
         </div>
+        {loading && uploadPercent != null && (
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm text-slate-600">
+              <span>{uploadPercent >= 100 ? 'Saving to storage...' : 'Uploading...'}</span>
+              <span>{uploadPercent >= 100 ? 'Processing' : `${uploadPercent}%`}</span>
+            </div>
+            <div className="h-2 w-full rounded-full bg-slate-200 overflow-hidden">
+              <div
+                className="h-full bg-teal-600 transition-all duration-300 ease-out"
+                style={{ width: `${Math.min(uploadPercent, 99)}%` }}
+              />
+            </div>
+          </div>
+        )}
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm flex items-center gap-2">
             <XCircle className="h-4 w-4 flex-shrink-0" />

@@ -5,93 +5,78 @@ import { useRouter, useParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { TagMultiSelect } from '@/components/ui/tag-multi-select'
 import { supabase } from '@/lib/supabase'
 import { uploadWithProgress } from '@/lib/upload-with-progress'
-import { Upload, Loader2, XCircle, FileText, ExternalLink } from 'lucide-react'
+import { Upload, Loader2, XCircle, FileArchive, Image } from 'lucide-react'
 
-interface Manual {
+interface Software {
   id: string
   title: string
-  tags: string[]
   description: string | null
+  image_url?: string | null
   filename?: string
-  download_url?: string
+  size?: string | null
 }
 
-export default function EditManualPage() {
+export default function EditSoftwarePage() {
   const router = useRouter()
   const params = useParams()
   const id = params.id as string
 
-  const [form, setForm] = useState<Manual | null>(null)
-  const [availableTags, setAvailableTags] = useState<string[]>([])
+  const [form, setForm] = useState<Software | null>(null)
   const [file, setFile] = useState<File | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [uploadPercent, setUploadPercent] = useState<number | null>(null)
+  const [imageUploading, setImageUploading] = useState(false)
   const [error, setError] = useState('')
 
+  const handleUploadImage = async (file: File): Promise<string | null> => {
+    setImageUploading(true)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) throw new Error('Session expired')
+      const formData = new FormData()
+      formData.set('file', file)
+      formData.set('folder', 'software')
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${session.access_token}` },
+        body: formData,
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Upload failed')
+      return data.url as string
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Upload failed')
+      return null
+    } finally {
+      setImageUploading(false)
+    }
+  }
+
   useEffect(() => {
-    const fetchManual = async () => {
+    const fetchSoftware = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession()
         if (!session) {
           router.push('/login')
           return
         }
-        const res = await fetch(`/api/manuals/${id}`, {
+        const res = await fetch(`/api/software/${id}`, {
           headers: { Authorization: `Bearer ${session.access_token}` },
         })
         const data = await res.json()
-        if (!res.ok) throw new Error(data.error || 'Failed to load document')
-        setForm({ ...data, tags: data.tags || [] })
+        if (!res.ok) throw new Error(data.error || 'Failed to load software')
+        setForm(data)
       } catch (e) {
-        setError(e instanceof Error ? e.message : 'Failed to load document')
+        setError(e instanceof Error ? e.message : 'Failed to load software')
       } finally {
         setLoading(false)
       }
     }
-    if (id) fetchManual()
+    if (id) fetchSoftware()
   }, [id, router])
-
-  const fetchAvailableTags = async () => {
-    try {
-      const res = await fetch('/api/tags')
-      const tags = res.ok ? await res.json() : []
-      setAvailableTags(
-        (Array.isArray(tags) ? tags : [])
-          .map((t: { id: string; name: string }) => t.name)
-          .sort((a: string, b: string) => a.toLowerCase().localeCompare(b.toLowerCase()))
-      )
-    } catch {
-      setAvailableTags([])
-    }
-  }
-
-  useEffect(() => {
-    fetchAvailableTags()
-  }, [])
-
-  const handleDeleteTagFromPool = async (tag: string) => {
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session) return
-    const res = await fetch('/api/manuals/tags/delete', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${session.access_token}`,
-      },
-      body: JSON.stringify({ tag }),
-    })
-    if (!res.ok) throw new Error('Failed to delete tag')
-    setForm((f) =>
-      f
-        ? { ...f, tags: (f.tags || []).filter((t) => t.toLowerCase() !== tag.toLowerCase()) }
-        : f
-    )
-    await fetchAvailableTags()
-  }
 
   const handleSubmit = async () => {
     if (!form || !form.title.trim()) {
@@ -111,28 +96,28 @@ export default function EditManualPage() {
       if (file) {
         const formData = new FormData()
         formData.set('title', form.title)
-        formData.set('tags', JSON.stringify(form.tags || []))
         if (form.description) formData.set('description', form.description)
+        if (form.image_url) formData.set('image_url', form.image_url)
         formData.set('file', file)
-        res = await uploadWithProgress(`/api/manuals/${form.id}`, formData, {
+        res = await uploadWithProgress(`/api/software/${form.id}`, formData, {
           method: 'PATCH',
           headers,
           onProgress: (_, __, percent) => setUploadPercent(percent),
         })
       } else {
-        res = await fetch(`/api/manuals/${form.id}`, {
+        res = await fetch(`/api/software/${form.id}`, {
           method: 'PATCH',
           headers: { ...headers, 'Content-Type': 'application/json' },
           body: JSON.stringify({
             title: form.title,
-            tags: form.tags || [],
             description: form.description || null,
+            image_url: form.image_url || null,
           }),
         })
       }
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Failed to update document')
-      router.push('/admin?tab=manuals')
+      if (!res.ok) throw new Error(data.error || 'Failed to update software')
+      router.push('/admin?tab=software')
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to save')
     } finally {
@@ -158,9 +143,9 @@ export default function EditManualPage() {
         <CardContent className="p-6">
           <div className="flex items-center gap-3 text-red-700 mb-4">
             <XCircle className="h-5 w-5" />
-            <span>{error || 'Document not found'}</span>
+            <span>{error || 'Software not found'}</span>
           </div>
-          <Button variant="outline" onClick={() => router.push('/admin?tab=manuals')}>Back to Admin</Button>
+          <Button variant="outline" onClick={() => router.push('/admin?tab=software')}>Back to Admin</Button>
         </CardContent>
       </Card>
     )
@@ -170,59 +155,49 @@ export default function EditManualPage() {
     <Card className="max-w-lg mx-auto border-0 shadow-xl bg-white">
       <CardHeader className="border-b border-slate-200 pb-4">
         <CardTitle className="flex items-center gap-2 text-xl">
-          <div className="p-2 bg-gradient-to-br from-teal-600 to-teal-700 rounded-lg">
+          <div className="p-2 bg-gradient-to-br from-cyan-600 to-cyan-700 rounded-lg">
             <Upload className="h-5 w-5 text-white" />
           </div>
-          Edit Document
+          Edit Software
         </CardTitle>
-        <CardDescription>Update metadata or replace PDF document (max 1 GB)</CardDescription>
+        <CardDescription>Update metadata or replace ZIP file (max 1 GB)</CardDescription>
       </CardHeader>
       <CardContent className="space-y-5 pt-6">
         <div>
           <label className="text-sm font-medium text-slate-700 mb-2 block">Title</label>
-          <Input placeholder="User Manual Volume 1" value={form.title} onChange={(e) => setForm((f) => f ? { ...f, title: e.target.value } : f)} className="h-11" disabled={saving} />
-        </div>
-        <div>
-          <label className="text-sm font-medium text-slate-700 mb-2 block">Tags</label>
-          <TagMultiSelect
-            value={form.tags || []}
-            onChange={(tags) => setForm((f) => f ? { ...f, tags } : f)}
-            availableTags={availableTags}
-            placeholder="e.g. OMNI-3000-6000, Installation, User Guide"
-            disabled={saving}
-            onDeleteFromPool={handleDeleteTagFromPool}
-          />
+          <Input placeholder="Software Name v1.0" value={form.title} onChange={(e) => setForm((f) => f ? { ...f, title: e.target.value } : f)} className="h-11" disabled={saving} />
         </div>
         <div>
           <label className="text-sm font-medium text-slate-700 mb-2 block">Description</label>
           <textarea className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-900 focus:border-slate-900" rows={2} placeholder="Brief description" value={form.description || ''} onChange={(e) => setForm((f) => f ? { ...f, description: e.target.value } : f)} disabled={saving} />
         </div>
         <div>
-          <label className="text-sm font-medium text-slate-700 mb-2 block">PDF File (optional – replace existing)</label>
-          {(form.filename || form.download_url) && (
+          <label className="text-sm font-medium text-slate-700 mb-2 block">Preview Image</label>
+          <div className="flex gap-2">
+            <Input placeholder="Paste URL or upload" value={form.image_url || ''} onChange={(e) => setForm((f) => f ? { ...f, image_url: e.target.value } : f)} className="h-11 flex-1" disabled={saving} />
+            <label className={`inline-flex items-center justify-center h-11 px-4 border rounded-lg border-slate-200 bg-white hover:bg-slate-50 cursor-pointer ${(imageUploading || saving) ? 'opacity-50 cursor-not-allowed' : ''}`}>
+              <input type="file" accept="image/*" className="hidden" onChange={async (e) => { const f = e.target.files?.[0]; if (f) { const url = await handleUploadImage(f); if (url) setForm((c) => c ? { ...c, image_url: url } : c); e.target.value = '' } }} disabled={imageUploading || saving} />
+              {imageUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Image className="h-4 w-4" />}
+            </label>
+          </div>
+          <p className="text-xs text-slate-500 mt-1">Optional. JPEG, PNG, GIF, WebP, max 5 MB</p>
+        </div>
+        <div>
+          <label className="text-sm font-medium text-slate-700 mb-2 block">ZIP File (optional – replace existing)</label>
+          {form.filename && (
             <div className="mb-3 flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
-              <FileText className="h-5 w-5 text-slate-500" />
+              <FileArchive className="h-5 w-5 text-slate-500" />
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-slate-900 truncate">{form.filename || 'Current file'}</p>
-                {form.download_url && (
-                  <a
-                    href={form.download_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-sm text-teal-600 hover:text-teal-700 hover:underline"
-                  >
-                    <ExternalLink className="h-3.5 w-3.5" />
-                    Open file
-                  </a>
-                )}
+                <p className="text-sm font-medium text-slate-900 truncate">{form.filename}</p>
+                {form.size && <p className="text-xs text-slate-500">{form.size}</p>}
               </div>
             </div>
           )}
-          <div className="border-2 border-dashed border-slate-200 rounded-lg p-6 text-center hover:border-teal-300 transition-colors">
-            <input type="file" accept=".pdf,application/pdf" onChange={(e) => setFile(e.target.files?.[0] ?? null)} className="hidden" id="manual-file" />
-            <label htmlFor="manual-file" className="cursor-pointer flex flex-col items-center gap-2">
+          <div className="border-2 border-dashed border-slate-200 rounded-lg p-6 text-center hover:border-cyan-300 transition-colors">
+            <input type="file" accept=".zip,application/zip,application/x-zip-compressed" onChange={(e) => setFile(e.target.files?.[0] ?? null)} className="hidden" id="software-file" />
+            <label htmlFor="software-file" className="cursor-pointer flex flex-col items-center gap-2">
               <Upload className="h-10 w-10 text-slate-400" />
-              <span className="text-sm text-slate-600">{file ? file.name : 'Click to replace PDF'}</span>
+              <span className="text-sm text-slate-600">{file ? file.name : 'Click to replace ZIP'}</span>
             </label>
           </div>
         </div>
@@ -234,7 +209,7 @@ export default function EditManualPage() {
             </div>
             <div className="h-2 w-full rounded-full bg-slate-200 overflow-hidden">
               <div
-                className="h-full bg-teal-600 transition-all duration-300 ease-out"
+                className="h-full bg-cyan-600 transition-all duration-300 ease-out"
                 style={{ width: `${Math.min(uploadPercent, 99)}%` }}
               />
             </div>
@@ -247,8 +222,8 @@ export default function EditManualPage() {
           </div>
         )}
         <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">
-          <Button variant="outline" onClick={() => router.push('/admin?tab=manuals')} disabled={saving} className="hover:bg-slate-100">Cancel</Button>
-          <Button onClick={handleSubmit} disabled={saving} className="bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white shadow-lg hover:shadow-xl transition-all duration-200">
+          <Button variant="outline" onClick={() => router.push('/admin?tab=software')} disabled={saving} className="hover:bg-slate-100">Cancel</Button>
+          <Button onClick={handleSubmit} disabled={saving} className="bg-gradient-to-r from-cyan-600 to-cyan-700 hover:from-cyan-700 hover:to-cyan-800 text-white shadow-lg hover:shadow-xl transition-all duration-200">
             {saving ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> {uploadPercent != null ? 'Uploading...' : 'Saving...'}</> : 'Update'}
           </Button>
         </div>

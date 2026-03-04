@@ -28,6 +28,7 @@ import {
   GraduationCap,
   Eye,
   BarChart3,
+  Package,
 } from 'lucide-react'
 
 interface User {
@@ -88,7 +89,17 @@ interface Invite {
   created_by?: string
 }
 
-const VALID_TABS = ['users', 'training', 'manuals', 'news', 'analytics'] as const
+interface SoftwareItem {
+  id: string
+  title: string
+  filename: string
+  storage_path: string
+  size: string | null
+  description: string | null
+  created_at: string
+}
+
+const VALID_TABS = ['users', 'training', 'manuals', 'software', 'news', 'analytics'] as const
 type TabId = (typeof VALID_TABS)[number]
 
 function AdminDashboardContent() {
@@ -131,6 +142,11 @@ function AdminDashboardContent() {
   const [newsArticles, setNewsArticles] = useState<NewsArticle[]>([])
   const [newsLoading, setNewsLoading] = useState(false)
   const [newsError, setNewsError] = useState('')
+
+  // Software state
+  const [softwareItems, setSoftwareItems] = useState<SoftwareItem[]>([])
+  const [softwareLoading, setSoftwareLoading] = useState(false)
+  const [softwareError, setSoftwareError] = useState('')
 
   // Analytics state
   const [analyticsEvents, setAnalyticsEvents] = useState<{
@@ -202,6 +218,25 @@ function AdminDashboardContent() {
       setNewsError(e instanceof Error ? e.message : 'Failed to load news')
     } finally {
       setNewsLoading(false)
+    }
+  }, [])
+
+  // Fetch software from API
+  const fetchSoftware = useCallback(async () => {
+    setSoftwareLoading(true)
+    setSoftwareError('')
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const res = await fetch('/api/software', {
+        headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {},
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed to load software')
+      setSoftwareItems(Array.isArray(data) ? data : [])
+    } catch (e: unknown) {
+      setSoftwareError(e instanceof Error ? e.message : 'Failed to load software')
+    } finally {
+      setSoftwareLoading(false)
     }
   }, [])
 
@@ -321,17 +356,19 @@ function AdminDashboardContent() {
   useEffect(() => {
     if (activeTab === 'training') fetchCourses()
     if (activeTab === 'manuals') fetchManuals()
+    if (activeTab === 'software') fetchSoftware()
     if (activeTab === 'news') fetchNews()
     if (activeTab === 'analytics') fetchAnalytics()
-  }, [activeTab, fetchCourses, fetchManuals, fetchNews, fetchAnalytics])
+  }, [activeTab, fetchCourses, fetchManuals, fetchSoftware, fetchNews, fetchAnalytics])
 
 
-  // Prefetch courses, manuals, news for stats cards
+  // Prefetch courses, manuals, software, news for stats cards
   useEffect(() => {
     fetchCourses()
     fetchManuals()
+    fetchSoftware()
     fetchNews()
-  }, [fetchCourses, fetchManuals, fetchNews])
+  }, [fetchCourses, fetchManuals, fetchSoftware, fetchNews])
 
   const handleSignOut = async () => {
     try {
@@ -494,6 +531,19 @@ function AdminDashboardContent() {
     }
   }
 
+  const handleDeleteSoftware = async (item: SoftwareItem) => {
+    if (!confirm(`Delete software "${item.title}"?`)) return
+    try {
+      const headers = await getAuthHeaders()
+      const res = await fetch(`/api/software/${item.id}`, { method: 'DELETE', headers })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed to delete')
+      await fetchSoftware()
+    } catch (e: unknown) {
+      alert(e instanceof Error ? e.message : 'Failed to delete')
+    }
+  }
+
   const handleDeleteNews = async (article: NewsArticle) => {
     if (!confirm(`Delete article "${article.title}"?`)) return
     try {
@@ -568,10 +618,20 @@ function AdminDashboardContent() {
     return title.includes(term) || desc.includes(term) || tagsStr.includes(term) || filename.includes(term)
   })
 
+  const filteredSoftware = softwareItems.filter(s => {
+    const term = searchTerm.toLowerCase()
+    if (!term) return true
+    const title = (s.title ?? '').toLowerCase()
+    const desc = (s.description ?? '').toLowerCase()
+    const filename = (s.filename ?? '').toLowerCase()
+    return title.includes(term) || desc.includes(term) || filename.includes(term)
+  })
+
   const tabItems = [
     { id: 'users' as const, label: 'Users', count: users.length, icon: Users },
     { id: 'training' as const, label: 'Training', count: courses.length, icon: GraduationCap },
     { id: 'manuals' as const, label: 'Documents', count: manuals.length, icon: BookOpen },
+    { id: 'software' as const, label: 'Software', count: softwareItems.length, icon: Package },
     { id: 'news' as const, label: 'News', count: newsArticles.length, icon: Newspaper },
     { id: 'analytics' as const, label: 'Analytics', count: analyticsEvents.length, icon: BarChart3 },
   ]
@@ -583,6 +643,7 @@ function AdminDashboardContent() {
       case 'users': return `${base} bg-gradient-to-r from-red-600 to-red-700 text-white shadow-md hover:from-red-700 hover:to-red-800`
       case 'training': return `${base} bg-gradient-to-r from-purple-600 to-purple-700 text-white shadow-md hover:from-purple-700 hover:to-purple-800`
       case 'manuals': return `${base} bg-gradient-to-r from-teal-600 to-teal-700 text-white shadow-md hover:from-teal-700 hover:to-teal-800`
+      case 'software': return `${base} bg-gradient-to-r from-cyan-600 to-cyan-700 text-white shadow-md hover:from-cyan-700 hover:to-cyan-800`
       case 'news': return `${base} bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-md hover:from-blue-700 hover:to-blue-800`
       case 'analytics': return `${base} bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow-md hover:from-indigo-700 hover:to-indigo-800`
       default: return base
@@ -668,6 +729,21 @@ function AdminDashboardContent() {
                 >
                   <Plus className="h-4 w-4 mr-2" />
                   Add Document
+                </Button>
+              </>
+            )}
+            {activeTab === 'software' && (
+              <>
+                <Button variant="outline" onClick={fetchSoftware} disabled={softwareLoading} className="flex items-center gap-2">
+                  <RefreshCw className={`h-4 w-4 ${softwareLoading ? 'animate-spin' : ''}`} />
+                  Refresh
+                </Button>
+                <Button
+                  onClick={() => router.push('/admin/software/add')}
+                  className="bg-gradient-to-r from-cyan-600 to-cyan-700 hover:from-cyan-700 hover:to-cyan-800 text-white shadow-lg hover:shadow-xl transition-all duration-200"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Software
                 </Button>
               </>
             )}
@@ -1021,6 +1097,69 @@ function AdminDashboardContent() {
           </div>
         )}
 
+        {activeTab === 'software' && (
+          <div className="space-y-4">
+            {softwareLoading ? (
+              <Card className="border-0 shadow-lg bg-white">
+                <CardContent className="p-12 text-center">
+                  <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary-600 mb-4" />
+                  <p className="text-slate-600">Loading software...</p>
+                </CardContent>
+              </Card>
+            ) : softwareError ? (
+              <Card className="border-0 shadow-lg border-red-200 bg-red-50">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-3 text-red-700">
+                    <XCircle className="h-5 w-5" />
+                    <span>{softwareError}</span>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : filteredSoftware.length === 0 ? (
+              <Card className="border-0 shadow-lg bg-white">
+                <CardContent className="p-12 text-center">
+                  <Package className="h-12 w-12 mx-auto text-slate-400 mb-4" />
+                  <p className="text-slate-600">
+                    {softwareItems.length === 0
+                      ? 'No software yet. Add one with a ZIP file to get started.'
+                      : 'No software matches your search.'}
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              filteredSoftware.map((item) => (
+                <Card key={item.id} className="border-0 shadow-lg hover:shadow-xl transition-all duration-200 bg-white">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <h3 className="text-lg font-semibold text-slate-900 mb-2">{item.title}</h3>
+                        <p className="text-sm text-slate-600 mb-3">{item.description || '—'}</p>
+                        <div className="flex items-center gap-4 text-sm text-slate-500">
+                          <span>File: {item.filename}</span>
+                          {item.size && <span>{item.size}</span>}
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Button variant="outline" size="sm" asChild>
+                          <a href={`/api/software/${item.id}/download`} target="_blank" rel="noopener noreferrer">
+                            <Eye className="h-4 w-4" />
+                          </a>
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => router.push(`/admin/software/${item.id}/edit`)} className="transition-all duration-200 hover:bg-slate-100">
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => handleDeleteSoftware(item)} className="text-red-600 hover:bg-red-50 hover:border-red-200">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
+          </div>
+        )}
+
         {activeTab === 'news' && (
           <div className="space-y-4">
             {newsLoading ? (
@@ -1089,6 +1228,7 @@ function AdminDashboardContent() {
               >
                 <option value="">All events</option>
                 <option value="document_download">Document download</option>
+                <option value="software_download">Software download</option>
               </select>
             </div>
             {analyticsLoading ? (
@@ -1156,10 +1296,10 @@ function AdminDashboardContent() {
 
       {/* Mobile Bottom Tab Bar */}
       <nav className="fixed bottom-0 left-0 right-0 md:hidden bg-white border-t border-slate-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-40 pb-[env(safe-area-inset-bottom)]">
-        <div className="grid grid-cols-5 h-14">
+        <div className="grid grid-cols-6 h-14">
           {tabItems.map(({ id, label, count, icon: Icon }) => {
             const isActive = activeTab === id
-            const activeColor = id === 'users' ? 'text-red-600' : id === 'training' ? 'text-purple-600' : id === 'manuals' ? 'text-teal-600' : id === 'news' ? 'text-blue-600' : 'text-indigo-600'
+            const activeColor = id === 'users' ? 'text-red-600' : id === 'training' ? 'text-purple-600' : id === 'manuals' ? 'text-teal-600' : id === 'software' ? 'text-cyan-600' : id === 'news' ? 'text-blue-600' : 'text-indigo-600'
             return (
               <button
                 key={id}

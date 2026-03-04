@@ -58,7 +58,8 @@ export async function GET(req: NextRequest) {
       const user = userMap.get(row.user_id);
       const metadata = (row.metadata as Record<string, unknown>) ?? {};
       const resourceLabel =
-        row.resource_type === "manual" && metadata.title
+        (row.resource_type === "manual" || row.resource_type === "software") &&
+        metadata.title
           ? String(metadata.title)
           : row.resource_type && row.resource_id
             ? `${row.resource_type}:${row.resource_id}`

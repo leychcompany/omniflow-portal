@@ -19,9 +19,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "File is required" }, { status: 400 });
     }
 
-    if (!folder || !["news", "training"].includes(folder)) {
+    if (!folder || !["news", "training", "software"].includes(folder)) {
       return NextResponse.json(
-        { error: "folder must be 'news' or 'training'" },
+        { error: "folder must be 'news', 'training', or 'software'" },
         { status: 400 }
       );
     }

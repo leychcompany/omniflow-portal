@@ -34,10 +34,11 @@ import {
   Settings,
   Crown,
   User,
-  ChevronDown
+  ChevronDown,
+  Package
 } from 'lucide-react'
 
-const getDashboardStats = (documentsCount: number, trainingCount: number) => [
+const getDashboardStats = (documentsCount: number, trainingCount: number, softwareCount: number) => [
   { 
     label: 'Documents', 
     value: documentsCount.toString(), 
@@ -55,6 +56,15 @@ const getDashboardStats = (documentsCount: number, trainingCount: number) => [
     borderColor: 'border-purple-200',
     icon: GraduationCap,
     href: '/training'
+  },
+  { 
+    label: 'Software', 
+    value: softwareCount.toString(), 
+    color: 'text-cyan-600', 
+    bgColor: 'bg-cyan-50', 
+    borderColor: 'border-cyan-200',
+    icon: Package,
+    href: '/software'
   },
 ]
 
@@ -110,6 +120,16 @@ const menuItems = [
     badgeColor: ''
   },
   {
+    id: 'software',
+    title: 'Software',
+    subtitle: 'Download software and tools',
+    icon: Package,
+    gradient: 'from-cyan-500 via-cyan-600 to-teal-600',
+    href: '/software',
+    badge: null,
+    badgeColor: ''
+  },
+  {
     id: 'news',
     title: 'News',
     subtitle: 'Latest company updates and announcements',
@@ -129,6 +149,7 @@ export default function HomePage() {
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false)
   const [documentsCount, setDocumentsCount] = useState(0)
   const [trainingCount, setTrainingCount] = useState(0)
+  const [softwareCount, setSoftwareCount] = useState(0)
   const hashHandledRef = useRef(false)
 
   useEffect(() => {
@@ -143,6 +164,13 @@ export default function HomePage() {
       .then((res) => (res.ok ? res.json() : []))
       .then((data) => setTrainingCount(Array.isArray(data) ? data.length : 0))
       .catch(() => setTrainingCount(0))
+  }, [])
+
+  useEffect(() => {
+    fetch('/api/software')
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) => setSoftwareCount(Array.isArray(data) ? data.length : 0))
+      .catch(() => setSoftwareCount(0))
   }, [])
 
   useEffect(() => {
@@ -320,7 +348,7 @@ export default function HomePage() {
 
         {/* Stats Grid */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {getDashboardStats(documentsCount, trainingCount).map((stat, index) => {
+          {getDashboardStats(documentsCount, trainingCount, softwareCount).map((stat, index) => {
             const Icon = stat.icon
             return (
               <Link key={index} href={stat.href} prefetch className="block touch-manipulation h-full">

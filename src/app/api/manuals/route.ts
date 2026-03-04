@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { verifyAdmin } from "@/lib/admin-auth";
+import { getStorageErrorMessage } from "@/lib/storage-error-message";
 
 const SIGNED_URL_EXPIRY = 3600; // 1 hour
 
@@ -92,7 +93,7 @@ export async function GET(req: NextRequest) {
   }
 }
 
-const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50 MB
+const MAX_FILE_SIZE = 1024 * 1024 * 1024; // 1 GB
 const ALLOWED_TYPES = ["application/pdf"];
 
 export async function POST(req: NextRequest) {
@@ -147,7 +148,7 @@ export async function POST(req: NextRequest) {
 
       if (file.size > MAX_FILE_SIZE) {
         return NextResponse.json(
-          { error: "File size must be under 50 MB" },
+          { error: "File size must be under 1 GB" },
           { status: 400 }
         );
       }
@@ -175,7 +176,7 @@ export async function POST(req: NextRequest) {
       if (uploadError) {
         console.error("Storage upload error:", uploadError);
         return NextResponse.json(
-          { error: "Failed to upload file: " + uploadError.message },
+          { error: getStorageErrorMessage(uploadError) },
           { status: 500 }
         );
       }
