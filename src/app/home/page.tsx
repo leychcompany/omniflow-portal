@@ -323,20 +323,18 @@ export default function HomePage() {
           {getDashboardStats(documentsCount, trainingCount).map((stat, index) => {
             const Icon = stat.icon
             return (
-              <Link key={index} href={stat.href} prefetch className="block touch-manipulation">
-                <Card className="hover:shadow-lg transition-all duration-200 border-0 shadow-sm cursor-pointer active:scale-[0.98] active:opacity-95">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4">
-                        <div className={`p-3 rounded-xl ${stat.bgColor} ${stat.borderColor} border`}>
-                          <Icon className={`h-6 w-6 ${stat.color}`} />
-                        </div>
-                        <div>
-                          <p className="text-2xl font-bold text-slate-900">{stat.value}</p>
-                          <p className="text-sm text-slate-600">{stat.label}</p>
-                        </div>
+              <Link key={index} href={stat.href} prefetch className="block touch-manipulation h-full">
+                <Card className="h-full hover:shadow-lg transition-all duration-200 border-0 shadow-sm cursor-pointer active:scale-[0.98] active:opacity-95">
+                  <CardContent className="p-6 flex flex-col h-full">
+                    {/* Top row: icon (left) and number (left) */}
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className={`p-3 rounded-xl shrink-0 ${stat.bgColor} ${stat.borderColor} border`}>
+                        <Icon className={`h-6 w-6 ${stat.color}`} />
                       </div>
+                      <p className="text-2xl font-bold text-slate-900">{stat.value}</p>
                     </div>
+                    {/* Bottom row: label */}
+                    <p className="text-sm text-slate-600 mt-auto text-center lg:text-left">{stat.label}</p>
                   </CardContent>
                 </Card>
               </Link>
