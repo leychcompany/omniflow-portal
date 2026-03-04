@@ -62,7 +62,7 @@ export const BLOCKED_EMAIL_DOMAINS = [
   "ig.com.br",
 ] as const;
 
-const blockedSet = new Set(BLOCKED_EMAIL_DOMAINS);
+const blockedSet = new Set<string>(BLOCKED_EMAIL_DOMAINS);
 
 /**
  * Extracts the domain from an email and checks if it's in the blocklist.
