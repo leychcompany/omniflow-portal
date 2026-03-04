@@ -157,9 +157,9 @@ export default function AIAssistantPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="h-screen flex flex-col overflow-hidden bg-slate-50 md:min-h-screen md:h-auto md:overflow-visible">
       {/* Header */}
-      <header className="bg-white border-b border-slate-200/50 shadow-sm sticky top-0 z-50">
+      <header className="shrink-0 bg-white border-b border-slate-200/50 shadow-sm z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between py-4">
             <div className="flex items-center space-x-4">
@@ -193,33 +193,33 @@ export default function AIAssistantPage() {
       </header>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="flex flex-col lg:flex-row gap-8 h-[calc(100vh-200px)]">
-          {/* Chat Area */}
-          <div className="flex-1 min-w-0">
-            <Card className="h-full border-0 shadow-sm">
-              <CardContent className="p-0 h-full flex flex-col">
-                {/* Messages */}
-                <div className="flex-1 p-8 overflow-y-auto">
-                  <div className="space-y-8 max-w-5xl mx-auto">
+      <div className="flex-1 flex flex-col min-h-0 md:max-w-7xl md:mx-auto md:px-4 md:py-6 md:min-h-0">
+        <div className="flex flex-col lg:flex-row gap-8 flex-1 min-h-0 md:h-[calc(100vh-200px)]">
+          {/* Chat Area - full width on mobile, expands to fill */}
+          <div className="flex-1 min-w-0 flex flex-col min-h-0 md:min-h-[calc(100vh-200px)]">
+            <Card className="flex-1 flex flex-col min-h-0 border-0 shadow-sm md:rounded-lg">
+              <CardContent className="p-0 flex-1 flex flex-col min-h-0">
+                {/* Messages - scrollable only */}
+                <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0 p-4 md:p-8">
+                  <div className="space-y-6 max-w-5xl mx-auto md:space-y-8">
                     {messages.map((message) => (
                       <div
                         key={message.id}
                         className={`flex ${message.isUser ? 'justify-end' : 'justify-start'} mb-3.5 px-1`}
                       >
-                        <div className={`flex max-w-[75%] ${message.isUser ? 'flex-row-reverse' : 'flex-row'} items-end`}>
+                        <div className={`flex w-full max-w-full md:max-w-[75%] ${message.isUser ? 'flex-row-reverse' : 'flex-row'} items-end`}>
                           {!message.isUser && (
-                            <div className="w-8 h-8 bg-gradient-to-br from-red-600 to-red-700 rounded-full flex items-center justify-center mr-2 mb-0.5 shadow-lg">
+                            <div className="w-8 h-8 shrink-0 bg-gradient-to-br from-red-600 to-red-700 rounded-full flex items-center justify-center mr-2 mb-0.5 shadow-lg">
                               <Sparkles className="h-4 w-4 text-white" />
                             </div>
                           )}
-                          <div className={`flex-1 ${message.isUser ? 'text-right' : 'text-left'}`}>
-                            <div className={`inline-block p-4 rounded-2xl ${
+                          <div className={`flex-1 min-w-0 ${message.isUser ? 'text-right' : 'text-left'}`}>
+                            <div className={`inline-block max-w-full p-4 rounded-2xl ${
                               message.isUser
                                 ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-br-sm'
                                 : 'bg-white border border-slate-200 text-slate-900 rounded-bl-sm shadow-sm'
                             }`}>
-                              <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.text}</p>
+                              <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">{message.text}</p>
                             </div>
                           </div>
                         </div>
@@ -249,8 +249,8 @@ export default function AIAssistantPage() {
                   </div>
                 </div>
 
-                {/* Input Area */}
-                <div className="bg-white border-t border-slate-200 p-4">
+                {/* Input Area - fixed at bottom on mobile */}
+                <div className="shrink-0 bg-white border-t border-slate-200 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] md:pb-4">
                   <div className="flex items-center bg-slate-50 rounded-3xl px-4 py-2">
                     <input
                       type="text"
@@ -258,12 +258,12 @@ export default function AIAssistantPage() {
                       onChange={(e) => setInputText(e.target.value)}
                       onKeyPress={handleKeyPress}
                       placeholder="Type your message..."
-                      className="flex-1 border-0 bg-transparent focus:ring-0 focus:border-0 focus:outline-none text-sm py-2"
+                      className="flex-1 min-w-0 border-0 bg-transparent focus:ring-0 focus:border-0 focus:outline-none text-sm py-2"
                     />
                     <Button
                       onClick={handleSendMessage}
                       disabled={!inputText.trim() || isTyping}
-                      className={`w-10 h-10 rounded-full p-0 transition-all duration-200 ${
+                      className={`w-10 h-10 shrink-0 rounded-full p-0 transition-all duration-200 ${
                         inputText.trim() 
                           ? 'bg-gradient-to-br from-red-600 to-red-700 hover:from-red-700 hover:to-red-800' 
                           : 'bg-slate-300'
@@ -277,8 +277,8 @@ export default function AIAssistantPage() {
             </Card>
           </div>
 
-          {/* Quick Replies Sidebar */}
-          <div className="w-full lg:w-80 flex-shrink-0">
+          {/* Quick Replies Sidebar - hidden on mobile */}
+          <div className="hidden lg:block w-80 flex-shrink-0">
             <Card className="h-full border-0 shadow-sm">
               <CardContent className="p-6 h-full flex flex-col">
                 <div className="mb-6">
