@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -193,13 +194,6 @@ export default function HomePage() {
     }
   }
 
-  const handleMenuClick = (href: string) => {
-    if (href.startsWith('http')) {
-      window.open(href, '_blank', 'noopener,noreferrer')
-      return
-    }
-    router.push(href)
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
@@ -329,25 +323,23 @@ export default function HomePage() {
           {getDashboardStats(documentsCount, trainingCount).map((stat, index) => {
             const Icon = stat.icon
             return (
-              <Card
-                key={index}
-                className="hover:shadow-lg transition-all duration-200 border-0 shadow-sm cursor-pointer"
-                onClick={() => router.push(stat.href)}
-              >
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <div className={`p-3 rounded-xl ${stat.bgColor} ${stat.borderColor} border`}>
-                        <Icon className={`h-6 w-6 ${stat.color}`} />
-                      </div>
-                      <div>
-                        <p className="text-2xl font-bold text-slate-900">{stat.value}</p>
-                        <p className="text-sm text-slate-600">{stat.label}</p>
+              <Link key={index} href={stat.href} prefetch className="block touch-manipulation">
+                <Card className="hover:shadow-lg transition-all duration-200 border-0 shadow-sm cursor-pointer active:scale-[0.98] active:opacity-95">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4">
+                        <div className={`p-3 rounded-xl ${stat.bgColor} ${stat.borderColor} border`}>
+                          <Icon className={`h-6 w-6 ${stat.color}`} />
+                        </div>
+                        <div>
+                          <p className="text-2xl font-bold text-slate-900">{stat.value}</p>
+                          <p className="text-sm text-slate-600">{stat.label}</p>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              </Link>
             )
           })}
         </div>
@@ -361,11 +353,12 @@ export default function HomePage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pb-6">
               {menuItems.map((item) => {
                 const Icon = item.icon
-                return (
+                const isExternal = item.href.startsWith('http')
+                const cardContent = (
                   <Card 
-                    key={item.id} 
-                    className="cursor-pointer hover:shadow-xl transition-all duration-300 group border-0 shadow-sm hover:scale-[1.02]"
-                    onClick={() => handleMenuClick(item.href)}
+                    key={item.id}
+                    className="cursor-pointer hover:shadow-xl transition-all duration-300 group border-0 shadow-sm hover:scale-[1.02] active:scale-[0.98] active:opacity-95 touch-manipulation"
+                    {...(isExternal && { onClick: () => window.open(item.href, '_blank', 'noopener,noreferrer') })}
                   >
                     <CardContent className="p-0">
                       <div className={`relative w-full h-40 bg-gradient-to-br ${item.gradient} rounded-lg p-6 text-white overflow-hidden`}>
@@ -392,6 +385,13 @@ export default function HomePage() {
                       </div>
                     </CardContent>
                   </Card>
+                )
+                return isExternal ? (
+                  <div>{cardContent}</div>
+                ) : (
+                  <Link href={item.href} prefetch className="block touch-manipulation">
+                    {cardContent}
+                  </Link>
                 )
               })}
             </div>

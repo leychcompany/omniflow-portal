@@ -369,6 +369,22 @@ button {
   outline-offset: 2px;
 }
 
+/* Remove 300ms tap delay on mobile for faster touch response */
+button,
+a,
+[role="button"],
+.touch-manipulation {
+  touch-action: manipulation;
+}
+
+/* Instant feedback on tap - override global transition for active state */
+button:active,
+a:active,
+[role="button"]:active,
+.touch-manipulation:active {
+  transition: none !important;
+}
+
 /* Hide scrollbar but keep functionality */
 .scrollbar-hide {
   -ms-overflow-style: none;

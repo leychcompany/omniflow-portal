@@ -69,12 +69,10 @@ export default function TrainingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between py-4">
             <div className="flex items-center space-x-4">
-              <Button
-                variant="outline"
-                onClick={() => router.push('/home')}
-                className="flex items-center gap-2 p-3"
-              >
-                <ArrowLeft className="h-4 w-4" />
+              <Button variant="outline" className="flex items-center gap-2 p-3 touch-manipulation active:opacity-80" asChild>
+                <Link href="/home" prefetch>
+                  <ArrowLeft className="h-4 w-4" />
+                </Link>
               </Button>
               <div className="flex items-center space-x-3">
                 <div className="p-2 bg-purple-100 rounded-lg">
