@@ -231,9 +231,8 @@ export async function PATCH(
         .from("manual_tags")
         .select("tag_id, tags(name)")
         .eq("manual_id", id);
-      tags = ((mtData as { tags: { name: string } | null }[]) ?? [])
-        .map((r) => r?.tags?.name)
-        .filter(Boolean) as string[];
+      const rows = (mtData ?? []) as unknown as { tags: { name: string } | null }[];
+      tags = rows.map((r) => r?.tags?.name).filter(Boolean) as string[];
       if (tags.length === 0 && (data as { category?: string })?.category) {
         tags = [(data as { category: string }).category];
       }
