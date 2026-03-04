@@ -89,14 +89,7 @@ export default function DocumentsPage() {
   const clearFilters = () => setSelectedTags([])
 
   const handleDownload = (doc: Manual) => {
-    const url = doc.download_url ?? doc.path
-    if (!url) return
-    const link = document.createElement('a')
-    link.href = url
-    link.download = doc.filename
-    link.target = '_blank'
-    link.rel = 'noopener noreferrer'
-    link.click()
+    window.open(`/api/manuals/${doc.id}/download`, '_blank', 'noopener,noreferrer')
   }
 
   if (loading) {

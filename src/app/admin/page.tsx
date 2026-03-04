@@ -27,6 +27,7 @@ import {
   Newspaper,
   GraduationCap,
   Eye,
+  BarChart3,
 } from 'lucide-react'
 
 interface User {
@@ -87,7 +88,7 @@ interface Invite {
   created_by?: string
 }
 
-const VALID_TABS = ['users', 'training', 'manuals', 'news'] as const
+const VALID_TABS = ['users', 'training', 'manuals', 'news', 'analytics'] as const
 type TabId = (typeof VALID_TABS)[number]
 
 function AdminDashboardContent() {
@@ -130,6 +131,23 @@ function AdminDashboardContent() {
   const [newsArticles, setNewsArticles] = useState<NewsArticle[]>([])
   const [newsLoading, setNewsLoading] = useState(false)
   const [newsError, setNewsError] = useState('')
+
+  // Analytics state
+  const [analyticsEvents, setAnalyticsEvents] = useState<{
+    id: string
+    event_type: string
+    user_id: string
+    user_email: string | null
+    user_name: string | null
+    resource_type: string | null
+    resource_id: string | null
+    resource_label: string
+    metadata: Record<string, unknown>
+    created_at: string
+  }[]>([])
+  const [analyticsLoading, setAnalyticsLoading] = useState(false)
+  const [analyticsError, setAnalyticsError] = useState('')
+  const [analyticsEventTypeFilter, setAnalyticsEventTypeFilter] = useState<string>('')
 
   const adminCount = useMemo(
     () => users.filter((userItem) => userItem.role === 'admin').length,
@@ -186,6 +204,27 @@ function AdminDashboardContent() {
       setNewsLoading(false)
     }
   }, [])
+
+  // Fetch analytics events
+  const fetchAnalytics = useCallback(async () => {
+    setAnalyticsLoading(true)
+    setAnalyticsError('')
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const params = new URLSearchParams()
+      if (analyticsEventTypeFilter) params.set('event_type', analyticsEventTypeFilter)
+      const res = await fetch(`/api/analytics/events?${params}`, {
+        headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {},
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed to load analytics')
+      setAnalyticsEvents(data.events ?? [])
+    } catch (e: unknown) {
+      setAnalyticsError(e instanceof Error ? e.message : 'Failed to load analytics')
+    } finally {
+      setAnalyticsLoading(false)
+    }
+  }, [analyticsEventTypeFilter])
 
   // Fetch users from database
   const fetchUsers = useCallback(async () => {
@@ -283,7 +322,9 @@ function AdminDashboardContent() {
     if (activeTab === 'training') fetchCourses()
     if (activeTab === 'manuals') fetchManuals()
     if (activeTab === 'news') fetchNews()
-  }, [activeTab, fetchCourses, fetchManuals, fetchNews])
+    if (activeTab === 'analytics') fetchAnalytics()
+  }, [activeTab, fetchCourses, fetchManuals, fetchNews, fetchAnalytics])
+
 
   // Prefetch courses, manuals, news for stats cards
   useEffect(() => {
@@ -532,6 +573,7 @@ function AdminDashboardContent() {
     { id: 'training' as const, label: 'Training', count: courses.length, icon: GraduationCap },
     { id: 'manuals' as const, label: 'Documents', count: manuals.length, icon: BookOpen },
     { id: 'news' as const, label: 'News', count: newsArticles.length, icon: Newspaper },
+    { id: 'analytics' as const, label: 'Analytics', count: analyticsEvents.length, icon: BarChart3 },
   ]
 
   const getTabButtonClass = (id: typeof activeTab) => {
@@ -542,6 +584,7 @@ function AdminDashboardContent() {
       case 'training': return `${base} bg-gradient-to-r from-purple-600 to-purple-700 text-white shadow-md hover:from-purple-700 hover:to-purple-800`
       case 'manuals': return `${base} bg-gradient-to-r from-teal-600 to-teal-700 text-white shadow-md hover:from-teal-700 hover:to-teal-800`
       case 'news': return `${base} bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-md hover:from-blue-700 hover:to-blue-800`
+      case 'analytics': return `${base} bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow-md hover:from-indigo-700 hover:to-indigo-800`
       default: return base
     }
   }
@@ -642,6 +685,12 @@ function AdminDashboardContent() {
                   Add News
                 </Button>
               </>
+            )}
+            {activeTab === 'analytics' && (
+              <Button variant="outline" onClick={fetchAnalytics} disabled={analyticsLoading} className="flex items-center gap-2">
+                <RefreshCw className={`h-4 w-4 ${analyticsLoading ? 'animate-spin' : ''}`} />
+                Refresh
+              </Button>
             )}
           </div>
         </div>
@@ -1026,12 +1075,91 @@ function AdminDashboardContent() {
           </div>
         )}
 
+        {activeTab === 'analytics' && (
+          <div className="space-y-4">
+            <div className="flex flex-wrap items-center gap-3 mb-4">
+              <label className="text-sm font-medium text-slate-700">Event type:</label>
+              <select
+                value={analyticsEventTypeFilter}
+                onChange={(e) => {
+                  setAnalyticsEventTypeFilter(e.target.value)
+                  setTimeout(() => fetchAnalytics(), 0)
+                }}
+                className="p-2 border border-slate-200 rounded-lg text-sm bg-white"
+              >
+                <option value="">All events</option>
+                <option value="document_download">Document download</option>
+              </select>
+            </div>
+            {analyticsLoading ? (
+              <Card className="border-0 shadow-lg bg-white">
+                <CardContent className="p-12 text-center">
+                  <Loader2 className="h-8 w-8 animate-spin mx-auto text-indigo-600 mb-4" />
+                  <p className="text-slate-600">Loading analytics...</p>
+                </CardContent>
+              </Card>
+            ) : analyticsError ? (
+              <Card className="border-0 shadow-lg border-red-200 bg-red-50">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-3 text-red-700">
+                    <XCircle className="h-5 w-5" />
+                    <span>{analyticsError}</span>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : analyticsEvents.length === 0 ? (
+              <Card className="border-0 shadow-lg bg-white">
+                <CardContent className="p-12 text-center">
+                  <BarChart3 className="h-12 w-12 mx-auto text-slate-400 mb-4" />
+                  <p className="text-slate-600">No activity events yet. Document downloads will appear here.</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card className="border-0 shadow-lg bg-white overflow-hidden">
+                <CardContent className="p-0">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-slate-200 bg-slate-50">
+                          <th className="text-left p-4 font-semibold text-slate-700">User</th>
+                          <th className="text-left p-4 font-semibold text-slate-700">Event</th>
+                          <th className="text-left p-4 font-semibold text-slate-700">Resource</th>
+                          <th className="text-left p-4 font-semibold text-slate-700">When</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {analyticsEvents.map((evt) => (
+                          <tr key={evt.id} className="border-b border-slate-100 hover:bg-slate-50">
+                            <td className="p-4">
+                              <div className="font-medium text-slate-900">{evt.user_name || evt.user_email || evt.user_id}</div>
+                              {evt.user_name && evt.user_email && (
+                                <div className="text-xs text-slate-500">{evt.user_email}</div>
+                              )}
+                            </td>
+                            <td className="p-4">
+                              <Badge variant="secondary" className="bg-indigo-100 text-indigo-800">
+                                {evt.event_type.replace(/_/g, ' ')}
+                              </Badge>
+                            </td>
+                            <td className="p-4 text-slate-700">{evt.resource_label}</td>
+                            <td className="p-4 text-slate-600">{formatDate(evt.created_at)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        )}
+
       {/* Mobile Bottom Tab Bar */}
       <nav className="fixed bottom-0 left-0 right-0 md:hidden bg-white border-t border-slate-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-40 pb-[env(safe-area-inset-bottom)]">
-        <div className="grid grid-cols-4 h-14">
+        <div className="grid grid-cols-5 h-14">
           {tabItems.map(({ id, label, count, icon: Icon }) => {
             const isActive = activeTab === id
-            const activeColor = id === 'users' ? 'text-red-600' : id === 'training' ? 'text-purple-600' : id === 'manuals' ? 'text-teal-600' : 'text-blue-600'
+            const activeColor = id === 'users' ? 'text-red-600' : id === 'training' ? 'text-purple-600' : id === 'manuals' ? 'text-teal-600' : id === 'news' ? 'text-blue-600' : 'text-indigo-600'
             return (
               <button
                 key={id}
