@@ -35,8 +35,7 @@ import {
   Crown,
   User,
   ChevronDown,
-  Package,
-  RefreshCw
+  Package
 } from 'lucide-react'
 
 const LOCKED_FEATURE_IDS = ['ai-assistant', 'view-documents', 'software']
@@ -257,16 +256,6 @@ export default function HomePage() {
                         >
                           <Settings className="h-4 w-4 text-slate-600" />
                           <span>User Settings</span>
-                        </button>
-                        <button
-                          onClick={() => {
-                            setProfileDropdownOpen(false)
-                            document.dispatchEvent(new CustomEvent('auth:refreshProfile'))
-                          }}
-                          className="w-full flex items-center space-x-3 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
-                        >
-                          <RefreshCw className="h-4 w-4 text-slate-600" />
-                          <span>Refresh profile</span>
                         </button>
                         {user?.role === 'admin' && (
                           <button

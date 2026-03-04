@@ -13,17 +13,17 @@ export default function LogoutPage() {
       if (done) return
       done = true
       useAuthStore.getState().signOut()
-      window.location.href = '/login'
+      // Server-side route clears session cookies and redirects to login
+      window.location.href = '/api/auth/logout'
     }
 
-    // Safety: force redirect after 1.5s if getSession/signOut hangs
+    // Safety: force redirect after 1.5s if getSession hangs
     const timeout = setTimeout(redirect, 1500)
 
     ;(async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession()
         recordAuthEvent('logout', session?.access_token)
-        await supabase.auth.signOut({ scope: 'local' })
       } catch (e) {
         console.error('Logout error:', e)
       } finally {
