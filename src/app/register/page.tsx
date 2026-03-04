@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, Suspense, useEffect } from 'react'
+import { useState, Suspense, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
@@ -9,7 +9,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Logo } from '@/components/Logo'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/auth-store'
-import { Eye, EyeOff, Loader2, Shield, Users, Zap, BookOpen, ArrowRight, UserPlus } from 'lucide-react'
+import { isBlockedEmailDomain, getBlockedDomainsMessage } from '@/lib/blocked-email-domains'
+import { Eye, EyeOff, Loader2, Shield, Users, Zap, BookOpen, ArrowRight, UserPlus, Mail, Hash } from 'lucide-react'
 
 function RegisterForm() {
   const [firstName, setFirstName] = useState('')
@@ -23,15 +24,31 @@ function RegisterForm() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
+  const [step, setStep] = useState<'form' | 'verify'>('form')
+  const [otpCode, setOtpCode] = useState('')
+  const [otpLoading, setOtpLoading] = useState(false)
+  const [resendLoading, setResendLoading] = useState(false)
+  const [resendSuccess, setResendSuccess] = useState(false)
+  const [resendCooldown, setResendCooldown] = useState(0)
+  const inVerifyStepRef = useRef(false)
+
+  // Cooldown timer for resend (Supabase rate limit: 60s)
+  useEffect(() => {
+    if (resendCooldown <= 0) return
+    const t = setInterval(() => setResendCooldown((s) => (s <= 1 ? 0 : s - 1)), 1000)
+    return () => clearInterval(t)
+  }, [resendCooldown])
 
   const router = useRouter()
   const { user } = useAuthStore()
 
+  // Only redirect when on form step - don't redirect during email verification
+  // Use ref to avoid race: auth callback can set user before React commits step
   useEffect(() => {
-    if (user) {
+    if (user && step === 'form' && !inVerifyStepRef.current) {
       router.push('/home')
     }
-  }, [user, router])
+  }, [user, router, step])
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -49,6 +66,11 @@ function RegisterForm() {
 
     if (password.length < 6) {
       setError('Password must be at least 6 characters')
+      return
+    }
+
+    if (isBlockedEmailDomain(email.trim())) {
+      setError(getBlockedDomainsMessage())
       return
     }
 
@@ -76,13 +98,79 @@ function RegisterForm() {
         return
       }
 
-      setSuccess(true)
+      setLoading(false)
+      inVerifyStepRef.current = true
+      setResendCooldown(60)
+      setStep('verify')
     } catch (err: unknown) {
       const errMsg = err as { message?: string }
       console.error('Registration error:', err)
       setError(errMsg.message || 'Registration failed')
     } finally {
-      setLoading(false)
+      if (step === 'form') setLoading(false)
+    }
+  }
+
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError('')
+
+    const trimmedCode = otpCode.replace(/\s/g, '')
+    if (!trimmedCode || trimmedCode.length !== 6) {
+      setError('Please enter the 6-digit code from your email')
+      return
+    }
+
+    setOtpLoading(true)
+    try {
+      const { data, error: verifyError } = await supabase.auth.verifyOtp({
+        email: email.trim().toLowerCase(),
+        token: trimmedCode,
+        type: 'signup',
+      })
+
+      if (verifyError) throw verifyError
+
+      if (data?.session) {
+        await supabase.auth.signOut({ scope: 'local' })
+        setSuccess(true)
+      } else {
+        setError('Verification failed. Please try again or request a new code.')
+      }
+    } catch (err: unknown) {
+      const errMsg = err as { message?: string }
+      console.error('Verification error:', err)
+      setError(errMsg.message || 'Invalid or expired code. Please request a new code.')
+    } finally {
+      setOtpLoading(false)
+    }
+  }
+
+  const handleResendCode = async () => {
+    if (resendCooldown > 0) return
+    setError('')
+    setResendSuccess(false)
+    setResendLoading(true)
+    try {
+      const { error: resendError } = await supabase.auth.resend({
+        type: 'signup',
+        email: email.trim().toLowerCase(),
+      })
+      if (resendError) throw resendError
+      setResendSuccess(true)
+      setResendCooldown(60)
+    } catch (err: unknown) {
+      const e = err as { message?: string; error_description?: string }
+      const msg = e?.message || e?.error_description || ''
+      const isRateLimit =
+        /rate limit|too many|wait.*second|429/i.test(msg) || msg.includes('60')
+      setError(
+        isRateLimit
+          ? 'Please wait 60 seconds before requesting another code.'
+          : msg || 'Failed to resend code. Please try again.'
+      )
+    } finally {
+      setResendLoading(false)
     }
   }
 
@@ -120,6 +208,91 @@ function RegisterForm() {
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    )
+  }
+
+  if (step === 'verify') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmM2Y0ZjYiIGZpbGwtb3BhY2l0eT0iMC40Ij48Y2lyY2xlIGN4PSIzMCIgY3k9IjMwIiByPSIyIi8+PC9nPjwvZz48L3N2Zz4=')] opacity-40"></div>
+        <div className="relative min-h-screen flex items-center justify-center px-4">
+          <Card className="max-w-md w-full shadow-2xl border-0 bg-white/95 backdrop-blur-sm">
+            <CardHeader className="space-y-2 text-center pb-6">
+              <div className="mx-auto p-4 bg-blue-100 rounded-full w-fit mb-2">
+                <Mail className="h-12 w-12 text-blue-600" />
+              </div>
+              <CardTitle className="text-2xl font-bold text-slate-900">
+                Verify your email
+              </CardTitle>
+              <CardDescription className="text-slate-600">
+                We&apos;ve sent a 6-digit code to <strong>{email}</strong>. Enter it below to complete your registration.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <form onSubmit={handleVerifyOtp} className="space-y-4">
+                <div className="space-y-2">
+                  <label htmlFor="otp" className="text-sm font-medium text-slate-700 flex items-center space-x-2">
+                    <Hash className="h-4 w-4" />
+                    <span>Verification code</span>
+                  </label>
+                  <Input
+                    id="otp"
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    maxLength={6}
+                    placeholder="000000"
+                    value={otpCode}
+                    onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
+                    className="h-12 text-center text-lg tracking-[0.5em] font-mono border-slate-200 focus:border-slate-400 focus:ring-slate-400"
+                    autoComplete="one-time-code"
+                  />
+                </div>
+                {error && (
+                  <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm flex items-center space-x-2">
+                    <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                    <span>{error}</span>
+                  </div>
+                )}
+                {resendSuccess && !error && (
+                  <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-lg text-sm flex items-center space-x-2">
+                    <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                    <span>Code resent. Check your email.</span>
+                  </div>
+                )}
+                <Button
+                  type="submit"
+                  className="w-full h-12 bg-gradient-to-r from-slate-900 to-slate-800 hover:from-slate-800 hover:to-slate-700 text-white font-semibold"
+                  disabled={otpLoading}
+                >
+                  {otpLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                      Verifying...
+                    </>
+                  ) : (
+                    'Verify'
+                  )}
+                </Button>
+              </form>
+              <div className="text-center space-y-1">
+                <button
+                  type="button"
+                  onClick={handleResendCode}
+                  disabled={resendLoading || resendCooldown > 0}
+                  className="text-sm text-slate-600 hover:text-slate-800 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {resendLoading
+                    ? 'Sending...'
+                    : resendCooldown > 0
+                      ? `Resend in ${resendCooldown}s`
+                      : "Didn't receive the code? Resend"}
+                </button>
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -246,6 +419,7 @@ function RegisterForm() {
                       required
                       className="h-11 border-slate-200 focus:border-slate-400 focus:ring-slate-400"
                     />
+                    <p className="text-xs text-slate-500">Use your company email address</p>
                   </div>
 
                   <div className="space-y-2">

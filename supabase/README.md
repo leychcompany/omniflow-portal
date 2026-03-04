@@ -54,17 +54,31 @@ Create a storage bucket named `images` for news and training thumbnails:
 
 The admin uploads images to `images/news/` and `images/training/` via the News and Training forms.
 
-## Password Reset & Invite – OTP Fallback (Corporate Email)
+## Password Reset, Invite & Signup – OTP Fallback (Corporate Email)
 
 Corporate email systems (e.g. Microsoft 365, Outlook, Proofpoint) often prefetch links in emails for security scanning. This consumes the one-time token before the user clicks, causing "link has expired" errors.
 
-To fix this, add the 6-digit OTP code (`{{ .Token }}`) to both **Reset Password** and **Invite** email templates in Supabase. Users can then enter the gitcode manually when the link is consumed by their corporate firewall.
+To fix this, add the 6-digit OTP code (`{{ .Token }}`) to **Reset Password**, **Invite**, and **Confirm signup** email templates in Supabase. Users can then enter the code manually when the link is consumed by their corporate firewall.
 
 ### Setup
 
 1. Go to [Supabase Dashboard](https://supabase.com/dashboard) → your project → **Authentication** → **Email Templates**
-2. Edit both **Reset Password** and **Invite** templates (see below)
+2. Edit **Reset Password**, **Invite**, and **Confirm signup** templates (see below)
 3. Save each template
+4. Ensure **Confirm email** is enabled under Authentication → Providers → Email
+
+### Confirm signup template
+
+Registration requires email verification. Add the 6-digit code to the signup template:
+
+```html
+<h2>Confirm Your Email</h2>
+<p>Thanks for signing up! Enter this 6-digit code on the registration page to verify your email:</p>
+<p><strong>{{ .Token }}</strong></p>
+<p>Or click the link below:</p>
+<p><a href="{{ .ConfirmationURL }}">Confirm Email</a></p>
+<p>This code expires in 24 hours.</p>
+```
 
 ### Reset Password template
 

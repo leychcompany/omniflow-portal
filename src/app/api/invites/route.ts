@@ -79,6 +79,7 @@ export async function POST(req: NextRequest) {
     );
 
     let createdUserId: string | undefined;
+    let inviteData: { id?: string } | null = null;
 
     let isExistingUser = false;
 
@@ -170,6 +171,7 @@ export async function POST(req: NextRequest) {
             email: normalizedEmail,
             password: String(password).trim(),
             email_confirm: true,
+            app_metadata: { invited_by_admin: true },
           });
 
         if (createError) throw createError;
@@ -179,48 +181,74 @@ export async function POST(req: NextRequest) {
           await ensureProfile(createdUserId);
         }
       } else {
-        // Create new user using inviteUserByEmail
+        // Create invite record BEFORE inviteUserByEmail so Auth Hook can detect admin invite
+        const inviteToken = `${Date.now()}_${Math.random()
+          .toString(36)
+          .substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`;
+
+        const { data: inviteRecord, error: inviteRecordError } = await supabaseAdmin
+          .from("invites")
+          .insert({
+            email: normalizedEmail,
+            used: false,
+            created_by: user.id,
+            token: inviteToken,
+            expires_at: new Date(
+              Date.now() + 7 * 24 * 60 * 60 * 1000
+            ).toISOString(),
+          })
+          .select()
+          .single();
+
+        if (inviteRecordError) {
+          console.error("Error creating invite record:", inviteRecordError);
+          throw inviteRecordError;
+        }
+
         const redirectUrl = process.env.NEXT_PUBLIC_APP_URL
           ? `${process.env.NEXT_PUBLIC_APP_URL}/auth/reset-password`
           : `${req.nextUrl.origin}/auth/reset-password`;
 
-        const { data: inviteData, error: inviteError } =
+        const { data: inviteResponse, error: inviteError } =
           await supabaseAdmin.auth.admin.inviteUserByEmail(normalizedEmail, {
             redirectTo: redirectUrl,
           });
 
         if (inviteError) throw inviteError;
-        createdUserId = inviteData?.user?.id;
+        createdUserId = inviteResponse?.user?.id;
 
         if (createdUserId) {
           await ensureProfile(createdUserId);
         }
+
+        inviteData = inviteRecord;
       }
     }
 
-    // Generate invite token (for tracking purposes)
-    const inviteToken = `${Date.now()}_${Math.random()
-      .toString(36)
-      .substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`;
+    // Create invite record for createWithPassword and existing user paths
+    if (!inviteData) {
+      const inviteToken = `${Date.now()}_${Math.random()
+        .toString(36)
+        .substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`;
 
-    // Create invite record (audit trail)
-    const { data: inviteData, error: inviteRecordError } = await supabaseAdmin
-      .from("invites")
-      .insert({
-        email: normalizedEmail,
-        used: isExistingUser || createWithPassword,
-        created_by: user.id,
-        token: inviteToken,
-        expires_at: new Date(
-          Date.now() + 7 * 24 * 60 * 60 * 1000
-        ).toISOString(),
-      })
-      .select()
-      .single();
+      const { data: record, error: inviteRecordError } = await supabaseAdmin
+        .from("invites")
+        .insert({
+          email: normalizedEmail,
+          used: isExistingUser || createWithPassword,
+          created_by: user.id,
+          token: inviteToken,
+          expires_at: new Date(
+            Date.now() + 7 * 24 * 60 * 60 * 1000
+          ).toISOString(),
+        })
+        .select()
+        .single();
 
-    if (inviteRecordError) {
-      console.error("Error creating invite:", inviteRecordError);
-      // Don't fail if invite creation fails, user is already created
+      if (inviteRecordError) {
+        console.error("Error creating invite:", inviteRecordError);
+      }
+      inviteData = record;
     }
 
     return NextResponse.json({
