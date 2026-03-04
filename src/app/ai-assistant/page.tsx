@@ -200,7 +200,7 @@ export default function AIAssistantPage() {
             <Card className="flex-1 flex flex-col min-h-0 border-0 shadow-sm md:rounded-lg h-full">
               <CardContent className="p-0 flex-1 flex flex-col min-h-0">
                 {/* Messages - scrollable only, pb-20 on mobile for fixed input */}
-                <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0 p-4 pb-24 md:pb-8 md:p-8 scrollbar-hide">
+                <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0 pt-10 pb-24 px-4 md:pt-10 md:pb-8 md:px-8 scrollbar-hide">
                   <div className="space-y-6 max-w-5xl mx-auto md:space-y-8">
                     {messages.map((message) => (
                       <div

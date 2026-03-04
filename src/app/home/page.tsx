@@ -311,7 +311,7 @@ export default function HomePage() {
                 Welcome back! 👋
               </h1>
               <p className="text-slate-600 text-lg">
-                Here&apos;s what&apos;s happening with your account today.
+              Here's the latest on your account.
               </p>
             </div>
         
@@ -319,7 +319,7 @@ export default function HomePage() {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {getDashboardStats(documentsCount, trainingCount).map((stat, index) => {
             const Icon = stat.icon
             return (
