@@ -347,7 +347,7 @@ export default function SupportPage() {
         </div>
 
         {/* Content */}
-        <Card ref={ticketFormRef} className="border-0 shadow-sm scroll-mt-6">
+        <Card ref={ticketFormRef} className="border-0 shadow-sm scroll-mt-24 md:scroll-mt-6">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <Headphones className="h-5 w-5 text-red-600" />
