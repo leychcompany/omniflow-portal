@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { supabase } from '@/lib/supabase'
-import { uploadWithProgress } from '@/lib/upload-with-progress'
+import { uploadFileViaPresign } from '@/lib/upload-file-direct'
 import { Upload, Loader2, XCircle, FileArchive, Image } from 'lucide-react'
 
 interface Software {
@@ -34,19 +34,13 @@ export default function EditSoftwarePage() {
   const handleUploadImage = async (file: File): Promise<string | null> => {
     setImageUploading(true)
     try {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) throw new Error('Session expired')
-      const formData = new FormData()
-      formData.set('file', file)
-      formData.set('folder', 'software')
-      const res = await fetch('/api/upload', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${session.access_token}` },
-        body: formData,
+      const { uploadImageDirect } = await import('@/lib/upload-image')
+      const url = await uploadImageDirect(file, 'software', async () => {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!session) throw new Error('Session expired')
+        return { Authorization: `Bearer ${session.access_token}` }
       })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Upload failed')
-      return data.url as string
+      return url
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Upload failed')
       return null
@@ -94,15 +88,24 @@ export default function EditSoftwarePage() {
       let res: Response
 
       if (file) {
-        const formData = new FormData()
-        formData.set('title', form.title)
-        if (form.description) formData.set('description', form.description)
-        if (form.image_url) formData.set('image_url', form.image_url)
-        formData.set('file', file)
-        res = await uploadWithProgress(`/api/software/${form.id}`, formData, {
+        const getHeaders = async () => headers
+        const { path, filename, size } = await uploadFileViaPresign(
+          '/api/software/upload-url',
+          getHeaders,
+          { filename: file.name, fileSize: file.size },
+          file
+        )
+        res = await fetch(`/api/software/${form.id}`, {
           method: 'PATCH',
-          headers,
-          onProgress: (_, __, percent) => setUploadPercent(percent),
+          headers: { ...headers, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: form.title,
+            description: form.description || null,
+            image_url: form.image_url || null,
+            filename,
+            storage_path: path,
+            size,
+          }),
         })
       } else {
         res = await fetch(`/api/software/${form.id}`, {

@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { TagMultiSelect } from '@/components/ui/tag-multi-select'
 import { supabase } from '@/lib/supabase'
-import { uploadWithProgress } from '@/lib/upload-with-progress'
+import { uploadFileViaPresign } from '@/lib/upload-file-direct'
 import { Upload, Loader2, XCircle, FileText, ExternalLink } from 'lucide-react'
 
 interface Manual {
@@ -109,15 +109,25 @@ export default function EditManualPage() {
       let res: Response
 
       if (file) {
-        const formData = new FormData()
-        formData.set('title', form.title)
-        formData.set('tags', JSON.stringify(form.tags || []))
-        if (form.description) formData.set('description', form.description)
-        formData.set('file', file)
-        res = await uploadWithProgress(`/api/manuals/${form.id}`, formData, {
+        const getHeaders = async () => headers
+        const folder = (form.tags?.[0] || 'uncategorized').replace(/[^a-zA-Z0-9_-]/g, '_')
+        const { path, filename, size } = await uploadFileViaPresign(
+          '/api/manuals/upload-url',
+          getHeaders,
+          { filename: file.name, folder, fileSize: file.size },
+          file
+        )
+        res = await fetch(`/api/manuals/${form.id}`, {
           method: 'PATCH',
-          headers,
-          onProgress: (_, __, percent) => setUploadPercent(percent),
+          headers: { ...headers, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: form.title,
+            tags: form.tags || [],
+            description: form.description || null,
+            filename,
+            storage_path: path,
+            size,
+          }),
         })
       } else {
         res = await fetch(`/api/manuals/${form.id}`, {

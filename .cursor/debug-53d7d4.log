@@ -1,0 +1,10 @@
+{"sessionId":"53d7d4","location":"use-auth.ts:onAuthStateChange","message":"Auth state changed","data":{"event":"SIGNED_IN","hasSession":true,"userId":"24577abe"},"timestamp":1772812606686,"hypothesisId":"H1"}
+{"sessionId":"53d7d4","location":"use-auth.ts:onAuthStateChange","message":"Auth state changed","data":{"event":"SIGNED_IN","hasSession":true,"userId":"24577abe"},"timestamp":1772812614373,"hypothesisId":"H1"}
+{"sessionId":"53d7d4","location":"use-auth.ts:onAuthStateChange","message":"Auth state changed","data":{"event":"SIGNED_IN","hasSession":true,"userId":"24577abe"},"timestamp":1772812619201,"hypothesisId":"H1"}
+{"sessionId":"53d7d4","location":"use-auth.ts:getSession","message":"getSession result","data":{"trigger":"init","hasSession":true,"userId":"24577abe"},"timestamp":1772812625941,"hypothesisId":"H1"}
+{"sessionId":"53d7d4","location":"use-auth.ts:onAuthStateChange","message":"Auth state changed","data":{"event":"INITIAL_SESSION","hasSession":true,"userId":"24577abe"},"timestamp":1772812625968,"hypothesisId":"H1"}
+{"sessionId":"53d7d4","location":"use-auth.ts:profile-ok","message":"Profile fetched, setUser(data)","data":{"hasName":true,"hasEmail":true,"name":"Thiago"},"timestamp":1772812626299,"hypothesisId":"H4"}
+{"sessionId":"53d7d4","location":"use-auth.ts:profile-ok","message":"Profile fetched, setUser(data)","data":{"hasName":true,"hasEmail":true,"name":"Thiago"},"timestamp":1772812626311,"hypothesisId":"H4"}
+{"sessionId":"53d7d4","location":"use-auth.ts:onAuthStateChange","message":"Auth state changed","data":{"event":"SIGNED_IN","hasSession":true,"userId":"24577abe"},"timestamp":1772812629086,"hypothesisId":"H1"}
+{"sessionId":"53d7d4","location":"use-auth.ts:onAuthStateChange","message":"Auth state changed","data":{"event":"SIGNED_IN","hasSession":true,"userId":"24577abe"},"timestamp":1772812631105,"hypothesisId":"H1"}
+{"sessionId":"53d7d4","location":"use-auth.ts:onAuthStateChange","message":"Auth state changed","data":{"event":"SIGNED_IN","hasSession":true,"userId":"24577abe"},"timestamp":1772812632463,"hypothesisId":"H1"}

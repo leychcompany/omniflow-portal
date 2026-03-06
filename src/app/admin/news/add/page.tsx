@@ -25,19 +25,13 @@ export default function AddNewsPage() {
   const handleUploadImage = async (file: File): Promise<string | null> => {
     setImageUploading(true)
     try {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) throw new Error('Session expired')
-      const formData = new FormData()
-      formData.set('file', file)
-      formData.set('folder', 'news')
-      const res = await fetch('/api/upload', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${session.access_token}` },
-        body: formData,
+      const { uploadImageDirect } = await import('@/lib/upload-image')
+      const url = await uploadImageDirect(file, 'news', async () => {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!session) throw new Error('Session expired')
+        return { Authorization: `Bearer ${session.access_token}` }
       })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Upload failed')
-      return data.url as string
+      return url
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Upload failed')
       return null

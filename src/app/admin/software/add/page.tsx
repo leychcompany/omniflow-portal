@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { supabase } from '@/lib/supabase'
-import { uploadWithProgress } from '@/lib/upload-with-progress'
+import { uploadFileViaPresign } from '@/lib/upload-file-direct'
 import { Upload, Loader2, XCircle, Image } from 'lucide-react'
 
 export default function AddSoftwarePage() {
@@ -21,19 +21,13 @@ export default function AddSoftwarePage() {
   const handleUploadImage = async (file: File): Promise<string | null> => {
     setImageUploading(true)
     try {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) throw new Error('Session expired')
-      const formData = new FormData()
-      formData.set('file', file)
-      formData.set('folder', 'software')
-      const res = await fetch('/api/upload', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${session.access_token}` },
-        body: formData,
+      const { uploadImageDirect } = await import('@/lib/upload-image')
+      const url = await uploadImageDirect(file, 'software', async () => {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!session) throw new Error('Session expired')
+        return { Authorization: `Bearer ${session.access_token}` }
       })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Upload failed')
-      return data.url as string
+      return url
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Upload failed')
       return null
@@ -52,21 +46,31 @@ export default function AddSoftwarePage() {
       return
     }
     setLoading(true)
-    setUploadPercent(0)
+    setUploadPercent(50)
     setError('')
     try {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) throw new Error('Session expired. Please log in again.')
 
-      const formData = new FormData()
-      formData.set('title', form.title)
-      if (form.description) formData.set('description', form.description)
-      if (form.image_url) formData.set('image_url', form.image_url)
-      formData.set('file', file)
-
-      const res = await uploadWithProgress('/api/software', formData, {
-        headers: { Authorization: `Bearer ${session.access_token}` },
-        onProgress: (_, __, percent) => setUploadPercent(percent),
+      const getHeaders = async () => ({ Authorization: `Bearer ${session.access_token}` })
+      const { path, filename, size } = await uploadFileViaPresign(
+        '/api/software/upload-url',
+        getHeaders,
+        { filename: file.name, fileSize: file.size },
+        file
+      )
+      setUploadPercent(90)
+      const res = await fetch('/api/software', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({
+          title: form.title,
+          description: form.description || null,
+          image_url: form.image_url || null,
+          filename,
+          storage_path: path,
+          size,
+        }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed to upload software')
@@ -123,13 +127,13 @@ export default function AddSoftwarePage() {
         {loading && uploadPercent != null && (
           <div className="space-y-2">
             <div className="flex justify-between text-sm text-slate-600">
-              <span>{uploadPercent >= 100 ? 'Saving to storage...' : 'Uploading...'}</span>
-              <span>{uploadPercent >= 100 ? 'Processing' : `${uploadPercent}%`}</span>
+              <span>{uploadPercent >= 90 ? 'Saving...' : 'Uploading...'}</span>
+              <span>{uploadPercent}%</span>
             </div>
             <div className="h-2 w-full rounded-full bg-slate-200 overflow-hidden">
               <div
                 className="h-full bg-cyan-600 transition-all duration-300 ease-out"
-                style={{ width: `${Math.min(uploadPercent, 99)}%` }}
+                style={{ width: `${uploadPercent}%` }}
               />
             </div>
           </div>

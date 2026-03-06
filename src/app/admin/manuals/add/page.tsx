@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { TagMultiSelect } from '@/components/ui/tag-multi-select'
 import { supabase } from '@/lib/supabase'
-import { uploadWithProgress } from '@/lib/upload-with-progress'
+import { uploadFileViaPresign } from '@/lib/upload-file-direct'
 import { Upload, Loader2, XCircle } from 'lucide-react'
 
 export default function AddManualPage() {
@@ -62,21 +62,32 @@ export default function AddManualPage() {
       return
     }
     setLoading(true)
-    setUploadPercent(0)
+    setUploadPercent(50)
     setError('')
     try {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) throw new Error('Session expired. Please log in again.')
 
-      const formData = new FormData()
-      formData.set('title', form.title)
-      formData.set('tags', JSON.stringify(form.tags))
-      if (form.description) formData.set('description', form.description)
-      formData.set('file', file)
-
-      const res = await uploadWithProgress('/api/manuals', formData, {
-        headers: { Authorization: `Bearer ${session.access_token}` },
-        onProgress: (_, __, percent) => setUploadPercent(percent),
+      const getHeaders = async () => ({ Authorization: `Bearer ${session.access_token}` })
+      const folder = form.tags[0] ? form.tags[0].replace(/[^a-zA-Z0-9_-]/g, '_') : 'uncategorized'
+      const { path, filename, size } = await uploadFileViaPresign(
+        '/api/manuals/upload-url',
+        getHeaders,
+        { filename: file.name, folder, fileSize: file.size },
+        file
+      )
+      setUploadPercent(90)
+      const res = await fetch('/api/manuals', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({
+          title: form.title,
+          tags: form.tags,
+          description: form.description || null,
+          filename,
+          storage_path: path,
+          size,
+        }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed to upload document')
@@ -133,13 +144,13 @@ export default function AddManualPage() {
         {loading && uploadPercent != null && (
           <div className="space-y-2">
             <div className="flex justify-between text-sm text-slate-600">
-              <span>{uploadPercent >= 100 ? 'Saving to storage...' : 'Uploading...'}</span>
-              <span>{uploadPercent >= 100 ? 'Processing' : `${uploadPercent}%`}</span>
+              <span>{uploadPercent >= 90 ? 'Saving...' : 'Uploading...'}</span>
+              <span>{uploadPercent}%</span>
             </div>
             <div className="h-2 w-full rounded-full bg-slate-200 overflow-hidden">
               <div
                 className="h-full bg-teal-600 transition-all duration-300 ease-out"
-                style={{ width: `${Math.min(uploadPercent, 99)}%` }}
+                style={{ width: `${uploadPercent}%` }}
               />
             </div>
           </div>
