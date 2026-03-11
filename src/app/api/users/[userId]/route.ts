@@ -1,61 +1,13 @@
-import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-
-const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
-  auth: { autoRefreshToken: false, persistSession: false },
-});
+import { supabaseAdmin } from "@/lib/supabase-admin";
+import { verifyAdmin } from "@/lib/admin-auth";
 
 async function assertAdmin(
   request: NextRequest
 ): Promise<{ errorResponse: NextResponse } | { userId: string }> {
-  const authHeader = request.headers.get("authorization");
-  if (!authHeader) {
-    return {
-      errorResponse: NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      ),
-    };
-  }
-
-  const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-    global: { headers: { Authorization: authHeader } },
-  });
-
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !user) {
-    return {
-      errorResponse: NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      ),
-    };
-  }
-
-  const { data: userData, error: userError } = await supabaseAdmin
-    .from("users")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-
-  if (userError || !userData || userData.role !== "admin") {
-    return {
-      errorResponse: NextResponse.json(
-        { error: "Forbidden: Admin access required" },
-        { status: 403 }
-      ),
-    };
-  }
-
-  return { userId: user.id };
+  const auth = await verifyAdmin(request);
+  if (!auth.ok) return { errorResponse: auth.response };
+  return { userId: auth.userId };
 }
 
 export async function GET(

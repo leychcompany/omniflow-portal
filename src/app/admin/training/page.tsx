@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { supabase } from '@/lib/supabase'
 import { Plus, Search, Edit, Trash2, GraduationCap, Loader2, XCircle, RefreshCw } from 'lucide-react'
 import { type Course } from '../_components/admin-types'
 
@@ -34,17 +33,10 @@ export default function AdminTrainingPage() {
 
   useEffect(() => { fetchCourses() }, [fetchCourses])
 
-  const getAuthHeaders = async () => {
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session) throw new Error('Session expired.')
-    return { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` }
-  }
-
   const handleDeleteCourse = async (course: Course) => {
     if (!confirm(`Delete course "${course.title}"?`)) return
     try {
-      const headers = await getAuthHeaders()
-      const res = await fetch(`/api/courses/${course.id}`, { method: 'DELETE', headers })
+      const res = await fetch(`/api/courses/${course.id}`, { method: 'DELETE', credentials: 'include' })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed to delete')
       await fetchCourses()

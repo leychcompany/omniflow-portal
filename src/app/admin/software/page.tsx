@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { supabase } from '@/lib/supabase'
 import { Plus, Search, Edit, Trash2, Package, Loader2, XCircle, RefreshCw, Eye } from 'lucide-react'
 import { type SoftwareItem } from '../_components/admin-types'
 
@@ -20,10 +19,7 @@ export default function AdminSoftwarePage() {
     setSoftwareLoading(true)
     setSoftwareError('')
     try {
-      const { data: { session } } = await supabase.auth.getSession()
-      const res = await fetch('/api/software', {
-        headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {},
-      })
+      const res = await fetch('/api/software', { credentials: 'include' })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed to load software')
       setSoftwareItems(Array.isArray(data) ? data : [])
@@ -36,17 +32,10 @@ export default function AdminSoftwarePage() {
 
   useEffect(() => { fetchSoftware() }, [fetchSoftware])
 
-  const getAuthHeaders = async () => {
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session) throw new Error('Session expired.')
-    return { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` }
-  }
-
   const handleDeleteSoftware = async (item: SoftwareItem) => {
     if (!confirm(`Delete software "${item.title}"?`)) return
     try {
-      const headers = await getAuthHeaders()
-      const res = await fetch(`/api/software/${item.id}`, { method: 'DELETE', headers })
+      const res = await fetch(`/api/software/${item.id}`, { method: 'DELETE', credentials: 'include' })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed to delete')
       await fetchSoftware()

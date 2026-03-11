@@ -17,41 +17,12 @@ interface Payload {
 }
 
 export async function POST(req: NextRequest) {
+  const { verifyAdmin } = await import("@/lib/admin-auth");
+  const auth = await verifyAdmin(req);
+  if (!auth.ok) return auth.response;
+  const adminUserId = auth.userId;
+
   try {
-    // Verify the user is authenticated and admin
-    const authHeader = req.headers.get("authorization");
-    if (!authHeader) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    // Create a client to verify the user session
-    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: authHeader } },
-    });
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    // Check if user is admin in database
-    const { data: userData, error: userError } = await supabaseAdmin
-      .from("users")
-      .select("role")
-      .eq("id", user.id)
-      .single();
-
-    if (userError || !userData || userData.role !== "admin") {
-      return NextResponse.json(
-        { error: "Forbidden: Admin access required" },
-        { status: 403 }
-      );
-    }
-
     const body: Payload = await req.json();
     const { email, role = "client", password } = body;
 
@@ -191,7 +162,7 @@ export async function POST(req: NextRequest) {
           .insert({
             email: normalizedEmail,
             used: false,
-            created_by: user.id,
+            created_by: adminUserId,
             token: inviteToken,
             expires_at: new Date(
               Date.now() + 7 * 24 * 60 * 60 * 1000
@@ -236,7 +207,7 @@ export async function POST(req: NextRequest) {
         .insert({
           email: normalizedEmail,
           used: isExistingUser || createWithPassword,
-          created_by: user.id,
+          created_by: adminUserId,
           token: inviteToken,
           expires_at: new Date(
             Date.now() + 7 * 24 * 60 * 60 * 1000
@@ -269,38 +240,11 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET(req: NextRequest) {
+  const { verifyAdmin } = await import("@/lib/admin-auth");
+  const auth = await verifyAdmin(req);
+  if (!auth.ok) return auth.response;
+
   try {
-    const authHeader = req.headers.get("authorization");
-    if (!authHeader) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: authHeader } },
-    });
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const { data: userData, error: userError } = await supabaseAdmin
-      .from("users")
-      .select("role")
-      .eq("id", user.id)
-      .single();
-
-    if (userError || !userData || userData.role !== "admin") {
-      return NextResponse.json(
-        { error: "Forbidden: Admin access required" },
-        { status: 403 }
-      );
-    }
-
     const includeUsed = req.nextUrl.searchParams.get("includeUsed") === "true";
 
     let query = supabaseAdmin

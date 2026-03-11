@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { supabase } from '@/lib/supabase'
 import { Plus, Search, Edit, Trash2, BookOpen, Loader2, XCircle, RefreshCw, Eye } from 'lucide-react'
 import { type Manual } from '../_components/admin-types'
 
@@ -20,10 +19,7 @@ export default function AdminManualsPage() {
     setManualsLoading(true)
     setManualsError('')
     try {
-      const { data: { session } } = await supabase.auth.getSession()
-      const res = await fetch('/api/manuals', {
-        headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {},
-      })
+      const res = await fetch('/api/manuals', { credentials: 'include' })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed to load documents')
       setManuals(Array.isArray(data) ? data : [])
@@ -36,17 +32,10 @@ export default function AdminManualsPage() {
 
   useEffect(() => { fetchManuals() }, [fetchManuals])
 
-  const getAuthHeaders = async () => {
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session) throw new Error('Session expired.')
-    return { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` }
-  }
-
   const handleDeleteManual = async (manual: Manual) => {
     if (!confirm(`Delete document "${manual.title}"?`)) return
     try {
-      const headers = await getAuthHeaders()
-      const res = await fetch(`/api/manuals/${manual.id}`, { method: 'DELETE', headers })
+      const res = await fetch(`/api/manuals/${manual.id}`, { method: 'DELETE', credentials: 'include' })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed to delete')
       await fetchManuals()

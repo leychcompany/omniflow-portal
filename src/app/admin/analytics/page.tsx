@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { supabase } from '@/lib/supabase'
 import { BarChart3, Loader2, XCircle } from 'lucide-react'
 import { formatDate } from '../_components/admin-types'
 
@@ -31,13 +30,10 @@ export default function AdminAnalyticsPage() {
     setAnalyticsLoading(true)
     setAnalyticsError('')
     try {
-      const { data: { session } } = await supabase.auth.getSession()
       const params = new URLSearchParams()
       const filter = filterOverride ?? analyticsEventTypeFilter
       if (filter) params.set('event_type', filter)
-      const res = await fetch(`/api/analytics/events?${params}`, {
-        headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {},
-      })
+      const res = await fetch(`/api/analytics/events?${params}`, { credentials: 'include' })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed to load analytics')
       setAnalyticsEvents(data.events ?? [])

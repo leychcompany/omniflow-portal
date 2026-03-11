@@ -46,9 +46,7 @@ export default function AdminUsersPage() {
     setUsersLoading(true)
     setUsersError('')
     try {
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-      if (sessionError || !session) throw new Error('Session expired. Please log in again.')
-      const response = await fetch('/api/users', { method: 'GET', headers: { Authorization: `Bearer ${session.access_token}` } })
+      const response = await fetch('/api/users', { method: 'GET', credentials: 'include' })
       const result = await response.json()
       if (!response.ok) throw new Error(result.error || 'Failed to load users')
       const dbUsers = result.users || []
@@ -74,9 +72,7 @@ export default function AdminUsersPage() {
     setInvitesLoading(true)
     setInvitesError('')
     try {
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-      if (sessionError || !session) throw new Error('Session expired. Please log in again.')
-      const response = await fetch('/api/invites', { method: 'GET', headers: { Authorization: `Bearer ${session.access_token}` } })
+      const response = await fetch('/api/invites', { method: 'GET', credentials: 'include' })
       const result = await response.json()
       if (!response.ok) throw new Error(result.error || 'Failed to load invites')
       setInvites(result.invites || [])
@@ -115,11 +111,10 @@ export default function AdminUsersPage() {
   const toggleUserLock = async (userId: string) => {
     const u = users.find(x => x.id === userId)
     if (!u) return
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-    if (sessionError || !session) throw new Error('Session expired.')
     const res = await fetch(`/api/users/${userId}`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify({ locked: !u.locked })
     })
     const data = await res.json()
@@ -136,13 +131,12 @@ export default function AdminUsersPage() {
   const resendInvite = async (invite: Invite) => {
     setResendingInviteId(invite.id)
     try {
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-      if (sessionError || !session) throw new Error('Session expired.')
       const { data: userData } = await supabase.from('users').select('role').eq('email', invite.email.toLowerCase()).single()
       const role = userData?.role || 'client'
       const response = await fetch('/api/invites', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ email: invite.email, role })
       })
       const result = await response.json()
@@ -158,9 +152,7 @@ export default function AdminUsersPage() {
   const deleteInvite = async (inviteId: string) => {
     setDeletingInviteId(inviteId)
     try {
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-      if (sessionError || !session) throw new Error('Session expired.')
-      const response = await fetch(`/api/invites/${inviteId}`, { method: 'DELETE', headers: { Authorization: `Bearer ${session.access_token}` } })
+      const response = await fetch(`/api/invites/${inviteId}`, { method: 'DELETE', credentials: 'include' })
       const result = await response.json()
       if (!response.ok) throw new Error(result.error || 'Failed to delete invite')
       await fetchInvites()

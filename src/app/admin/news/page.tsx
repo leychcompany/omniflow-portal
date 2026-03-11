@@ -7,7 +7,6 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Plus, Search, Edit, Trash2, Newspaper, Loader2, XCircle, RefreshCw } from 'lucide-react'
-import { supabase } from '@/lib/supabase'
 import { type NewsArticle, formatDate } from '../_components/admin-types'
 
 export default function AdminNewsPage() {
@@ -34,17 +33,10 @@ export default function AdminNewsPage() {
 
   useEffect(() => { fetchNews() }, [fetchNews])
 
-  const getAuthHeaders = async () => {
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session) throw new Error('Session expired.')
-    return { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` }
-  }
-
   const handleDeleteNews = async (article: NewsArticle) => {
     if (!confirm(`Delete article "${article.title}"?`)) return
     try {
-      const headers = await getAuthHeaders()
-      const res = await fetch(`/api/news/${article.id}`, { method: 'DELETE', headers })
+      const res = await fetch(`/api/news/${article.id}`, { method: 'DELETE', credentials: 'include' })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed to delete')
       await fetchNews()

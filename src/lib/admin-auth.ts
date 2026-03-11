@@ -1,32 +1,51 @@
 import { createClient } from "@supabase/supabase-js";
+import { createServerClient } from "@supabase/ssr";
+import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
-export async function verifyAdmin(req: Request): Promise<
+async function getUserIdFromCookies(req: NextRequest): Promise<string | null> {
+  const supabase = createServerClient(
+    supabaseUrl,
+    supabaseAnonKey,
+    {
+      cookies: {
+        get(name: string) {
+          return req.cookies.get(name)?.value;
+        },
+        set() {},
+        remove() {},
+      },
+    }
+  );
+  const { data: { session }, error } = await supabase.auth.getSession();
+  if (error || !session?.user) return null;
+  return session.user.id;
+}
+
+export async function verifyAdmin(req: NextRequest): Promise<
   | { ok: true; userId: string }
   | { ok: false; response: NextResponse }
 > {
+  let userId: string | null = null;
+
   const authHeader = req.headers.get("authorization");
-  if (!authHeader) {
-    return {
-      ok: false,
-      response: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
-    };
+  if (authHeader?.startsWith("Bearer ")) {
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
+    const { data: { user }, error } = await supabase.auth.getUser();
+    if (!error && user) userId = user.id;
   }
 
-  const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-    global: { headers: { Authorization: authHeader } },
-  });
+  if (!userId && "cookies" in req) {
+    userId = await getUserIdFromCookies(req);
+  }
 
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !user) {
+  if (!userId) {
     return {
       ok: false,
       response: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
@@ -40,7 +59,7 @@ export async function verifyAdmin(req: Request): Promise<
   const { data: userData, error: userError } = await supabaseAdmin
     .from("users")
     .select("role")
-    .eq("id", user.id)
+    .eq("id", userId)
     .single();
 
   if (userError || !userData || userData.role !== "admin") {
@@ -53,5 +72,5 @@ export async function verifyAdmin(req: Request): Promise<
     };
   }
 
-  return { ok: true, userId: user.id };
+  return { ok: true, userId };
 }
