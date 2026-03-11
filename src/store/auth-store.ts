@@ -29,7 +29,7 @@ export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
       user: null,
-      loading: false, // Changed to false by default
+      loading: true, // Start true until session check completes; avoids wrong redirect on refresh
       mustChangePassword: false,
       setUser: (user) => set({ user }),
       setLoading: (loading) => set({ loading }),
@@ -38,9 +38,12 @@ export const useAuthStore = create<AuthState>()(
       signOut: () => set({ user: null, mustChangePassword: false }),
     }),
     {
-      name: "auth-storage-v2",
-      // Don't persist user - always fetch fresh on load so locked status updates on refresh
-      partialize: (state) => ({ mustChangePassword: state.mustChangePassword }),
+      name: "auth-storage-v3",
+      // Persist user to avoid "User" fallback in header on F5; still fetch fresh on load for locked status
+      partialize: (state) => ({
+        mustChangePassword: state.mustChangePassword,
+        user: state.user,
+      }),
     }
   )
 );
