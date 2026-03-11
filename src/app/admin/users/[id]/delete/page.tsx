@@ -61,7 +61,7 @@ export default function DeleteUserPage() {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed to delete user')
-      router.push('/admin?tab=users')
+      router.push('/admin/users')
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to delete user')
     } finally {
@@ -88,7 +88,7 @@ export default function DeleteUserPage() {
             <XCircle className="h-5 w-5" />
             <span>{error || 'User not found'}</span>
           </div>
-          <Button variant="outline" onClick={() => router.push('/admin?tab=users')}>
+          <Button variant="outline" onClick={() => router.push('/admin/users')}>
             Back to Admin
           </Button>
         </CardContent>
@@ -129,7 +129,7 @@ export default function DeleteUserPage() {
         <div className="flex justify-end gap-3 pt-4">
           <Button
             variant="outline"
-            onClick={() => router.push('/admin?tab=users')}
+            onClick={() => router.push('/admin/users')}
             disabled={deleting}
             className="hover:bg-slate-100"
           >

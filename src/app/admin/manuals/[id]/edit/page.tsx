@@ -142,7 +142,7 @@ export default function EditManualPage() {
       }
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed to update document')
-      router.push('/admin?tab=manuals')
+      router.push('/admin/manuals')
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to save')
     } finally {
@@ -170,7 +170,7 @@ export default function EditManualPage() {
             <XCircle className="h-5 w-5" />
             <span>{error || 'Document not found'}</span>
           </div>
-          <Button variant="outline" onClick={() => router.push('/admin?tab=manuals')}>Back to Admin</Button>
+          <Button variant="outline" onClick={() => router.push('/admin/manuals')}>Back to Admin</Button>
         </CardContent>
       </Card>
     )
@@ -257,7 +257,7 @@ export default function EditManualPage() {
           </div>
         )}
         <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">
-          <Button variant="outline" onClick={() => router.push('/admin?tab=manuals')} disabled={saving} className="hover:bg-slate-100">Cancel</Button>
+          <Button variant="outline" onClick={() => router.push('/admin/manuals')} disabled={saving} className="hover:bg-slate-100">Cancel</Button>
           <Button onClick={handleSubmit} disabled={saving} className="bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white shadow-lg hover:shadow-xl transition-all duration-200">
             {saving ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> {uploadPercent != null ? 'Uploading...' : 'Saving...'}</> : 'Update'}
           </Button>

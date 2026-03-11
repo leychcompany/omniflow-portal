@@ -127,7 +127,7 @@ export default function EditCoursePage() {
             <XCircle className="h-5 w-5" />
             <span>{error || 'Course not found'}</span>
           </div>
-          <Button variant="outline" onClick={() => router.push('/admin?tab=training')}>Back to Admin</Button>
+          <Button variant="outline" onClick={() => router.push('/admin/training')}>Back to Admin</Button>
         </CardContent>
       </Card>
     )
@@ -188,7 +188,7 @@ export default function EditCoursePage() {
           </div>
         )}
         <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">
-          <Button variant="outline" onClick={() => router.push('/admin?tab=training')} disabled={saving} className="hover:bg-slate-100">Cancel</Button>
+          <Button variant="outline" onClick={() => router.push('/admin/training')} disabled={saving} className="hover:bg-slate-100">Cancel</Button>
           <Button onClick={handleSubmit} disabled={saving} className="bg-gradient-to-r from-slate-900 to-slate-800 hover:from-slate-800 hover:to-slate-700 text-white shadow-lg hover:shadow-xl transition-all duration-200">
             {saving ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Saving...</> : 'Update'}
           </Button>

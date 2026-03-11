@@ -120,7 +120,7 @@ export default function EditSoftwarePage() {
       }
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed to update software')
-      router.push('/admin?tab=software')
+      router.push('/admin/software')
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to save')
     } finally {
@@ -148,7 +148,7 @@ export default function EditSoftwarePage() {
             <XCircle className="h-5 w-5" />
             <span>{error || 'Software not found'}</span>
           </div>
-          <Button variant="outline" onClick={() => router.push('/admin?tab=software')}>Back to Admin</Button>
+          <Button variant="outline" onClick={() => router.push('/admin/software')}>Back to Admin</Button>
         </CardContent>
       </Card>
     )
@@ -225,7 +225,7 @@ export default function EditSoftwarePage() {
           </div>
         )}
         <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">
-          <Button variant="outline" onClick={() => router.push('/admin?tab=software')} disabled={saving} className="hover:bg-slate-100">Cancel</Button>
+          <Button variant="outline" onClick={() => router.push('/admin/software')} disabled={saving} className="hover:bg-slate-100">Cancel</Button>
           <Button onClick={handleSubmit} disabled={saving} className="bg-gradient-to-r from-cyan-600 to-cyan-700 hover:from-cyan-700 hover:to-cyan-800 text-white shadow-lg hover:shadow-xl transition-all duration-200">
             {saving ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> {uploadPercent != null ? 'Uploading...' : 'Saving...'}</> : 'Update'}
           </Button>

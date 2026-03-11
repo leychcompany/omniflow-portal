@@ -76,7 +76,7 @@ export default function AddCoursePage() {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed to create course')
-      router.push('/admin')
+      router.push('/admin/training')
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to save')
     } finally {
@@ -148,7 +148,7 @@ export default function AddCoursePage() {
           </div>
         )}
         <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">
-          <Button variant="outline" onClick={() => router.push('/admin?tab=training')} disabled={loading} className="hover:bg-slate-100">Cancel</Button>
+          <Button variant="outline" onClick={() => router.push('/admin/training')} disabled={loading} className="hover:bg-slate-100">Cancel</Button>
           <Button onClick={handleSubmit} disabled={loading} className="bg-gradient-to-r from-slate-900 to-slate-800 hover:from-slate-800 hover:to-slate-700 text-white shadow-lg hover:shadow-xl transition-all duration-200">
             {loading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Saving...</> : 'Create'}
           </Button>
