@@ -1,228 +1,134 @@
-import type { CookieOptions } from "@supabase/ssr";
 import { createServerClient } from "@supabase/ssr";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
-export async function proxy(req: NextRequest) {
-  const pathname = req.nextUrl.pathname;
+// Public routes - no auth required
+const PUBLIC_ROUTES = [
+  "/login",
+  "/register",
+  "/forgot-password",
+  "/set-password",
+  "/auth/reset-password",
+];
 
-  // Define public routes that don't require authentication
-  const publicRoutes = [
-    "/login",
-    "/register",
-    "/forgot-password",
-    "/set-password",
-    "/auth/reset-password",
-  ];
-  const isPublicRoute =
-    publicRoutes.includes(pathname) ||
-    publicRoutes.some((route) => pathname.startsWith(route));
+// Protected routes - require any authenticated user
+const PROTECTED_ROUTES = [
+  "/home",
+  "/settings",
+  "/logout",
+  "/ai-assistant",
+  "/training",
+  "/rfq",
+  "/support",
+  "/documents",
+  "/news",
+  "/software",
+];
 
-  // Define admin routes that require admin role
-  const adminRoutes = ["/admin"];
-  const isAdminRoute = adminRoutes.some((route) => pathname.startsWith(route));
+// Admin routes - require admin role
+const ADMIN_ROUTES = ["/admin"];
 
-  // Define protected routes that require authentication
-  const protectedRoutes = [
-    "/home",
-    "/settings",
-    "/logout",
-    "/ai-assistant",
-    "/training",
-    "/rfq",
-    "/support",
-    "/documents",
-    "/news",
-  ];
-  const isProtectedRoute = protectedRoutes.some((route) =>
-    pathname.startsWith(route)
+function isPublicRoute(pathname: string): boolean {
+  return (
+    PUBLIC_ROUTES.includes(pathname) ||
+    PUBLIC_ROUTES.some((r) => pathname.startsWith(r))
   );
+}
 
-  // Skip auth check for static files and API routes
-  if (
+function isProtectedRoute(pathname: string): boolean {
+  return PROTECTED_ROUTES.some((r) => pathname.startsWith(r));
+}
+
+function isAdminRoute(pathname: string): boolean {
+  return ADMIN_ROUTES.some((r) => pathname.startsWith(r));
+}
+
+function shouldSkipAuth(pathname: string): boolean {
+  return (
     pathname.startsWith("/_next") ||
     pathname.startsWith("/api") ||
     pathname.startsWith("/favicon.ico") ||
-    pathname.match(/\.(ico|png|jpg|jpeg|svg|gif|webp)$/)
-  ) {
+    /\.(ico|png|jpg|jpeg|svg|gif|webp)$/.test(pathname)
+  );
+}
+
+export async function proxy(req: NextRequest) {
+  const pathname = req.nextUrl.pathname;
+
+  if (shouldSkipAuth(pathname)) {
     return NextResponse.next();
   }
 
-  // Early return for public routes - allow access without auth check
-  // This prevents issues if Supabase client fails to initialize
-  if (isPublicRoute) {
-    // We still need to check if authenticated user is trying to access login/forgot-password
-    // But if Supabase fails, we'll allow access anyway
-    try {
-      const response = NextResponse.next({
-        request: {
-          headers: req.headers,
-        },
-      });
-
-      const supabase = createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        {
-          cookies: {
-            get(name: string) {
-              return req.cookies.get(name)?.value;
-            },
-            set(name: string, value: string, options: CookieOptions) {
-              req.cookies.set({
-                name,
-                value,
-                ...options,
-              });
-              response.cookies.set({
-                name,
-                value,
-                ...options,
-              });
-            },
-            remove(name: string, options: CookieOptions) {
-              req.cookies.set({
-                name,
-                value: "",
-                ...options,
-              });
-              response.cookies.set({
-                name,
-                value: "",
-                ...options,
-              });
-            },
-          },
-        }
-      );
-
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
-      // If authenticated and trying to access login/register/forgot-password, redirect to portal
-      if (
-        session &&
-        (pathname === "/login" || pathname === "/register" || pathname === "/forgot-password")
-      ) {
-        return NextResponse.redirect(new URL("/home", req.url));
-      }
-
-      return response;
-    } catch (error) {
-      // If Supabase fails, allow access to public routes anyway
-      console.error("Proxy error for public route:", error);
-      return NextResponse.next();
-    }
-  }
-
-  // Create Supabase client for server-side session check
   const response = NextResponse.next({
-    request: {
-      headers: req.headers,
-    },
+    request: { headers: req.headers },
   });
 
-  let supabase;
-  let isAuthenticated = false;
-  let userRole: string | null = null;
-
-  try {
-    supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          get(name: string) {
-            return req.cookies.get(name)?.value;
-          },
-          set(name: string, value: string, options: CookieOptions) {
-            req.cookies.set({
-              name,
-              value,
-              ...options,
-            });
-            response.cookies.set({
-              name,
-              value,
-              ...options,
-            });
-          },
-          remove(name: string, options: CookieOptions) {
-            req.cookies.set({
-              name,
-              value: "",
-              ...options,
-            });
-            response.cookies.set({
-              name,
-              value: "",
-              ...options,
-            });
-          },
+  // Create Supabase client with getAll/setAll (recommended pattern for proper cookie refresh)
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return req.cookies.getAll();
         },
-      }
-    );
-
-    // Get session
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    isAuthenticated = !!session;
-
-    // Get user role if authenticated
-    if (isAuthenticated && session?.user) {
-      try {
-        const { data: userData } = await supabase
-          .from("users")
-          .select("role")
-          .eq("id", session.user.id)
-          .single();
-        userRole = userData?.role || null;
-      } catch (error) {
-        // Ignore errors - role check will fail gracefully
-        console.error("Error fetching user role:", error);
-      }
+        setAll(cookiesToSet: { name: string; value: string; options?: Record<string, unknown> }[]) {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            response.cookies.set(name, value, options ?? {});
+          });
+        },
+      },
     }
-  } catch (error) {
-    // If Supabase fails, log error but continue
-    // Unauthenticated users will be redirected to login for protected routes
-    console.error("Proxy error:", error);
+  );
+
+  // Use getUser() to validate JWT and trigger token refresh if needed (fixes stale cookie issues)
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const isAuthenticated = !!user;
+
+  let userRole: string | null = null;
+  if (isAuthenticated && user) {
+    try {
+      const { data } = await supabase
+        .from("users")
+        .select("role")
+        .eq("id", user.id)
+        .single();
+      userRole = data?.role ?? null;
+    } catch {
+      // Ignore - role check will fail gracefully
+    }
   }
 
-  // Redirect root to home if authenticated, otherwise to login
+  // Root redirect
   if (pathname === "/") {
-    if (isAuthenticated) {
+    return NextResponse.redirect(
+      new URL(isAuthenticated ? "/home" : "/login", req.url)
+    );
+  }
+
+  // Public routes - redirect authenticated users away from login/register
+  if (isPublicRoute(pathname)) {
+    if (
+      isAuthenticated &&
+      (pathname === "/login" || pathname === "/register" || pathname === "/forgot-password")
+    ) {
       return NextResponse.redirect(new URL("/home", req.url));
-    } else {
-      return NextResponse.redirect(new URL("/login", req.url));
     }
+    return response;
   }
 
-  // If user is authenticated and trying to access public auth routes, redirect to home
-  if (
-    isAuthenticated &&
-    (pathname === "/login" || pathname === "/forgot-password")
-  ) {
-    return NextResponse.redirect(new URL("/home", req.url));
-  }
-
-  // If user is not authenticated and trying to access protected routes, redirect to login
-  if (!isAuthenticated && isProtectedRoute) {
+  // Protected and admin routes - require auth
+  if (!isAuthenticated) {
     const loginUrl = new URL("/login", req.url);
     loginUrl.searchParams.set("redirect", pathname);
     return NextResponse.redirect(loginUrl);
   }
 
-  // If user is not authenticated and trying to access admin routes, redirect to login
-  if (!isAuthenticated && isAdminRoute) {
-    const loginUrl = new URL("/login", req.url);
-    loginUrl.searchParams.set("redirect", pathname);
-    return NextResponse.redirect(loginUrl);
-  }
-
-  // If user is authenticated but not admin and trying to access admin routes, redirect to portal
-  if (isAuthenticated && isAdminRoute && userRole !== "admin") {
+  // Admin routes - require admin role
+  if (isAdminRoute(pathname) && userRole !== "admin") {
     return NextResponse.redirect(new URL("/home", req.url));
   }
 
@@ -231,13 +137,6 @@ export async function proxy(req: NextRequest) {
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public folder
-     */
     "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };

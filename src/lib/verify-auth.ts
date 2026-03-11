@@ -1,12 +1,10 @@
-import type { CookieOptions } from "@supabase/ssr";
 import { createServerClient } from "@supabase/ssr";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
 /**
  * Verifies that the request has an authenticated user (any role).
- * Uses cookie-based session for compatibility with window.open/location.href
- * which cannot send Authorization headers.
+ * Uses getUser() to validate the JWT - prevents stale/invalid cookie issues.
  */
 export async function verifyAuth(req: NextRequest): Promise<
   | { ok: true; userId: string; userEmail: string }
@@ -19,25 +17,24 @@ export async function verifyAuth(req: NextRequest): Promise<
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        get(name: string) {
-          return req.cookies.get(name)?.value;
+        getAll() {
+          return req.cookies.getAll();
         },
-        set(name: string, value: string, options: CookieOptions) {
-          response.cookies.set({ name, value, ...options });
-        },
-        remove(name: string, options: CookieOptions) {
-          response.cookies.set({ name, value: "", ...options });
+        setAll(cookiesToSet: { name: string; value: string; options?: Record<string, unknown> }[]) {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            response.cookies.set(name, value, options ?? {});
+          });
         },
       },
     }
   );
 
   const {
-    data: { session },
-    error: sessionError,
-  } = await supabase.auth.getSession();
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
 
-  if (sessionError || !session?.user) {
+  if (error || !user) {
     return {
       ok: false,
       response: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
@@ -46,7 +43,7 @@ export async function verifyAuth(req: NextRequest): Promise<
 
   return {
     ok: true,
-    userId: session.user.id,
-    userEmail: session.user.email ?? "",
+    userId: user.id,
+    userEmail: user.email ?? "",
   };
 }
