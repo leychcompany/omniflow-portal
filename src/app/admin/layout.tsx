@@ -5,6 +5,10 @@ import { Button } from '@/components/ui/button'
 import { Crown, ArrowLeft, LogOut } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { recordAuthEvent } from '@/lib/record-analytics-event'
+import { AdminTabNav, AdminMobileTabNav } from './_components/admin-tab-nav'
+import { ADMIN_TABS } from './_components/admin-types'
+
+const MAIN_SECTION_PATTERN = new RegExp(`^/admin/(${ADMIN_TABS.join('|')})$`)
 
 export default function AdminLayout({
   children,
@@ -13,7 +17,7 @@ export default function AdminLayout({
 }) {
   const router = useRouter()
   const pathname = usePathname()
-  const isDashboard = pathname === '/admin'
+  const isMainSection = pathname === '/admin' || MAIN_SECTION_PATTERN.test(pathname)
 
   const handleSignOut = async () => {
     try {
@@ -27,10 +31,11 @@ export default function AdminLayout({
   }
 
   const handleBack = () => {
-    if (isDashboard) {
+    if (isMainSection) {
       router.push('/home')
     } else {
-      router.push('/admin')
+      const match = pathname.match(/^\/admin\/(users|training|manuals|software|news|analytics)/)
+      router.push(match ? `/admin/${match[1]}` : '/admin/users')
     }
   }
 
@@ -54,7 +59,7 @@ export default function AdminLayout({
                 <div>
                   <h1 className="text-xl font-bold text-slate-900">Admin Panel</h1>
                   <p className="text-sm text-slate-600">
-                    {isDashboard ? 'Manage users, content, and system settings' : 'Admin'}
+                    {isMainSection ? 'Manage users, content, and system settings' : 'Admin'}
                   </p>
                 </div>
               </div>
@@ -71,7 +76,9 @@ export default function AdminLayout({
         </div>
       </header>
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {pathname !== '/admin' && <AdminTabNav />}
         {children}
+        {pathname !== '/admin' && <AdminMobileTabNav />}
       </main>
     </div>
   )

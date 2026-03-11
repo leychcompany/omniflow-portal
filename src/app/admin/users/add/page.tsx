@@ -75,7 +75,7 @@ export default function AddUserPage() {
       setInviteSuccess(true)
       setInviteSuccessMessage(data.message || (addUserMode === 'password' ? 'User created. They can sign in with their email and the password you set.' : 'Invite sent successfully!'))
 
-      setTimeout(() => router.push('/admin?tab=users'), 1500)
+      setTimeout(() => router.push('/admin/users'), 1500)
     } catch (err: unknown) {
       const error = err as { message?: string }
       setInviteError(error.message || 'Failed to send invite. Please try again.')
@@ -171,7 +171,7 @@ export default function AddUserPage() {
         <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">
           <Button
             variant="outline"
-            onClick={() => router.push('/admin?tab=users')}
+            onClick={() => router.push('/admin/users')}
             disabled={inviteLoading}
             className="hover:bg-slate-100"
           >

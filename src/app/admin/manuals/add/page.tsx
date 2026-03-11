@@ -91,7 +91,7 @@ export default function AddManualPage() {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed to upload document')
-      router.push('/admin?tab=manuals')
+      router.push('/admin/manuals')
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to save')
     } finally {
@@ -162,7 +162,7 @@ export default function AddManualPage() {
           </div>
         )}
         <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">
-          <Button variant="outline" onClick={() => router.push('/admin?tab=manuals')} disabled={loading} className="hover:bg-slate-100">Cancel</Button>
+          <Button variant="outline" onClick={() => router.push('/admin/manuals')} disabled={loading} className="hover:bg-slate-100">Cancel</Button>
           <Button onClick={handleSubmit} disabled={loading} className="bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white shadow-lg hover:shadow-xl transition-all duration-200">
             {loading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Uploading...</> : 'Upload'}
           </Button>
