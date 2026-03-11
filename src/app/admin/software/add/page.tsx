@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { supabase } from '@/lib/supabase'
 import { uploadFileViaPresign } from '@/lib/upload-file-direct'
 import { Upload, Loader2, XCircle, Image } from 'lucide-react'
 
@@ -22,11 +21,7 @@ export default function AddSoftwarePage() {
     setImageUploading(true)
     try {
       const { uploadImageDirect } = await import('@/lib/upload-image')
-      const url = await uploadImageDirect(file, 'software', async () => {
-        const { data: { session } } = await supabase.auth.getSession()
-        if (!session) throw new Error('Session expired')
-        return { Authorization: `Bearer ${session.access_token}` }
-      })
+      const url = await uploadImageDirect(file, 'software', async () => ({}))
       return url
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Upload failed')
@@ -49,10 +44,7 @@ export default function AddSoftwarePage() {
     setUploadPercent(50)
     setError('')
     try {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) throw new Error('Session expired. Please log in again.')
-
-      const getHeaders = async () => ({ Authorization: `Bearer ${session.access_token}` })
+      const getHeaders = async () => ({})
       const { path, filename, size } = await uploadFileViaPresign(
         '/api/software/upload-url',
         getHeaders,
@@ -62,7 +54,8 @@ export default function AddSoftwarePage() {
       setUploadPercent(90)
       const res = await fetch('/api/software', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
           title: form.title,
           description: form.description || null,

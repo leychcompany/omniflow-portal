@@ -19,6 +19,7 @@ export async function uploadImageDirect(
       fileSize: file.size,
       contentType: file.type,
     }),
+    credentials: "include",
   });
   const presignData = await presignRes.json();
   if (!presignRes.ok) {

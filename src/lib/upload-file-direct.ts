@@ -19,6 +19,7 @@ export async function uploadFileViaPresign(
     method: "POST",
     headers: { "Content-Type": "application/json", ...headers },
     body: JSON.stringify(presignBody),
+    credentials: "include",
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || "Failed to get upload URL");

@@ -5,7 +5,6 @@ import { useRouter, useParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { supabase } from '@/lib/supabase'
 import { uploadFileViaPresign } from '@/lib/upload-file-direct'
 import { Upload, Loader2, XCircle, FileArchive, Image } from 'lucide-react'
 
@@ -35,11 +34,7 @@ export default function EditSoftwarePage() {
     setImageUploading(true)
     try {
       const { uploadImageDirect } = await import('@/lib/upload-image')
-      const url = await uploadImageDirect(file, 'software', async () => {
-        const { data: { session } } = await supabase.auth.getSession()
-        if (!session) throw new Error('Session expired')
-        return { Authorization: `Bearer ${session.access_token}` }
-      })
+      const url = await uploadImageDirect(file, 'software', async () => ({}))
       return url
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Upload failed')
@@ -52,14 +47,7 @@ export default function EditSoftwarePage() {
   useEffect(() => {
     const fetchSoftware = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession()
-        if (!session) {
-          router.push('/login')
-          return
-        }
-        const res = await fetch(`/api/software/${id}`, {
-          headers: { Authorization: `Bearer ${session.access_token}` },
-        })
+        const res = await fetch(`/api/software/${id}`, { credentials: 'include' })
         const data = await res.json()
         if (!res.ok) throw new Error(data.error || 'Failed to load software')
         setForm(data)
@@ -81,14 +69,10 @@ export default function EditSoftwarePage() {
     setUploadPercent(file ? 0 : null)
     setError('')
     try {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) throw new Error('Session expired. Please log in again.')
-
-      const headers = { Authorization: `Bearer ${session.access_token}` }
       let res: Response
 
       if (file) {
-        const getHeaders = async () => headers
+        const getHeaders = async () => ({})
         const { path, filename, size } = await uploadFileViaPresign(
           '/api/software/upload-url',
           getHeaders,
@@ -97,7 +81,8 @@ export default function EditSoftwarePage() {
         )
         res = await fetch(`/api/software/${form.id}`, {
           method: 'PATCH',
-          headers: { ...headers, 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
           body: JSON.stringify({
             title: form.title,
             description: form.description || null,
@@ -110,7 +95,8 @@ export default function EditSoftwarePage() {
       } else {
         res = await fetch(`/api/software/${form.id}`, {
           method: 'PATCH',
-          headers: { ...headers, 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
           body: JSON.stringify({
             title: form.title,
             description: form.description || null,
