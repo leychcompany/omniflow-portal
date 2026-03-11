@@ -5,6 +5,9 @@ const nextConfig: NextConfig = {
     isolatedDevBuild: false,
     proxyClientMaxBodySize: "1gb",
   },
+  turbopack: {
+    root: __dirname,
+  },
 };
 
 export default nextConfig;

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { uploadFileViaPresign } from '@/lib/upload-file-direct'
+import { fetchWithAuthRetry } from '@/lib/fetch-with-auth'
 import { Upload, Loader2, XCircle, Image } from 'lucide-react'
 
 export default function AddSoftwarePage() {
@@ -44,7 +45,14 @@ export default function AddSoftwarePage() {
     setUploadPercent(50)
     setError('')
     try {
-      const getHeaders = async () => ({})
+      const getHeaders = async (): Promise<Record<string, string>> => {
+        const { supabase } = await import('@/lib/supabase');
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.access_token) {
+          return { Authorization: `Bearer ${session.access_token}` };
+        }
+        return {} as Record<string, string>;
+      };
       const { path, filename, size } = await uploadFileViaPresign(
         '/api/software/upload-url',
         getHeaders,
@@ -52,10 +60,9 @@ export default function AddSoftwarePage() {
         file
       )
       setUploadPercent(90)
-      const res = await fetch('/api/software', {
+      const res = await fetchWithAuthRetry('/api/software', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify({
           title: form.title,
           description: form.description || null,

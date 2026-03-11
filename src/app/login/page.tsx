@@ -60,9 +60,10 @@ function LoginForm() {
     }
   }, [router])
 
+  // Clear any stale persisted state when no valid session (fixes cookie issues)
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) {
         useAuthStore.getState().signOut()
       }
     })
