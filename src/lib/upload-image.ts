@@ -1,46 +1,52 @@
+const UPLOAD_TIMEOUT_MS = 30_000;
+
 /**
- * Upload an image via presigned URL so the file never hits the server (avoids Vercel 4.5 MB body limit).
+ * Upload an image via server (FormData to /api/upload).
+ * Same approach as ZIP - file goes through Next.js, server uploads to Supabase.
+ * No client-side uploadToSignedUrl.
  */
 export async function uploadImageDirect(
   file: File,
   folder: "news" | "training" | "software",
-  getAuthHeaders: () => Promise<Record<string, string>>
+  _getAuthHeaders: () => Promise<Record<string, string>>
 ): Promise<string> {
-  const headers = await getAuthHeaders();
-  const presignRes = await fetch("/api/upload/presign", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      ...headers,
-    },
-    body: JSON.stringify({
-      folder,
-      filename: file.name,
-      fileSize: file.size,
-      contentType: file.type,
-    }),
-    credentials: "include",
-  });
-  const presignData = await presignRes.json();
-  if (!presignRes.ok) {
-    throw new Error(presignData.error || "Failed to get upload URL");
-  }
-  const { path, token, publicUrl } = presignData as {
-    path: string;
-    token: string;
-    publicUrl: string;
-  };
+  const base = typeof window !== "undefined" ? window.location.origin : "";
+  const url = `${base}/api/upload`;
 
-  const { supabase } = await import("@/lib/supabase");
-  const { error } = await supabase.storage
-    .from("images")
-    .uploadToSignedUrl(path, token, file, {
-      contentType: file.type,
-      upsert: true,
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("folder", folder);
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), UPLOAD_TIMEOUT_MS);
+
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      method: "POST",
+      body: formData,
+      credentials: "include",
+      signal: controller.signal,
     });
-
-  if (error) {
-    throw new Error(error.message || "Upload failed");
+  } catch (e) {
+    clearTimeout(timeout);
+    if (e instanceof Error) {
+      if (e.name === "AbortError") {
+        throw new Error("Upload timed out. Please try again.");
+      }
+      throw new Error(e.message || "Failed to connect");
+    }
+    throw new Error("Failed to connect");
   }
-  return publicUrl;
+  clearTimeout(timeout);
+
+  const data = (await res.json()) as { url?: string; error?: string };
+
+  if (!res.ok) {
+    throw new Error(data.error || `Upload failed (${res.status})`);
+  }
+  if (!data.url) {
+    throw new Error("No URL returned from upload");
+  }
+  return data.url;
 }

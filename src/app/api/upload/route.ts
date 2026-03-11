@@ -1,10 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
-import { supabaseAdmin } from "@/lib/supabase-admin";
 import { verifyAdmin } from "@/lib/admin-auth";
+import { supabaseAdmin } from "@/lib/supabase-admin";
+import { NextRequest, NextResponse } from "next/server";
 
 const BUCKET = "images";
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
-const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+const ALLOWED_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp"];
 
 export async function POST(req: NextRequest) {
   const auth = await verifyAdmin(req);
@@ -22,21 +22,21 @@ export async function POST(req: NextRequest) {
     if (!folder || !["news", "training", "software"].includes(folder)) {
       return NextResponse.json(
         { error: "folder must be 'news', 'training', or 'software'" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (file.size > MAX_FILE_SIZE) {
       return NextResponse.json(
         { error: "File size must be under 5 MB" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (!ALLOWED_TYPES.includes(file.type)) {
       return NextResponse.json(
         { error: "Only JPEG, PNG, GIF, and WebP images are allowed" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
       console.error("Storage upload error:", uploadError);
       return NextResponse.json(
         { error: "Failed to upload: " + uploadError.message },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -66,9 +66,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ url: urlData.publicUrl });
   } catch (error: unknown) {
     console.error("Upload error:", error);
-    return NextResponse.json(
-      { error: "Failed to upload" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to upload" }, { status: 500 });
   }
 }
