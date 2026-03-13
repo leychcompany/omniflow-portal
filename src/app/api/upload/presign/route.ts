@@ -4,7 +4,7 @@ import { verifyAdmin } from "@/lib/admin-auth";
 
 const BUCKET = "images";
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
-const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+const ALLOWED_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp"];
 
 export async function POST(req: NextRequest) {
   const auth = await verifyAdmin(req);
@@ -58,6 +58,7 @@ export async function POST(req: NextRequest) {
       .getPublicUrl(path);
 
     return NextResponse.json({
+      bucket: BUCKET,
       path,
       token: signData.token,
       publicUrl: urlData.publicUrl,

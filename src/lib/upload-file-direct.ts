@@ -1,15 +1,14 @@
-import { fetchWithAuthRetry } from "./fetch-with-auth";
-
 function formatFileSize(bytes: number): string {
   if (bytes < 1024) return bytes + " B";
   if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
   return (bytes / (1024 * 1024)).toFixed(1) + " MB";
 }
 
+const PRESIGN_TIMEOUT_MS = 30_000;
+
 /**
  * Get a presigned upload URL from the API, then upload the file directly to Supabase.
- * Avoids sending the file through the server (Vercel 4.5 MB body limit).
- * Uses fetchWithAuthRetry to handle 401 (e.g. expired token).
+ * Uses plain fetch with credentials (cookies) - no getAuthHeaders to avoid hanging on getSession.
  */
 export async function uploadFileViaPresign(
   presignUrl: string,
@@ -17,12 +16,29 @@ export async function uploadFileViaPresign(
   presignBody: Record<string, unknown>,
   file: File
 ): Promise<{ path: string; filename: string; size: string }> {
-  const headers = await getAuthHeaders();
-  const res = await fetchWithAuthRetry(presignUrl, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...headers },
-    body: JSON.stringify(presignBody),
-  });
+  const base = typeof window !== "undefined" ? window.location.origin : "";
+  const url = presignUrl.startsWith("http") ? presignUrl : `${base}${presignUrl}`;
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), PRESIGN_TIMEOUT_MS);
+
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(presignBody),
+      credentials: "include",
+      signal: controller.signal,
+    });
+  } catch (e) {
+    clearTimeout(timeout);
+    if (e instanceof Error && e.name === "AbortError") {
+      throw new Error("Upload timed out. Please try again.");
+    }
+    throw e;
+  }
+  clearTimeout(timeout);
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || "Failed to get upload URL");
   const { bucket, path, token } = data as {

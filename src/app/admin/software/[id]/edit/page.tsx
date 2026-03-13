@@ -32,9 +32,18 @@ export default function EditSoftwarePage() {
 
   const handleUploadImage = async (file: File): Promise<string | null> => {
     setImageUploading(true)
+    setError('')
     try {
       const { uploadImageDirect } = await import('@/lib/upload-image')
-      const url = await uploadImageDirect(file, 'software', async () => ({}))
+      const getHeaders = async (): Promise<Record<string, string>> => {
+        const { supabase } = await import('@/lib/supabase')
+        const { data: { session } } = await supabase.auth.getSession()
+        if (session?.access_token) {
+          return { Authorization: `Bearer ${session.access_token}` }
+        }
+        return {} as Record<string, string>
+      }
+      const url = await uploadImageDirect(file, 'software', getHeaders)
       return url
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Upload failed')
