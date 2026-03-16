@@ -33,6 +33,11 @@ export default function EditManualPage() {
   const [error, setError] = useState('')
 
   useEffect(() => {
+    if (!id) {
+      setError('Invalid document ID')
+      setLoading(false)
+      return
+    }
     const fetchManual = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession()
@@ -52,7 +57,7 @@ export default function EditManualPage() {
         setLoading(false)
       }
     }
-    if (id) fetchManual()
+    fetchManual()
   }, [id, router])
 
   const fetchAvailableTags = async () => {
@@ -153,7 +158,7 @@ export default function EditManualPage() {
 
   if (loading) {
     return (
-      <Card className="max-w-lg mx-auto border-0 shadow-xl bg-white">
+      <Card className="max-w-2xl mx-auto border-0 shadow-xl bg-white">
         <CardContent className="p-12 text-center">
           <Loader2 className="h-8 w-8 animate-spin mx-auto text-slate-600 mb-4" />
           <p className="text-slate-600">Loading...</p>
@@ -164,7 +169,7 @@ export default function EditManualPage() {
 
   if (!form) {
     return (
-      <Card className="max-w-lg mx-auto border-0 shadow-xl bg-white">
+      <Card className="max-w-2xl mx-auto border-0 shadow-xl bg-white">
         <CardContent className="p-6">
           <div className="flex items-center gap-3 text-red-700 mb-4">
             <XCircle className="h-5 w-5" />
@@ -177,7 +182,7 @@ export default function EditManualPage() {
   }
 
   return (
-    <Card className="max-w-lg mx-auto border-0 shadow-xl bg-white">
+    <Card className="max-w-2xl mx-auto border-0 shadow-xl bg-white">
       <CardHeader className="border-b border-slate-200 pb-4">
         <CardTitle className="flex items-center gap-2 text-xl">
           <div className="p-2 bg-gradient-to-br from-teal-600 to-teal-700 rounded-lg">

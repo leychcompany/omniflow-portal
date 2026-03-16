@@ -30,6 +30,11 @@ export default function EditNewsPage() {
   const [error, setError] = useState('')
 
   useEffect(() => {
+    if (!id) {
+      setError('Invalid article ID')
+      setLoading(false)
+      return
+    }
     const fetchArticle = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession()
@@ -49,7 +54,7 @@ export default function EditNewsPage() {
         setLoading(false)
       }
     }
-    if (id) fetchArticle()
+    fetchArticle()
   }, [id, router])
 
   const handleUploadImage = async (file: File): Promise<string | null> => {

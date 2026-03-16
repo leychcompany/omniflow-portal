@@ -54,6 +54,11 @@ export default function EditSoftwarePage() {
   }
 
   useEffect(() => {
+    if (!id) {
+      setError('Invalid software ID')
+      setLoading(false)
+      return
+    }
     const fetchSoftware = async () => {
       try {
         const res = await fetch(`/api/software/${id}`, { credentials: 'include' })
@@ -66,7 +71,7 @@ export default function EditSoftwarePage() {
         setLoading(false)
       }
     }
-    if (id) fetchSoftware()
+    fetchSoftware()
   }, [id, router])
 
   const handleSubmit = async () => {

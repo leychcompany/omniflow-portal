@@ -31,6 +31,11 @@ export default function EditCoursePage() {
   const [error, setError] = useState('')
 
   useEffect(() => {
+    if (!id) {
+      setError('Invalid course ID')
+      setLoading(false)
+      return
+    }
     const fetchCourse = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession()
@@ -50,7 +55,7 @@ export default function EditCoursePage() {
         setLoading(false)
       }
     }
-    if (id) fetchCourse()
+    fetchCourse()
   }, [id, router])
 
   const handleUploadImage = async (file: File): Promise<string | null> => {
