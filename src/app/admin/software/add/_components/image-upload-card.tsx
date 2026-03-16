@@ -20,13 +20,13 @@ export function ImageUploadCard({ value, onChange, disabled }: ImageUploadCardPr
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const getAuthHeaders = async () => {
+  const getAuthHeaders = async (): Promise<Record<string, string>> => {
     const { supabase } = await import("@/lib/supabase");
     const { data: { session } } = await supabase.auth.getSession();
     if (session?.access_token) {
       return { Authorization: `Bearer ${session.access_token}` };
     }
-    return {};
+    return {} as Record<string, string>;
   };
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
