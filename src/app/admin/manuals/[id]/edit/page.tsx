@@ -2,13 +2,21 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { TagMultiSelect } from '@/components/ui/tag-multi-select'
 import { supabase } from '@/lib/supabase'
 import { uploadFileViaPresign } from '@/lib/upload-file-direct'
-import { Upload, Loader2, XCircle, FileText, ExternalLink } from 'lucide-react'
+import {
+  Upload,
+  Loader2,
+  XCircle,
+  FileText,
+  ExternalLink,
+  ArrowLeft,
+  Save,
+} from 'lucide-react'
 
 interface Manual {
   id: string
@@ -31,7 +39,6 @@ export default function EditManualPage() {
   const [saving, setSaving] = useState(false)
   const [uploadPercent, setUploadPercent] = useState<number | null>(null)
   const [error, setError] = useState('')
-  const [retryKey, setRetryKey] = useState(0)
 
   useEffect(() => {
     if (!id) {
@@ -41,65 +48,32 @@ export default function EditManualPage() {
     }
 
     let cancelled = false
-    const LOAD_TIMEOUT_MS = 15_000
-
     const fetchManual = async () => {
-      const timeoutPromise = new Promise<never>((_, reject) => {
-        setTimeout(() => reject(new Error('TIMEOUT')), LOAD_TIMEOUT_MS)
-      })
-
-      const loadPromise = (async () => {
-        const { data: { session } } = await supabase.auth.getSession()
-        if (!session) {
-          router.push('/login')
-          throw new Error('Session expired. Please log in again.')
-        }
-        const res = await fetch(`/api/manuals/${id}`, {
-          headers: { Authorization: `Bearer ${session.access_token}` },
-          credentials: 'include',
-        })
+      try {
+        const res = await fetch(`/api/manuals/${id}`, { credentials: 'include' })
         const data = await res.json()
         if (!res.ok) throw new Error(data.error || 'Failed to load document')
-        return { ...data, tags: data.tags || [] }
-      })()
-
-      try {
-        const result = await Promise.race([loadPromise, timeoutPromise])
-        if (!cancelled && result) setForm(result)
+        if (!cancelled) setForm({ ...data, tags: data.tags || [] })
       } catch (e) {
-        if (!cancelled) {
-          if (e instanceof Error && e.message === 'TIMEOUT') {
-            setError('Request timed out. Please refresh or try again.')
-          } else {
-            setError(e instanceof Error ? e.message : 'Failed to load document')
-          }
-        }
+        if (!cancelled) setError(e instanceof Error ? e.message : 'Failed to load document')
       } finally {
         if (!cancelled) setLoading(false)
       }
     }
     fetchManual()
-    return () => {
-      cancelled = true
-    }
-  }, [id, router, retryKey])
-
-  const fetchAvailableTags = async () => {
-    try {
-      const res = await fetch('/api/tags')
-      const tags = res.ok ? await res.json() : []
-      setAvailableTags(
-        (Array.isArray(tags) ? tags : [])
-          .map((t: { id: string; name: string }) => t.name)
-          .sort((a: string, b: string) => a.toLowerCase().localeCompare(b.toLowerCase()))
-      )
-    } catch {
-      setAvailableTags([])
-    }
-  }
+    return () => { cancelled = true }
+  }, [id])
 
   useEffect(() => {
-    fetchAvailableTags()
+    fetch('/api/tags', { credentials: 'include' })
+      .then((res) => res.ok ? res.json() : [])
+      .then((tags) => {
+        const names = (Array.isArray(tags) ? tags : [])
+          .map((t: { id: string; name: string }) => t.name)
+          .sort((a: string, b: string) => a.toLowerCase().localeCompare(b.toLowerCase()))
+        setAvailableTags(names)
+      })
+      .catch(() => setAvailableTags([]))
   }, [])
 
   const handleDeleteTagFromPool = async (tag: string) => {
@@ -115,11 +89,15 @@ export default function EditManualPage() {
     })
     if (!res.ok) throw new Error('Failed to delete tag')
     setForm((f) =>
-      f
-        ? { ...f, tags: (f.tags || []).filter((t) => t.toLowerCase() !== tag.toLowerCase()) }
-        : f
+      f ? { ...f, tags: (f.tags || []).filter((t) => t.toLowerCase() !== tag.toLowerCase()) } : f
     )
-    await fetchAvailableTags()
+    const tagsRes = await fetch('/api/tags', { credentials: 'include' })
+    const tags = tagsRes.ok ? await tagsRes.json() : []
+    setAvailableTags(
+      (Array.isArray(tags) ? tags : [])
+        .map((t: { id: string; name: string }) => t.name)
+        .sort((a: string, b: string) => a.toLowerCase().localeCompare(b.toLowerCase()))
+    )
   }
 
   const handleSubmit = async () => {
@@ -149,6 +127,7 @@ export default function EditManualPage() {
         res = await fetch(`/api/manuals/${form.id}`, {
           method: 'PATCH',
           headers: { ...headers, 'Content-Type': 'application/json' },
+          credentials: 'include',
           body: JSON.stringify({
             title: form.title,
             tags: form.tags || [],
@@ -162,6 +141,7 @@ export default function EditManualPage() {
         res = await fetch(`/api/manuals/${form.id}`, {
           method: 'PATCH',
           headers: { ...headers, 'Content-Type': 'application/json' },
+          credentials: 'include',
           body: JSON.stringify({
             title: form.title,
             tags: form.tags || [],
@@ -171,6 +151,7 @@ export default function EditManualPage() {
       }
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed to update document')
+      toast.success('Document updated')
       router.push('/admin/manuals')
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to save')
@@ -180,128 +161,224 @@ export default function EditManualPage() {
     }
   }
 
-  if (loading) {
-    return (
-      <Card className="max-w-2xl mx-auto border-0 shadow-xl bg-white">
-        <CardContent className="p-12 text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto text-slate-600 mb-4" />
-          <p className="text-slate-600">Loading...</p>
-        </CardContent>
-      </Card>
-    )
-  }
-
   const handleRetry = () => {
     setError('')
     setForm(null)
     setLoading(true)
-    setRetryKey((k) => k + 1)
+    const fetchManual = async () => {
+      try {
+        const res = await fetch(`/api/manuals/${id}`, { credentials: 'include' })
+        const data = await res.json()
+        if (!res.ok) throw new Error(data.error || 'Failed to load document')
+        setForm({ ...data, tags: data.tags || [] })
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'Failed to load document')
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchManual()
+  }
+
+  if (loading) {
+    return (
+      <div className="max-w-3xl mx-auto">
+        <div className="rounded-2xl bg-white/80 backdrop-blur border border-slate-200/60 shadow-xl p-16 text-center">
+          <Loader2 className="h-12 w-12 animate-spin text-zinc-500 mx-auto mb-6" />
+          <p className="text-slate-600 font-medium">Loading document...</p>
+          <p className="text-sm text-slate-400 mt-2">This usually takes a moment</p>
+        </div>
+      </div>
+    )
   }
 
   if (!form) {
     return (
-      <Card className="max-w-2xl mx-auto border-0 shadow-xl bg-white">
-        <CardContent className="p-6">
-          <div className="flex items-center gap-3 text-red-700 mb-4">
-            <XCircle className="h-5 w-5" />
-            <span>{error || 'Document not found'}</span>
+      <div className="max-w-3xl mx-auto">
+        <div className="rounded-2xl bg-white/80 backdrop-blur border border-red-200/60 shadow-xl p-8">
+          <div className="flex items-start gap-4">
+            <div className="p-3 rounded-xl bg-red-50">
+              <XCircle className="h-8 w-8 text-red-500" />
+            </div>
+            <div className="flex-1">
+              <h2 className="text-lg font-semibold text-slate-900 mb-1">Could not load document</h2>
+              <p className="text-slate-600 mb-6">{error || 'Document not found'}</p>
+              <div className="flex gap-3">
+                <Button variant="outline" onClick={handleRetry} className="gap-2">
+                  <Loader2 className="h-4 w-4" />
+                  Retry
+                </Button>
+                <Button variant="ghost" onClick={() => router.push('/admin/manuals')} className="gap-2">
+                  <ArrowLeft className="h-4 w-4" />
+                  Back to Documents
+                </Button>
+              </div>
+            </div>
           </div>
-          <div className="flex gap-3">
-            <Button variant="outline" onClick={handleRetry}>Retry</Button>
-            <Button variant="outline" onClick={() => router.push('/admin/manuals')}>Back to Admin</Button>
-          </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     )
   }
 
   return (
-    <Card className="max-w-2xl mx-auto border-0 shadow-xl bg-white">
-      <CardHeader className="border-b border-slate-200 pb-4">
-        <CardTitle className="flex items-center gap-2 text-xl">
-          <div className="p-2 bg-gradient-to-br from-teal-600 to-teal-700 rounded-lg">
-            <Upload className="h-5 w-5 text-white" />
+    <div className="max-w-3xl mx-auto space-y-8">
+      <div className="flex items-center gap-4">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => router.push('/admin/manuals')}
+          className="rounded-xl hover:bg-slate-100"
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </Button>
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">Edit Document</h1>
+          <p className="text-slate-500 text-sm mt-0.5">Update metadata or replace PDF (max 1 GB)</p>
+        </div>
+      </div>
+
+      <div className="rounded-2xl bg-white/80 backdrop-blur border border-slate-200/60 shadow-xl overflow-hidden">
+        <div className="p-8 space-y-6">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Title</label>
+            <Input
+              placeholder="User Manual Volume 1"
+              value={form.title}
+              onChange={(e) => setForm((f) => f ? { ...f, title: e.target.value } : f)}
+              className="h-12 rounded-xl text-base"
+              disabled={saving}
+            />
           </div>
-          Edit Document
-        </CardTitle>
-        <CardDescription>Update metadata or replace PDF document (max 1 GB)</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-5 pt-6">
-        <div>
-          <label className="text-sm font-medium text-slate-700 mb-2 block">Title</label>
-          <Input placeholder="User Manual Volume 1" value={form.title} onChange={(e) => setForm((f) => f ? { ...f, title: e.target.value } : f)} className="h-11" disabled={saving} />
-        </div>
-        <div>
-          <label className="text-sm font-medium text-slate-700 mb-2 block">Tags</label>
-          <TagMultiSelect
-            value={form.tags || []}
-            onChange={(tags) => setForm((f) => f ? { ...f, tags } : f)}
-            availableTags={availableTags}
-            placeholder="e.g. OMNI-3000-6000, Installation, User Guide"
-            disabled={saving}
-            onDeleteFromPool={handleDeleteTagFromPool}
-          />
-        </div>
-        <div>
-          <label className="text-sm font-medium text-slate-700 mb-2 block">Description</label>
-          <textarea className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-900 focus:border-slate-900" rows={2} placeholder="Brief description" value={form.description || ''} onChange={(e) => setForm((f) => f ? { ...f, description: e.target.value } : f)} disabled={saving} />
-        </div>
-        <div>
-          <label className="text-sm font-medium text-slate-700 mb-2 block">PDF File (optional – replace existing)</label>
-          {(form.filename || form.download_url) && (
-            <div className="mb-3 flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
-              <FileText className="h-5 w-5 text-slate-500" />
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-slate-900 truncate">{form.filename || 'Current file'}</p>
-                {form.download_url && (
-                  <a
-                    href={form.download_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-sm text-teal-600 hover:text-teal-700 hover:underline"
-                  >
-                    <ExternalLink className="h-3.5 w-3.5" />
-                    Open file
-                  </a>
-                )}
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Tags</label>
+            <TagMultiSelect
+              value={form.tags || []}
+              onChange={(tags) => setForm((f) => f ? { ...f, tags } : f)}
+              availableTags={availableTags}
+              placeholder="e.g. OMNI-3000-6000, Installation, User Guide"
+              disabled={saving}
+              onDeleteFromPool={handleDeleteTagFromPool}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Description</label>
+            <textarea
+              className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-zinc-500 focus:border-zinc-500 resize-none"
+              rows={3}
+              placeholder="Brief description"
+              value={form.description || ''}
+              onChange={(e) => setForm((f) => f ? { ...f, description: e.target.value } : f)}
+              disabled={saving}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">
+              PDF File (optional – replace existing)
+            </label>
+            {form.filename || form.download_url ? (
+              <div className="mb-4 flex items-center gap-4 rounded-xl border border-slate-200 bg-slate-50/50 px-5 py-4">
+                <div className="p-3 rounded-lg bg-zinc-50">
+                  <FileText className="h-8 w-8 text-zinc-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-slate-900 truncate">{form.filename || 'Current file'}</p>
+                  {form.download_url && (
+                    <a
+                      href={form.download_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 text-sm text-zinc-600 hover:text-zinc-700 font-medium mt-1"
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                      Open PDF
+                    </a>
+                  )}
+                </div>
+              </div>
+            ) : null}
+            {form.download_url && (
+              <div className="mb-6 rounded-xl border border-slate-200 overflow-hidden bg-slate-50">
+                <div className="px-4 py-2 bg-slate-100 border-b border-slate-200 text-sm font-medium text-slate-700 flex items-center gap-2">
+                  <FileText className="h-4 w-4" />
+                  PDF Preview
+                </div>
+                <div className="aspect-[4/3] min-h-[320px]">
+                  <iframe
+                    src={`${form.download_url}#toolbar=1`}
+                    title="PDF Preview"
+                    className="w-full h-full"
+                  />
+                </div>
+              </div>
+            )}
+            <label className="flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-slate-200 hover:border-zinc-300 bg-slate-50/30 py-10 cursor-pointer transition-colors">
+              <input
+                type="file"
+                accept=".pdf,application/pdf"
+                onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+                className="hidden"
+              />
+              <Upload className="h-10 w-10 text-slate-400" />
+              <span className="text-sm text-slate-600 font-medium">
+                {file ? file.name : 'Click to select new PDF'}
+              </span>
+            </label>
+          </div>
+
+          {saving && uploadPercent != null && (
+            <div className="rounded-xl bg-slate-50 p-4 space-y-2">
+              <div className="flex justify-between text-sm font-medium text-slate-600">
+                <span>{uploadPercent >= 100 ? 'Saving...' : 'Uploading...'}</span>
+                <span>{uploadPercent >= 100 ? 'Processing' : `${uploadPercent}%`}</span>
+              </div>
+              <div className="h-2 rounded-full bg-slate-200 overflow-hidden">
+                <div
+                  className="h-full bg-zinc-500 rounded-full transition-all duration-300"
+                  style={{ width: `${Math.min(uploadPercent, 99)}%` }}
+                />
               </div>
             </div>
           )}
-          <div className="border-2 border-dashed border-slate-200 rounded-lg p-6 text-center hover:border-teal-300 transition-colors">
-            <input type="file" accept=".pdf,application/pdf" onChange={(e) => setFile(e.target.files?.[0] ?? null)} className="hidden" id="manual-file" />
-            <label htmlFor="manual-file" className="cursor-pointer flex flex-col items-center gap-2">
-              <Upload className="h-10 w-10 text-slate-400" />
-              <span className="text-sm text-slate-600">{file ? file.name : 'Click to replace PDF'}</span>
-            </label>
+
+          {error && (
+            <div className="flex items-center gap-3 rounded-xl bg-red-50 border border-red-200 px-4 py-3">
+              <XCircle className="h-5 w-5 text-red-500 shrink-0" />
+              <span className="text-red-700 text-sm">{error}</span>
+            </div>
+          )}
+
+          <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+            <Button
+              variant="outline"
+              onClick={() => router.push('/admin/manuals')}
+              disabled={saving}
+              className="rounded-xl"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSubmit}
+              disabled={saving}
+              className="bg-zinc-600 hover:bg-zinc-700 text-white rounded-xl gap-2 shadow-lg shadow-zinc-500/25"
+            >
+              {saving ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  {uploadPercent != null ? 'Uploading...' : 'Saving...'}
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4" />
+                  Update Document
+                </>
+              )}
+            </Button>
           </div>
         </div>
-        {saving && uploadPercent != null && (
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm text-slate-600">
-              <span>{uploadPercent >= 100 ? 'Saving to storage...' : 'Uploading...'}</span>
-              <span>{uploadPercent >= 100 ? 'Processing' : `${uploadPercent}%`}</span>
-            </div>
-            <div className="h-2 w-full rounded-full bg-slate-200 overflow-hidden">
-              <div
-                className="h-full bg-teal-600 transition-all duration-300 ease-out"
-                style={{ width: `${Math.min(uploadPercent, 99)}%` }}
-              />
-            </div>
-          </div>
-        )}
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm flex items-center gap-2">
-            <XCircle className="h-4 w-4 flex-shrink-0" />
-            <span>{error}</span>
-          </div>
-        )}
-        <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">
-          <Button variant="outline" onClick={() => router.push('/admin/manuals')} disabled={saving} className="hover:bg-slate-100">Cancel</Button>
-          <Button onClick={handleSubmit} disabled={saving} className="bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white shadow-lg hover:shadow-xl transition-all duration-200">
-            {saving ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> {uploadPercent != null ? 'Uploading...' : 'Saving...'}</> : 'Update'}
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   )
 }

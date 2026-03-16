@@ -38,14 +38,7 @@ export default function EditCoursePage() {
     }
     const fetchCourse = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession()
-        if (!session) {
-          router.push('/login')
-          return
-        }
-        const res = await fetch(`/api/courses/${id}`, {
-          headers: { Authorization: `Bearer ${session.access_token}` },
-        })
+        const res = await fetch(`/api/courses/${id}`, { credentials: 'include' })
         const data = await res.json()
         if (!res.ok) throw new Error(data.error || 'Failed to load course')
         setForm(data)

@@ -95,7 +95,7 @@ export function TagMultiSelect({
   return (
     <div ref={containerRef} className={`relative ${className}`}>
       <div
-        className={`flex min-h-11 flex-wrap gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 focus-within:ring-2 focus-within:ring-teal-500 focus-within:border-teal-500 ${disabled ? 'cursor-not-allowed bg-slate-50 opacity-60' : ''}`}
+        className={`flex min-h-11 flex-wrap gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 focus-within:ring-2 focus-within:ring-indigo-500 focus-within:border-indigo-400 ${disabled ? 'cursor-not-allowed bg-slate-50 opacity-60' : ''}`}
         onClick={() => !disabled && setIsOpen(true)}
       >
         {displayTags.map((tag) => (

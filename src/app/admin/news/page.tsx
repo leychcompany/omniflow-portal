@@ -2,11 +2,21 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
-import { Plus, Search, Edit, Trash2, Newspaper, Loader2, XCircle, RefreshCw } from 'lucide-react'
+import { DeleteConfirmDialog } from '@/components/ui/delete-confirm-dialog'
+import { CardSkeleton } from '@/components/ui/card-skeleton'
+import { AdminCardGrid, AdminCard } from '@/components/admin/admin-card-grid'
+import { AdminPageDashboard } from '@/components/admin/admin-page-dashboard'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { Plus, Search, Newspaper, XCircle, RefreshCw, MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
 import { type NewsArticle, formatDate } from '../_components/admin-types'
 
 export default function AdminNewsPage() {
@@ -15,12 +25,14 @@ export default function AdminNewsPage() {
   const [newsArticles, setNewsArticles] = useState<NewsArticle[]>([])
   const [newsLoading, setNewsLoading] = useState(true)
   const [newsError, setNewsError] = useState('')
+  const [deleteTarget, setDeleteTarget] = useState<NewsArticle | null>(null)
+  const [deleteLoading, setDeleteLoading] = useState(false)
 
   const fetchNews = useCallback(async () => {
     setNewsLoading(true)
     setNewsError('')
     try {
-      const res = await fetch('/api/news')
+      const res = await fetch('/api/news', { credentials: 'include' })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed to load news')
       setNewsArticles(Array.isArray(data) ? data : [])
@@ -33,15 +45,20 @@ export default function AdminNewsPage() {
 
   useEffect(() => { fetchNews() }, [fetchNews])
 
-  const handleDeleteNews = async (article: NewsArticle) => {
-    if (!confirm(`Delete article "${article.title}"?`)) return
+  const handleDeleteNews = async () => {
+    if (!deleteTarget) return
+    setDeleteLoading(true)
     try {
-      const res = await fetch(`/api/news/${article.id}`, { method: 'DELETE', credentials: 'include' })
+      const res = await fetch(`/api/news/${deleteTarget.id}`, { method: 'DELETE', credentials: 'include' })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed to delete')
       await fetchNews()
+      toast.success('Article deleted')
+      setDeleteTarget(null)
     } catch (e: unknown) {
-      alert(e instanceof Error ? e.message : 'Failed to delete')
+      toast.error(e instanceof Error ? e.message : 'Failed to delete')
+    } finally {
+      setDeleteLoading(false)
     }
   }
 
@@ -51,82 +68,110 @@ export default function AdminNewsPage() {
     (a.excerpt || '').toLowerCase().includes(searchTerm.toLowerCase())
   )
 
+  const featuredCount = newsArticles.filter((a) => a.featured).length
+  const dashboardStats = [
+    { label: 'Articles', value: searchTerm ? `${filteredNews.length} of ${newsArticles.length}` : newsArticles.length },
+    { label: 'Featured', value: featuredCount },
+  ]
+
   return (
-    <div className="pb-20 md:pb-0">
-      <div className="flex flex-col sm:flex-row gap-4 mb-6">
+    <div className="pb-20 md:pb-0 space-y-6">
+      {!newsLoading && !newsError && (
+        <AdminPageDashboard
+          title="News"
+          description="Articles and announcements"
+          icon={<Newspaper className="h-6 w-6" />}
+          stats={dashboardStats}
+          accent="news"
+        />
+      )}
+      <div className="flex flex-col sm:flex-row gap-4">
         <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-400" />
           <Input
             type="text"
-            placeholder="Search news..."
+            placeholder="Search articles..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 border-slate-200 rounded-xl focus:ring-2 focus:ring-primary-600 bg-white shadow-sm"
+            className="w-full pl-11 pr-4 py-2.5 rounded-xl border-slate-200 bg-white text-sm focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-400 shadow-sm"
           />
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={fetchNews} disabled={newsLoading} className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={fetchNews} disabled={newsLoading} className="gap-2 rounded-xl border-slate-200 text-slate-600 hover:bg-slate-50">
             <RefreshCw className={`h-4 w-4 ${newsLoading ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
-          <Button onClick={() => router.push('/admin/news/add')} className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg">
-            <Plus className="h-4 w-4 mr-2" />
-            Add News
+          <Button onClick={() => router.push('/admin/news/add')} className="gap-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-500/25">
+            <Plus className="h-4 w-4" />
+            Add Article
           </Button>
         </div>
       </div>
 
       {newsLoading ? (
-        <Card className="border-0 shadow-lg bg-white">
-          <CardContent className="p-12 text-center">
-            <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary-600 mb-4" />
-            <p className="text-slate-600">Loading news...</p>
-          </CardContent>
-        </Card>
+        <CardSkeleton count={6} />
       ) : newsError ? (
-        <Card className="border-0 shadow-lg border-red-200 bg-red-50">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-3 text-red-700">
-              <XCircle className="h-5 w-5" />
-              <span>{newsError}</span>
-            </div>
-          </CardContent>
-        </Card>
-      ) : newsArticles.length === 0 ? (
-        <Card className="border-0 shadow-lg bg-white">
-          <CardContent className="p-12 text-center">
-            <Newspaper className="h-12 w-12 mx-auto text-slate-400 mb-4" />
-            <p className="text-slate-600">No news articles yet. Add one to get started.</p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="space-y-4">
-          {filteredNews.map((article) => (
-            <Card key={article.id} className="border-0 shadow-lg hover:shadow-xl transition-all duration-200 bg-white">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-slate-900 mb-2">{article.title}</h3>
-                    <p className="text-sm text-slate-600 mb-3">{article.excerpt || '—'}</p>
-                    <div className="flex items-center gap-4 text-sm text-slate-500">
-                      <span>Published: {formatDate(article.published_at)}</span>
-                      {article.featured && <Badge className="bg-amber-100 text-amber-700 border-amber-200">Featured</Badge>}
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Button variant="outline" size="sm" onClick={() => router.push(`/admin/news/${article.id}/edit`)} className="hover:bg-slate-100">
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={() => handleDeleteNews(article)} className="text-red-600 hover:bg-red-50 hover:border-red-200">
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+        <div className="rounded-lg border border-red-200 bg-red-50 p-6">
+          <div className="flex items-center gap-3 text-red-700">
+            <XCircle className="h-5 w-5 shrink-0" />
+            <span className="text-sm">{newsError}</span>
+          </div>
         </div>
+      ) : filteredNews.length === 0 ? (
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-16 text-center shadow-sm">
+          <Newspaper className="h-12 w-12 text-zinc-300 mx-auto mb-4" />
+          <p className="text-sm text-zinc-600">
+            {newsArticles.length === 0 ? 'No articles. Add one to get started.' : 'No matches.'}
+          </p>
+        </div>
+      ) : (
+        <AdminCardGrid>
+          {filteredNews.map((article) => (
+            <AdminCard key={article.id}>
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="font-semibold text-slate-900 truncate">{article.title}</h3>
+                    {article.featured && (
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-medium shrink-0">Featured</span>
+                    )}
+                  </div>
+                  <p className="text-sm text-slate-500 mt-1 line-clamp-2">{article.excerpt || '—'}</p>
+                  <p className="text-xs text-slate-400 mt-2">{formatDate(article.published_at)}</p>
+                </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 rounded-lg text-slate-400 hover:text-slate-700">
+                      <MoreHorizontal className="h-4 w-4" />
+                      <span className="sr-only">Open menu</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="min-w-36">
+                    <DropdownMenuItem onSelect={() => router.push(`/admin/news/${article.id}/edit`)}>
+                      <Pencil className="h-4 w-4 mr-2" />
+                      Edit
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem variant="destructive" onSelect={() => setDeleteTarget(article)}>
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Delete
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            </AdminCard>
+          ))}
+        </AdminCardGrid>
       )}
+
+      <DeleteConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+        title={deleteTarget?.title ?? ''}
+        description="The article will be removed permanently."
+        onConfirm={handleDeleteNews}
+        isLoading={deleteLoading}
+      />
     </div>
   )
 }

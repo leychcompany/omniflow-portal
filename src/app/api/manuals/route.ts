@@ -59,31 +59,22 @@ export async function GET(req: NextRequest) {
 
     if (error) throw error;
 
-    const manualsWithUrls = await Promise.all(
-      (manuals ?? []).map(async (manual) => {
-        let downloadUrl = manual.storage_path;
-        try {
-          const { data: signed } = await supabaseAdmin.storage
-            .from("manuals")
-            .createSignedUrl(manual.storage_path, SIGNED_URL_EXPIRY);
-          if (signed?.signedUrl) downloadUrl = signed.signedUrl;
-        } catch {
-          // If bucket doesn't exist or file missing, keep storage_path
-        }
-        const mtList = (manual as { manual_tags?: { tags: { name: string } | null }[] }).manual_tags ?? [];
-        const tagNames = mtList.map((mt) => mt?.tags?.name).filter(Boolean) as string[];
-        const tags = tagNames.length ? tagNames : (manual.category ? [manual.category] : []);
-        const { manual_tags: _mt, ...rest } = manual as { manual_tags?: unknown };
-        return {
-          ...rest,
-          tags,
-          path: downloadUrl,
-          download_url: downloadUrl,
-        };
-      })
-    );
+    // Do NOT create signed URLs here - each createSignedUrl is a slow storage round-trip.
+    // List returns metadata only. Use /api/manuals/[id]/view to open PDF (creates URL on-demand).
+    const result = (manuals ?? []).map((manual) => {
+      const mtList = (manual as { manual_tags?: { tags: { name: string } | null }[] }).manual_tags ?? [];
+      const tagNames = mtList.map((mt) => mt?.tags?.name).filter(Boolean) as string[];
+      const tags = tagNames.length ? tagNames : (manual.category ? [manual.category] : []);
+      const { manual_tags: _mt, storage_path: storagePath, ...rest } = manual as { manual_tags?: unknown; storage_path?: string };
+      return {
+        ...rest,
+        tags,
+        path: storagePath,
+        download_url: null as string | null,
+      };
+    });
 
-    return NextResponse.json(manualsWithUrls);
+    return NextResponse.json(result);
   } catch (error: unknown) {
     console.error("Error fetching manuals:", error);
     return NextResponse.json(

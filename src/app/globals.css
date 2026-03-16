@@ -71,6 +71,17 @@ button {
   transition: all 0.2s ease-in-out !important;
 }
 
+/* Dashboard shine animation */
+@keyframes dashboard-shimmer {
+  0%, 100% { background-position: 200% 200%; }
+  50% { background-position: -100% -100%; }
+}
+.dashboard-shine {
+  background: linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.12) 50%, transparent 60%);
+  background-size: 200% 200%;
+  animation: dashboard-shimmer 4s ease-in-out infinite;
+}
+
 /* Glass morphism effect */
 .glass {
   background: rgba(255, 255, 255, 0.25);

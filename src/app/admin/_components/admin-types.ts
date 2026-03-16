@@ -70,6 +70,20 @@ export interface SoftwareItem {
 export const ADMIN_TABS = ['users', 'training', 'manuals', 'software', 'news', 'analytics'] as const
 export type AdminTabId = (typeof ADMIN_TABS)[number]
 
+/** Per-section accent colors for header nav and page dashboards */
+export const ADMIN_TAB_COLORS: Record<AdminTabId, {
+  nav: string
+  mobile: string
+  dashboard: { border: string; icon: string; pills: string }
+}> = {
+  users: { nav: 'bg-blue-100 text-blue-700', mobile: 'text-blue-600', dashboard: { border: 'border-l-blue-500', icon: 'bg-blue-50 text-blue-600', pills: 'border-blue-100 bg-blue-50/40' } },
+  training: { nav: 'bg-emerald-100 text-emerald-700', mobile: 'text-emerald-600', dashboard: { border: 'border-l-emerald-500', icon: 'bg-emerald-50 text-emerald-600', pills: 'border-emerald-100 bg-emerald-50/40' } },
+  manuals: { nav: 'bg-indigo-100 text-indigo-700', mobile: 'text-indigo-600', dashboard: { border: 'border-l-indigo-500', icon: 'bg-indigo-50 text-indigo-600', pills: 'border-indigo-100 bg-indigo-50/40' } },
+  software: { nav: 'bg-violet-100 text-violet-700', mobile: 'text-violet-600', dashboard: { border: 'border-l-violet-500', icon: 'bg-violet-50 text-violet-600', pills: 'border-violet-100 bg-violet-50/40' } },
+  news: { nav: 'bg-amber-100 text-amber-700', mobile: 'text-amber-600', dashboard: { border: 'border-l-amber-500', icon: 'bg-amber-50 text-amber-600', pills: 'border-amber-100 bg-amber-50/40' } },
+  analytics: { nav: 'bg-cyan-100 text-cyan-700', mobile: 'text-cyan-600', dashboard: { border: 'border-l-cyan-500', icon: 'bg-cyan-50 text-cyan-600', pills: 'border-cyan-100 bg-cyan-50/40' } },
+}
+
 export function getStatusColor(status: string) {
   switch (status) {
     case 'active': return 'bg-emerald-100 text-emerald-700 border-emerald-200'

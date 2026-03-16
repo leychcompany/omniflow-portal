@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { BarChart3, Loader2, XCircle } from 'lucide-react'
 import { formatDate } from '../_components/admin-types'
@@ -53,12 +52,12 @@ export default function AdminAnalyticsPage() {
 
   return (
     <div className="pb-20 md:pb-0">
-      <div className="flex flex-wrap items-center gap-3 mb-4">
-        <label className="text-sm font-medium text-slate-700">Event type:</label>
+      <div className="flex flex-wrap items-center gap-3 mb-6">
+        <label className="text-sm font-medium text-zinc-700">Event type</label>
         <select
           value={analyticsEventTypeFilter}
           onChange={(e) => handleFilterChange(e.target.value)}
-          className="p-2 border border-slate-200 rounded-lg text-sm bg-white"
+          className="px-3 py-2 border border-zinc-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-zinc-900"
         >
           <option value="">All events</option>
           <option value="login">Login</option>
@@ -69,44 +68,37 @@ export default function AdminAnalyticsPage() {
       </div>
 
       {analyticsLoading ? (
-        <Card className="border-0 shadow-lg bg-white">
-          <CardContent className="p-12 text-center">
-            <Loader2 className="h-8 w-8 animate-spin mx-auto text-indigo-600 mb-4" />
-            <p className="text-slate-600">Loading analytics...</p>
-          </CardContent>
-        </Card>
+        <div className="rounded-lg border border-zinc-200 bg-white p-12 text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto text-zinc-500 mb-4" />
+          <p className="text-zinc-600 text-sm">Loading analytics...</p>
+        </div>
       ) : analyticsError ? (
-        <Card className="border-0 shadow-lg border-red-200 bg-red-50">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-3 text-red-700">
-              <XCircle className="h-5 w-5" />
-              <span>{analyticsError}</span>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="rounded-lg border border-red-200 bg-red-50 p-6">
+          <div className="flex items-center gap-3 text-red-700">
+            <XCircle className="h-5 w-5 shrink-0" />
+            <span>{analyticsError}</span>
+          </div>
+        </div>
       ) : analyticsEvents.length === 0 ? (
-        <Card className="border-0 shadow-lg bg-white">
-          <CardContent className="p-12 text-center">
-            <BarChart3 className="h-12 w-12 mx-auto text-slate-400 mb-4" />
-            <p className="text-slate-600">No activity events yet. Document downloads will appear here.</p>
-          </CardContent>
-        </Card>
+        <div className="rounded-lg border border-zinc-200 bg-white p-12 text-center">
+          <BarChart3 className="h-12 w-12 mx-auto text-zinc-400 mb-4" />
+          <p className="text-zinc-600 text-sm">No activity events yet. Document downloads will appear here.</p>
+        </div>
       ) : (
-        <Card className="border-0 shadow-lg bg-white overflow-hidden">
-          <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+        <div className="rounded-lg border border-zinc-200 bg-white overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-slate-200 bg-slate-50">
-                    <th className="text-left p-4 font-semibold text-slate-700">User</th>
-                    <th className="text-left p-4 font-semibold text-slate-700">Event</th>
-                    <th className="text-left p-4 font-semibold text-slate-700">Resource</th>
-                    <th className="text-left p-4 font-semibold text-slate-700">When</th>
+                  <tr className="border-b border-zinc-200 bg-zinc-50">
+                    <th className="text-left p-4 text-xs font-semibold text-zinc-600 uppercase tracking-wider">User</th>
+                    <th className="text-left p-4 text-xs font-semibold text-zinc-600 uppercase tracking-wider">Event</th>
+                    <th className="text-left p-4 text-xs font-semibold text-zinc-600 uppercase tracking-wider">Resource</th>
+                    <th className="text-left p-4 text-xs font-semibold text-zinc-600 uppercase tracking-wider">When</th>
                   </tr>
                 </thead>
                 <tbody>
                   {analyticsEvents.map((evt) => (
-                    <tr key={evt.id} className="border-b border-slate-100 hover:bg-slate-50">
+                    <tr key={evt.id} className="border-b border-zinc-100 hover:bg-zinc-50">
                       <td className="p-4">
                         <div className="font-medium text-slate-900">{evt.user_name || evt.user_email || evt.user_id}</div>
                         {evt.user_name && evt.user_email && (
@@ -114,11 +106,11 @@ export default function AdminAnalyticsPage() {
                         )}
                       </td>
                       <td className="p-4">
-                        <Badge variant="secondary" className="bg-indigo-100 text-indigo-800">
-                          {evt.event_type.replace(/_/g, ' ')}
+                        <Badge variant="secondary" className="bg-zinc-100 text-zinc-800 font-mono text-xs">
+                          {evt.event_type.replaceAll('_', ' ')}
                         </Badge>
                       </td>
-                      <td className="p-4 text-slate-700">
+                      <td className="p-4 text-zinc-700">
                         {evt.event_type === 'login' || evt.event_type === 'logout' ? (
                           <span className="text-xs" title={JSON.stringify(evt.metadata)}>
                             {(evt.metadata as { ip?: string })?.ip || '—'}
@@ -127,14 +119,13 @@ export default function AdminAnalyticsPage() {
                           evt.resource_label
                         )}
                       </td>
-                      <td className="p-4 text-slate-600">{formatDate(evt.created_at)}</td>
+                      <td className="p-4 text-zinc-500 text-xs">{formatDate(evt.created_at)}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
-            </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
     </div>
   )

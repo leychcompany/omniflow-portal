@@ -37,14 +37,7 @@ export default function EditNewsPage() {
     }
     const fetchArticle = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession()
-        if (!session) {
-          router.push('/login')
-          return
-        }
-        const res = await fetch(`/api/news/${id}`, {
-          headers: { Authorization: `Bearer ${session.access_token}` },
-        })
+        const res = await fetch(`/api/news/${id}`, { credentials: 'include' })
         const data = await res.json()
         if (!res.ok) throw new Error(data.error || 'Failed to load article')
         setForm(data)
