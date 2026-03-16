@@ -31,6 +31,7 @@ export default function EditManualPage() {
   const [saving, setSaving] = useState(false)
   const [uploadPercent, setUploadPercent] = useState<number | null>(null)
   const [error, setError] = useState('')
+  const [retryKey, setRetryKey] = useState(0)
 
   useEffect(() => {
     if (!id) {
@@ -38,27 +39,50 @@ export default function EditManualPage() {
       setLoading(false)
       return
     }
+
+    let cancelled = false
+    const LOAD_TIMEOUT_MS = 15_000
+
     const fetchManual = async () => {
-      try {
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error('TIMEOUT')), LOAD_TIMEOUT_MS)
+      })
+
+      const loadPromise = (async () => {
         const { data: { session } } = await supabase.auth.getSession()
         if (!session) {
           router.push('/login')
-          return
+          throw new Error('Session expired. Please log in again.')
         }
         const res = await fetch(`/api/manuals/${id}`, {
           headers: { Authorization: `Bearer ${session.access_token}` },
+          credentials: 'include',
         })
         const data = await res.json()
         if (!res.ok) throw new Error(data.error || 'Failed to load document')
-        setForm({ ...data, tags: data.tags || [] })
+        return { ...data, tags: data.tags || [] }
+      })()
+
+      try {
+        const result = await Promise.race([loadPromise, timeoutPromise])
+        if (!cancelled && result) setForm(result)
       } catch (e) {
-        setError(e instanceof Error ? e.message : 'Failed to load document')
+        if (!cancelled) {
+          if (e instanceof Error && e.message === 'TIMEOUT') {
+            setError('Request timed out. Please refresh or try again.')
+          } else {
+            setError(e instanceof Error ? e.message : 'Failed to load document')
+          }
+        }
       } finally {
-        setLoading(false)
+        if (!cancelled) setLoading(false)
       }
     }
     fetchManual()
-  }, [id, router])
+    return () => {
+      cancelled = true
+    }
+  }, [id, router, retryKey])
 
   const fetchAvailableTags = async () => {
     try {
@@ -167,6 +191,13 @@ export default function EditManualPage() {
     )
   }
 
+  const handleRetry = () => {
+    setError('')
+    setForm(null)
+    setLoading(true)
+    setRetryKey((k) => k + 1)
+  }
+
   if (!form) {
     return (
       <Card className="max-w-2xl mx-auto border-0 shadow-xl bg-white">
@@ -175,7 +206,10 @@ export default function EditManualPage() {
             <XCircle className="h-5 w-5" />
             <span>{error || 'Document not found'}</span>
           </div>
-          <Button variant="outline" onClick={() => router.push('/admin/manuals')}>Back to Admin</Button>
+          <div className="flex gap-3">
+            <Button variant="outline" onClick={handleRetry}>Retry</Button>
+            <Button variant="outline" onClick={() => router.push('/admin/manuals')}>Back to Admin</Button>
+          </div>
         </CardContent>
       </Card>
     )
