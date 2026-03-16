@@ -70,12 +70,15 @@ export interface SoftwareItem {
 export const ADMIN_TABS = ['users', 'training', 'manuals', 'software', 'news', 'analytics'] as const
 export type AdminTabId = (typeof ADMIN_TABS)[number]
 
+export type AdminNavTabId = 'dashboard' | AdminTabId
+
 /** Per-section accent colors for header nav and page dashboards */
-export const ADMIN_TAB_COLORS: Record<AdminTabId, {
+export const ADMIN_TAB_COLORS: Record<AdminNavTabId, {
   nav: string
   mobile: string
   dashboard: { border: string; icon: string; pills: string }
 }> = {
+  dashboard: { nav: 'bg-indigo-100 text-indigo-700', mobile: 'text-indigo-600', dashboard: { border: 'border-l-indigo-500', icon: 'bg-indigo-50 text-indigo-600', pills: 'border-indigo-100 bg-indigo-50/40' } },
   users: { nav: 'bg-blue-100 text-blue-700', mobile: 'text-blue-600', dashboard: { border: 'border-l-blue-500', icon: 'bg-blue-50 text-blue-600', pills: 'border-blue-100 bg-blue-50/40' } },
   training: { nav: 'bg-emerald-100 text-emerald-700', mobile: 'text-emerald-600', dashboard: { border: 'border-l-emerald-500', icon: 'bg-emerald-50 text-emerald-600', pills: 'border-emerald-100 bg-emerald-50/40' } },
   manuals: { nav: 'bg-indigo-100 text-indigo-700', mobile: 'text-indigo-600', dashboard: { border: 'border-l-indigo-500', icon: 'bg-indigo-50 text-indigo-600', pills: 'border-indigo-100 bg-indigo-50/40' } },

@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { AdminAuthGuard } from './_components/admin-auth-guard'
 import {
+  LayoutDashboard,
   Users,
   GraduationCap,
   BookOpen,
@@ -17,9 +18,10 @@ import {
 import { supabase } from '@/lib/supabase'
 import { recordAuthEvent } from '@/lib/record-analytics-event'
 import { CommandPalette } from '@/components/admin/command-palette'
-import { ADMIN_TABS, ADMIN_TAB_COLORS, type AdminTabId } from './_components/admin-types'
+import { ADMIN_TABS, ADMIN_TAB_COLORS, type AdminNavTabId } from './_components/admin-types'
 
-const TAB_CONFIG: { id: AdminTabId; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
+const TAB_CONFIG: { id: AdminNavTabId; label: string; icon: React.ComponentType<{ className?: string }>; href?: string }[] = [
+  { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, href: '/admin' },
   { id: 'users', label: 'Users', icon: Users },
   { id: 'training', label: 'Training', icon: GraduationCap },
   { id: 'manuals', label: 'Documents', icon: BookOpen },
@@ -31,7 +33,8 @@ const TAB_CONFIG: { id: AdminTabId; label: string; icon: React.ComponentType<{ c
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const segment = pathname.replace(/^\/admin\/?/, '').split('/')[0]
-  const activeTab = (ADMIN_TABS.includes(segment as AdminTabId) ? segment : null) as AdminTabId | null
+  const activeTab: AdminNavTabId | null =
+    segment === '' ? 'dashboard' : (ADMIN_TABS.includes(segment as typeof ADMIN_TABS[number]) ? segment : null) as AdminNavTabId | null
 
   const handleSignOut = async () => {
     try {
@@ -59,13 +62,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           >
             <Home className="h-4 w-4" />
           </Link>
-          {TAB_CONFIG.map(({ id, label, icon: Icon }) => {
+          {TAB_CONFIG.map(({ id, label, icon: Icon, href }) => {
             const isActive = activeTab === id
             const colors = ADMIN_TAB_COLORS[id]
             return (
               <Link
                 key={id}
-                href={`/admin/${id}`}
+                href={href ?? `/admin/${id}`}
                 title={label}
                 className={`flex items-center justify-center gap-2 px-2 py-2 2xl:px-3 rounded-lg text-sm font-medium shrink-0 transition-colors ${
                   isActive ? colors.nav : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
@@ -96,14 +99,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
       {/* Mobile bottom nav */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur border-t border-slate-200 z-40 pb-[env(safe-area-inset-bottom)] shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
-        <div className="grid grid-cols-6 h-14">
-          {TAB_CONFIG.map(({ id, label, icon: Icon }) => {
+        <div className="grid grid-cols-7 h-14">
+          {TAB_CONFIG.map(({ id, label, icon: Icon, href }) => {
             const isActive = activeTab === id
             const colors = ADMIN_TAB_COLORS[id]
             return (
               <Link
                 key={id}
-                href={`/admin/${id}`}
+                href={href ?? `/admin/${id}`}
                 className={`flex flex-col items-center justify-center gap-0.5 py-2 px-1 transition-colors ${
                   isActive ? colors.mobile : 'text-slate-500'
                 }`}

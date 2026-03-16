@@ -261,7 +261,7 @@ export default function HomePage() {
                           <button
                             onClick={() => {
                               setProfileDropdownOpen(false)
-                              router.push('/admin/users')
+                              router.push('/admin')
                             }}
                             className="w-full flex items-center space-x-3 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
                           >
@@ -297,7 +297,7 @@ export default function HomePage() {
                 Welcome back! 👋
               </h1>
               <p className="text-slate-600 text-lg">
-              Here's the latest on your account.
+              Here&apos;s the latest on your account.
               </p>
             </div>
         
