@@ -9,9 +9,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { DataTable, SortableHeader } from '@/components/admin/data-table'
-import { ExternalLink, MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
+import { SortableHeader } from '@/components/admin/data-table'
+import { ExternalLink, FileText, MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
 import { type Manual } from '../../_components/admin-types'
+import { formatDate } from '../../_components/admin-types'
 
 export function getManualsColumns(
   router: { push: (url: string) => void },
@@ -26,11 +27,18 @@ export function getManualsColumns(
       cell: ({ row }) => {
         const m = row.original
         return (
-          <div>
-            <p className="font-semibold text-slate-900">{m.title}</p>
-            {m.description && (
-              <p className="text-slate-500 text-xs mt-0.5 line-clamp-1">{m.description}</p>
-            )}
+          <div className="flex items-start gap-3 min-w-0">
+            <div className="shrink-0 p-2 rounded-lg bg-indigo-50 text-indigo-600">
+              <FileText className="h-4 w-4" />
+            </div>
+            <div className="min-w-0">
+              <p className="font-semibold text-slate-900 truncate">{m.title}</p>
+              {m.description ? (
+                <p className="text-slate-500 text-xs mt-0.5 line-clamp-1">{m.description}</p>
+              ) : (
+                <p className="text-slate-400 text-xs mt-0.5 italic">No description</p>
+              )}
+            </div>
           </div>
         )
       },
@@ -38,44 +46,86 @@ export function getManualsColumns(
     {
       accessorKey: 'tags',
       header: ({ column }) => (
-        <SortableHeader column={column}>
-          <span className="hidden sm:inline">Tags</span>
-        </SortableHeader>
+        <SortableHeader column={column}>Tags</SortableHeader>
       ),
       cell: ({ row }) => {
-        const tags = row.original.tags ?? []
+        const tags = (row.original.tags ?? []).slice(0, 4)
+        if (tags.length === 0) return <span className="text-slate-400 text-sm">—</span>
         return (
-          <span className="hidden sm:inline text-slate-500 text-sm">
-            {tags.length ? tags.slice(0, 2).join(', ') : '—'}
-          </span>
+          <div className="flex flex-wrap gap-1">
+            {tags.map((tag) => (
+              <span
+                key={tag}
+                className="inline-flex px-2 py-0.5 rounded-md text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-100"
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
         )
       },
     },
     {
-      accessorKey: 'filename',
+      id: 'file-info',
+      header: () => <span className="hidden lg:block">File</span>,
+      cell: ({ row }) => {
+        const m = row.original
+        return (
+          <div className="hidden lg:block min-w-0">
+            <p className="text-slate-600 text-xs font-mono truncate max-w-[160px]" title={m.filename}>
+              {m.filename ?? '—'}
+            </p>
+            {m.size && (
+              <p className="text-slate-400 text-xs mt-0.5">{m.size}</p>
+            )}
+          </div>
+        )
+      },
+    },
+    {
+      accessorKey: 'created_at',
       header: ({ column }) => (
         <SortableHeader column={column}>
-          <span className="hidden md:inline">File</span>
+          <span className="hidden xl:inline">Added</span>
         </SortableHeader>
       ),
       cell: ({ row }) => (
-        <span className="hidden md:inline text-slate-500 text-xs font-mono truncate max-w-[140px] block">
-          {row.original.filename ?? '—'}
+        <span className="hidden xl:inline text-slate-500 text-xs">
+          {row.original.created_at ? formatDate(row.original.created_at) : '—'}
         </span>
       ),
     },
     {
       id: 'actions',
-      header: () => <span className="text-right block w-full">Actions</span>,
+      header: () => <span className="sr-only">Actions</span>,
       cell: ({ row }) => {
         const manual = row.original
         return (
-          <div className="flex justify-end">
+          <div className="flex items-center justify-end gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg"
+              asChild
+            >
+              <a href={`/api/manuals/${manual.id}/view`} target="_blank" rel="noopener noreferrer" title="View PDF">
+                <ExternalLink className="h-4 w-4" />
+              </a>
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg"
+              onClick={() => router.push(`/admin/manuals/${manual.id}/edit`)}
+              title="Edit"
+            >
+              <Pencil className="h-4 w-4" />
+            </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg">
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg">
                   <MoreHorizontal className="h-4 w-4" />
-                  <span className="sr-only">Open menu</span>
+                  <span className="sr-only">More</span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="min-w-36">

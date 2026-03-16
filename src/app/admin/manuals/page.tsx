@@ -155,7 +155,7 @@ export default function AdminManualsPage() {
         </div>
       ) : (
         <>
-          <DataTable columns={columns} data={manuals} />
+          <DataTable columns={columns} data={manuals} headerVariant="indigo" />
           {total > 0 && (
             <TablePagination
               page={page}

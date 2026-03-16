@@ -25,12 +25,15 @@ interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
   data: TData[]
   className?: string
+  /** Softer header for Documents/Manuals tables */
+  headerVariant?: 'default' | 'indigo'
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
   className,
+  headerVariant = 'default',
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([])
 
@@ -48,11 +51,22 @@ export function DataTable<TData, TValue>({
       <Table>
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (
-            <TableRow key={headerGroup.id} className="bg-slate-800 hover:bg-slate-800 border-slate-700">
+            <TableRow
+              key={headerGroup.id}
+              className={cn(
+                'border-b',
+                headerVariant === 'indigo'
+                  ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-600 hover:to-indigo-700 border-indigo-500/30'
+                  : 'bg-slate-800 hover:bg-slate-800 border-slate-700'
+              )}
+            >
               {headerGroup.headers.map((header) => (
                 <TableHead
                   key={header.id}
-                  className="h-12 px-5 text-left font-semibold text-white text-sm uppercase tracking-wider"
+                  className={cn(
+                    'h-12 px-5 text-left font-semibold text-sm tracking-wider',
+                    headerVariant === 'indigo' ? 'text-white/95' : 'text-white'
+                  )}
                 >
                   {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
                 </TableHead>
