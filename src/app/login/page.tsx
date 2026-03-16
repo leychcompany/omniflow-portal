@@ -2,7 +2,7 @@
 
 import { useState, Suspense, useEffect, useRef } from 'react'
 import Link from 'next/link'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -20,7 +20,6 @@ function LoginForm() {
   const [error, setError] = useState('')
   
   const router = useRouter()
-  const searchParams = useSearchParams()
   const { setUser, setMustChangePassword } = useAuthStore()
   const hashHandledRef = useRef(false)
 
@@ -88,7 +87,8 @@ function LoginForm() {
       if (error) throw error
 
       if (data.user) {
-        await recordAuthEvent('login', data.session?.access_token)
+        // Fire-and-forget: do not block redirect (slow analytics must not block login)
+        recordAuthEvent('login', data.session?.access_token).catch(() => {})
         // Fetch user profile via API (bypasses RLS, returns correct locked status)
         const profileRes = await fetch('/api/profile', {
           credentials: 'include',
@@ -112,8 +112,7 @@ function LoginForm() {
             router.push('/set-password')
           } else {
             setMustChangePassword(false)
-            const redirectTo = searchParams.get('redirect') || '/home'
-            router.push(redirectTo)
+            window.location.replace('/home')
           }
         }
       }

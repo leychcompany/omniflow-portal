@@ -25,7 +25,7 @@ export default function SettingsPage() {
 
   useEffect(() => {
     if (!user) {
-      router.push('/login?redirect=/settings')
+      router.push('/login')
       return
     }
 

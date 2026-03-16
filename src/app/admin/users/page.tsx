@@ -1,12 +1,18 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
+import { DashboardSkeleton } from '@/components/ui/dashboard-skeleton'
+import { SearchBarSkeleton } from '@/components/ui/search-bar-skeleton'
+import { TabsSkeleton } from '@/components/ui/tabs-skeleton'
+import { TableSkeleton } from '@/components/ui/table-skeleton'
 import { AdminPageDashboard } from '@/components/admin/admin-page-dashboard'
+import { TablePagination } from '@/components/admin/table-pagination'
+import { UserDetailModal } from '@/components/admin/user-detail-modal'
 import { supabase } from '@/lib/supabase'
 import {
   Plus,
@@ -24,11 +30,19 @@ import {
 } from 'lucide-react'
 import { type User, type Invite, getStatusColor, formatDate } from '../_components/admin-types'
 
+const LIMIT = 20
+const SEARCH_DEBOUNCE_MS = 300
+
 export default function AdminUsersPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [subTab, setSubTab] = useState<'users' | 'invites'>('users')
+  const [searchInput, setSearchInput] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
+  const [page, setPage] = useState(1)
   const [users, setUsers] = useState<User[]>([])
+  const [usersTotal, setUsersTotal] = useState(0)
+  const [usersTotalPages, setUsersTotalPages] = useState(1)
   const [usersLoading, setUsersLoading] = useState(true)
   const [usersError, setUsersError] = useState('')
   const [invites, setInvites] = useState<Invite[]>([])
@@ -36,6 +50,7 @@ export default function AdminUsersPage() {
   const [invitesError, setInvitesError] = useState('')
   const [resendingId, setResendingId] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [userModalId, setUserModalId] = useState<string | null>(null)
 
   const adminCount = users.filter((u) => u.role === 'admin').length
 
@@ -43,28 +58,32 @@ export default function AdminUsersPage() {
     setUsersLoading(true)
     setUsersError('')
     try {
-      const res = await fetch('/api/users', { credentials: 'include' })
+      const params = new URLSearchParams({ page: String(page), limit: String(LIMIT) })
+      if (searchTerm) params.set('q', searchTerm)
+      const res = await fetch(`/api/users?${params}`, { credentials: 'include' })
       const result = await res.json()
       if (!res.ok) throw new Error(result.error || 'Failed to load')
       const db = result.users || []
       setUsers(
-        db.map((u: any) => ({
+        db.map((u: Record<string, unknown>) => ({
           id: u.id,
-          name: u.name || [u.first_name, u.last_name].filter(Boolean).join(' ') || u.email?.split('@')[0] || '—',
+          name: (u.name as string) || [u.first_name, u.last_name].filter(Boolean).join(' ') || String(u.email || '').split('@')[0] || '—',
           email: u.email,
-          role: u.role || 'client',
-          status: u.status || 'active',
+          role: (u.role as string) || 'client',
+          status: (u.status as string) || 'active',
           createdAt: u.created_at || u.createdAt,
           lastLogin: u.last_login || u.lastLogin,
           locked: !!u.locked,
         }))
       )
+      setUsersTotal(result.total ?? 0)
+      setUsersTotalPages(result.totalPages ?? 1)
     } catch (e) {
       setUsersError(e instanceof Error ? e.message : 'Failed to load')
     } finally {
       setUsersLoading(false)
     }
-  }, [])
+  }, [page, searchTerm])
 
   const fetchInvites = useCallback(async () => {
     setInvitesLoading(true)
@@ -82,9 +101,24 @@ export default function AdminUsersPage() {
   }, [])
 
   useEffect(() => {
+    const t = setTimeout(() => {
+      setSearchTerm(searchInput)
+      setPage(1)
+    }, SEARCH_DEBOUNCE_MS)
+    return () => clearTimeout(t)
+  }, [searchInput])
+
+  useEffect(() => {
     fetchUsers()
     fetchInvites()
   }, [fetchUsers, fetchInvites])
+
+  useEffect(() => {
+    const userId = searchParams.get('user')
+    if (userId) {
+      setUserModalId(userId)
+    }
+  }, [searchParams])
 
   const toggleRole = async (userId: string) => {
     const u = users.find((x) => x.id === userId)
@@ -142,22 +176,19 @@ export default function AdminUsersPage() {
     }
   }
 
-  const filteredUsers = users.filter(
-    (u) =>
-      u.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (u.name && u.name.toLowerCase().includes(searchTerm.toLowerCase()))
-  )
-  const filteredInvites = invites.filter((i) => i.email.toLowerCase().includes(searchTerm.toLowerCase()))
+  const filteredInvites = invites.filter((i) => i.email.toLowerCase().includes(searchInput.toLowerCase()))
 
   const dashboardStats = [
-    { label: 'Users', value: users.length },
+    { label: 'Users', value: usersTotal },
     { label: 'Admins', value: adminCount },
     { label: 'Pending invites', value: invites.length },
   ]
 
   return (
     <div className="space-y-6">
-      {!usersLoading && (
+      {usersLoading ? (
+        <DashboardSkeleton statCount={3} />
+      ) : (
         <AdminPageDashboard
           title="Users"
           description="Manage users and invites"
@@ -166,13 +197,16 @@ export default function AdminUsersPage() {
           accent="users"
         />
       )}
+      {usersLoading ? (
+        <SearchBarSkeleton />
+      ) : (
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="flex-1 relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
           <Input
             placeholder="Search..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
             className="pl-10 h-10 bg-white border-zinc-200"
           />
         </div>
@@ -187,13 +221,16 @@ export default function AdminUsersPage() {
           </Button>
         </div>
       </div>
-
+      )}
+      {usersLoading ? (
+        <TabsSkeleton count={2} />
+      ) : (
       <div className="flex gap-1 p-1 bg-zinc-100 rounded-lg w-fit">
         <button
           onClick={() => setSubTab('users')}
           className={`px-4 py-2 rounded-md text-sm font-medium ${subTab === 'users' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-600 hover:text-zinc-900'}`}
         >
-          Users ({users.length})
+          Users ({usersTotal})
         </button>
         <button
           onClick={() => setSubTab('invites')}
@@ -202,19 +239,18 @@ export default function AdminUsersPage() {
           Invites ({invites.length})
         </button>
       </div>
+      )}
 
       {subTab === 'users' && (
         <>
           {usersLoading ? (
-            <div className="border border-zinc-200 bg-white rounded-lg p-12 text-center">
-              <Loader2 className="h-8 w-8 animate-spin text-zinc-400 mx-auto" />
-            </div>
+            <TableSkeleton rowCount={6} colCount={4} className="border-zinc-200" />
           ) : usersError ? (
             <div className="border border-red-200 bg-red-50 rounded-lg p-6 flex items-center gap-3">
               <XCircle className="h-5 w-5 text-red-500" />
               <span className="text-sm text-red-700">{usersError}</span>
             </div>
-          ) : filteredUsers.length === 0 ? (
+          ) : users.length === 0 ? (
             <div className="border border-zinc-200 bg-white rounded-lg p-12 text-center">
               <p className="text-sm text-zinc-500">No users found</p>
             </div>
@@ -230,13 +266,17 @@ export default function AdminUsersPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredUsers.map((u) => (
+                  {users.map((u) => (
                     <tr key={u.id} className="border-b border-zinc-100 last:border-0 hover:bg-zinc-50/50">
                       <td className="py-4 px-4">
-                        <div>
+                        <button
+                          type="button"
+                          onClick={() => setUserModalId(u.id)}
+                          className="block w-full text-left hover:bg-zinc-50 -mx-2 -my-1 px-2 py-1 rounded-md transition-colors"
+                        >
                           <p className="font-medium text-zinc-900">{u.name}</p>
                           <p className="text-zinc-500 text-xs">{u.email}</p>
-                        </div>
+                        </button>
                       </td>
                       <td className="py-4 px-4 hidden sm:table-cell">
                         <Badge variant={u.role === 'admin' ? 'default' : 'secondary'} className="text-xs">
@@ -282,6 +322,15 @@ export default function AdminUsersPage() {
                 </tbody>
               </table>
             </div>
+          )}
+          {users.length > 0 && usersTotalPages > 1 && (
+            <TablePagination
+              page={page}
+              totalPages={usersTotalPages}
+              total={usersTotal}
+              limit={LIMIT}
+              onPageChange={setPage}
+            />
           )}
         </>
       )}
@@ -359,6 +408,14 @@ export default function AdminUsersPage() {
           )}
         </>
       )}
+
+      <UserDetailModal
+        userId={userModalId}
+        open={!!userModalId}
+        onOpenChange={(o) => !o && setUserModalId(null)}
+        adminCount={adminCount}
+        onUpdate={fetchUsers}
+      />
     </div>
   )
 }

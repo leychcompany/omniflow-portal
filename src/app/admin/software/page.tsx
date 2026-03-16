@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { DeleteConfirmDialog } from '@/components/ui/delete-confirm-dialog'
 import { CardSkeleton } from '@/components/ui/card-skeleton'
+import { DashboardSkeleton } from '@/components/ui/dashboard-skeleton'
+import { SearchBarSkeleton } from '@/components/ui/search-bar-skeleton'
 import { AdminCardGrid, AdminCard } from '@/components/admin/admin-card-grid'
 import { AdminPageDashboard } from '@/components/admin/admin-page-dashboard'
 import {
@@ -77,7 +79,9 @@ export default function AdminSoftwarePage() {
 
   return (
     <div className="pb-20 md:pb-0 space-y-6">
-      {!softwareLoading && !softwareError && (
+      {softwareLoading ? (
+        <DashboardSkeleton statCount={1} />
+      ) : !softwareError ? (
         <AdminPageDashboard
           title="Software"
           description="Downloads and applications"
@@ -85,7 +89,10 @@ export default function AdminSoftwarePage() {
           stats={dashboardStats}
           accent="software"
         />
-      )}
+      ) : null}
+      {softwareLoading ? (
+        <SearchBarSkeleton />
+      ) : (
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="flex-1 relative">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-400" />
@@ -108,6 +115,7 @@ export default function AdminSoftwarePage() {
           </Button>
         </div>
       </div>
+      )}
 
       {softwareLoading ? (
         <CardSkeleton count={6} />

@@ -44,9 +44,17 @@ async function getOrCreateTagIds(tagNames: string[]): Promise<string[]> {
   return ids;
 }
 
+const DEFAULT_LIMIT = 20;
+const MAX_LIMIT = 100;
+
 export async function GET(req: NextRequest) {
   try {
-    const { data: manuals, error } = await supabaseAdmin
+    const { searchParams } = new URL(req.url);
+    const page = Math.max(1, parseInt(searchParams.get("page") ?? "1", 10));
+    const limit = Math.min(MAX_LIMIT, Math.max(1, parseInt(searchParams.get("limit") ?? String(DEFAULT_LIMIT), 10)));
+    const q = (searchParams.get("q") ?? "").trim();
+
+    let query = supabaseAdmin
       .from("manuals")
       .select(`
         *,
@@ -54,13 +62,23 @@ export async function GET(req: NextRequest) {
           tag_id,
           tags (id, name)
         )
-      `)
+      `, { count: "exact" })
       .order("title");
+
+    if (q) {
+      const safe = q.replace(/,/g, " ");
+      const term = `%${safe}%`;
+      query = query.or(`title.ilike.${term},description.ilike.${term},filename.ilike.${term}`);
+    }
+
+    const from = (page - 1) * limit;
+    const to = from + limit - 1;
+    const { data: manuals, error, count } = await query.range(from, to);
 
     if (error) throw error;
 
-    // Do NOT create signed URLs here - each createSignedUrl is a slow storage round-trip.
-    // List returns metadata only. Use /api/manuals/[id]/view to open PDF (creates URL on-demand).
+    const total = count ?? 0;
+
     const result = (manuals ?? []).map((manual) => {
       const mtList = (manual as { manual_tags?: { tags: { name: string } | null }[] }).manual_tags ?? [];
       const tagNames = mtList.map((mt) => mt?.tags?.name).filter(Boolean) as string[];
@@ -74,7 +92,13 @@ export async function GET(req: NextRequest) {
       };
     });
 
-    return NextResponse.json(result);
+    return NextResponse.json({
+      items: result,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit) || 1,
+    });
   } catch (error: unknown) {
     console.error("Error fetching manuals:", error);
     return NextResponse.json(

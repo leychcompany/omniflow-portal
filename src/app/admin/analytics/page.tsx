@@ -3,7 +3,11 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { BarChart3, Loader2, XCircle } from 'lucide-react'
+import { DashboardSkeleton } from '@/components/ui/dashboard-skeleton'
+import { SearchBarSkeleton } from '@/components/ui/search-bar-skeleton'
+import { TableSkeleton } from '@/components/ui/table-skeleton'
+import { AdminPageDashboard } from '@/components/admin/admin-page-dashboard'
+import { BarChart3, Loader2, XCircle, RefreshCw, Activity } from 'lucide-react'
 import { formatDate } from '../_components/admin-types'
 
 interface AnalyticsEvent {
@@ -17,6 +21,13 @@ interface AnalyticsEvent {
   resource_label: string
   metadata: Record<string, unknown>
   created_at: string
+}
+
+const EVENT_LABELS: Record<string, string> = {
+  login: 'Login',
+  logout: 'Logout',
+  document_download: 'Document',
+  software_download: 'Software',
 }
 
 export default function AdminAnalyticsPage() {
@@ -50,80 +61,123 @@ export default function AdminAnalyticsPage() {
     fetchAnalytics(value)
   }
 
+  const uniqueUsers = new Set(analyticsEvents.map((e) => e.user_id)).size
+  const uniqueEventTypes = new Set(analyticsEvents.map((e) => e.event_type)).size
+
+  const dashboardStats = [
+    { label: 'Events', value: analyticsEvents.length },
+    { label: 'Unique users', value: uniqueUsers },
+    { label: 'Event types', value: uniqueEventTypes },
+  ]
+
   return (
-    <div className="pb-20 md:pb-0">
-      <div className="flex flex-wrap items-center gap-3 mb-6">
-        <label className="text-sm font-medium text-zinc-700">Event type</label>
-        <select
-          value={analyticsEventTypeFilter}
-          onChange={(e) => handleFilterChange(e.target.value)}
-          className="px-3 py-2 border border-zinc-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-zinc-900"
+    <div className="space-y-6 pb-20 md:pb-0">
+      {analyticsLoading ? (
+        <DashboardSkeleton statCount={3} />
+      ) : !analyticsError ? (
+        <AdminPageDashboard
+          title="Analytics"
+          description="Activity events and usage metrics"
+          icon={<BarChart3 className="h-6 w-6" />}
+          stats={dashboardStats}
+          accent="analytics"
+        />
+      ) : null}
+      {analyticsLoading ? (
+        <SearchBarSkeleton />
+      ) : (
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="flex-1">
+          <label className="sr-only">Event type</label>
+          <select
+            value={analyticsEventTypeFilter}
+            onChange={(e) => handleFilterChange(e.target.value)}
+            className="w-full sm:w-auto h-11 px-4 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 shadow-sm focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-400"
+          >
+            <option value="">All events</option>
+            <option value="login">Login</option>
+            <option value="logout">Logout</option>
+            <option value="document_download">Document download</option>
+            <option value="software_download">Software download</option>
+          </select>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => fetchAnalytics()}
+          disabled={analyticsLoading}
+          className="h-11 rounded-xl border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-900"
         >
-          <option value="">All events</option>
-          <option value="login">Login</option>
-          <option value="logout">Logout</option>
-          <option value="document_download">Document download</option>
-          <option value="software_download">Software download</option>
-        </select>
+          <RefreshCw className={`h-4 w-4 mr-2 ${analyticsLoading ? 'animate-spin' : ''}`} />
+          Refresh
+        </Button>
       </div>
+      )}
 
       {analyticsLoading ? (
-        <div className="rounded-lg border border-zinc-200 bg-white p-12 text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto text-zinc-500 mb-4" />
-          <p className="text-zinc-600 text-sm">Loading analytics...</p>
-        </div>
+        <TableSkeleton rowCount={8} colCount={4} />
       ) : analyticsError ? (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-6">
-          <div className="flex items-center gap-3 text-red-700">
-            <XCircle className="h-5 w-5 shrink-0" />
-            <span>{analyticsError}</span>
+        <div className="border border-rose-200 bg-rose-50/80 rounded-2xl p-6 flex items-center gap-4 shadow-sm">
+          <div className="p-2.5 rounded-xl bg-rose-100">
+            <XCircle className="h-6 w-6 text-rose-600" />
           </div>
+          <span className="text-sm font-medium text-rose-800">{analyticsError}</span>
         </div>
       ) : analyticsEvents.length === 0 ? (
-        <div className="rounded-lg border border-zinc-200 bg-white p-12 text-center">
-          <BarChart3 className="h-12 w-12 mx-auto text-zinc-400 mb-4" />
-          <p className="text-zinc-600 text-sm">No activity events yet. Document downloads will appear here.</p>
+        <div className="border border-slate-200/80 bg-white rounded-2xl p-16 text-center shadow-sm">
+          <div className="w-16 h-16 rounded-2xl bg-cyan-50 flex items-center justify-center mx-auto mb-6">
+            <Activity className="h-8 w-8 text-cyan-500" />
+          </div>
+          <p className="text-base font-semibold text-slate-700 mb-2">No activity yet</p>
+          <p className="text-sm text-slate-500 max-w-sm mx-auto">
+            Document downloads, logins, and other events will appear here.
+          </p>
         </div>
       ) : (
-        <div className="rounded-lg border border-zinc-200 bg-white overflow-hidden">
+        <div className="border border-slate-200/80 bg-white rounded-2xl overflow-hidden shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-zinc-200 bg-zinc-50">
-                    <th className="text-left p-4 text-xs font-semibold text-zinc-600 uppercase tracking-wider">User</th>
-                    <th className="text-left p-4 text-xs font-semibold text-zinc-600 uppercase tracking-wider">Event</th>
-                    <th className="text-left p-4 text-xs font-semibold text-zinc-600 uppercase tracking-wider">Resource</th>
-                    <th className="text-left p-4 text-xs font-semibold text-zinc-600 uppercase tracking-wider">When</th>
+              <thead>
+                <tr className="border-b border-slate-200 bg-slate-50/50">
+                  <th className="text-left py-3 px-4 font-medium text-slate-600">User</th>
+                  <th className="text-left py-3 px-4 font-medium text-slate-600">Event</th>
+                  <th className="text-left py-3 px-4 font-medium text-slate-600">Resource</th>
+                  <th className="text-left py-3 px-4 font-medium text-slate-600">When</th>
+                </tr>
+              </thead>
+              <tbody>
+                {analyticsEvents.map((evt) => (
+                  <tr key={evt.id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50/50">
+                    <td className="py-4 px-4">
+                      <div className="font-medium text-slate-900">
+                        {evt.user_name || evt.user_email || evt.user_id}
+                      </div>
+                      {evt.user_name && evt.user_email && (
+                        <div className="text-xs text-slate-500">{evt.user_email}</div>
+                      )}
+                    </td>
+                    <td className="py-4 px-4">
+                      <Badge
+                        variant="secondary"
+                        className="text-xs border-cyan-200 bg-cyan-50/60 text-cyan-800 font-medium"
+                      >
+                        {evt.event_type.replaceAll('_', ' ')}
+                      </Badge>
+                    </td>
+                    <td className="py-4 px-4 text-slate-700">
+                      {evt.event_type === 'login' || evt.event_type === 'logout' ? (
+                        <span className="text-xs" title={JSON.stringify(evt.metadata)}>
+                          {(evt.metadata as { ip?: string })?.ip || '—'}
+                        </span>
+                      ) : (
+                        evt.resource_label
+                      )}
+                    </td>
+                    <td className="py-4 px-4 text-slate-500 text-xs">{formatDate(evt.created_at)}</td>
                   </tr>
-                </thead>
-                <tbody>
-                  {analyticsEvents.map((evt) => (
-                    <tr key={evt.id} className="border-b border-zinc-100 hover:bg-zinc-50">
-                      <td className="p-4">
-                        <div className="font-medium text-slate-900">{evt.user_name || evt.user_email || evt.user_id}</div>
-                        {evt.user_name && evt.user_email && (
-                          <div className="text-xs text-slate-500">{evt.user_email}</div>
-                        )}
-                      </td>
-                      <td className="p-4">
-                        <Badge variant="secondary" className="bg-zinc-100 text-zinc-800 font-mono text-xs">
-                          {evt.event_type.replaceAll('_', ' ')}
-                        </Badge>
-                      </td>
-                      <td className="p-4 text-zinc-700">
-                        {evt.event_type === 'login' || evt.event_type === 'logout' ? (
-                          <span className="text-xs" title={JSON.stringify(evt.metadata)}>
-                            {(evt.metadata as { ip?: string })?.ip || '—'}
-                          </span>
-                        ) : (
-                          evt.resource_label
-                        )}
-                      </td>
-                      <td className="p-4 text-zinc-500 text-xs">{formatDate(evt.created_at)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       )}

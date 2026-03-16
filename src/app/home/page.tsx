@@ -162,7 +162,7 @@ export default function HomePage() {
   // Redirect to login when auth is resolved and user is null (session expired or invalid)
   useEffect(() => {
     if (!loading && user === null) {
-      router.replace('/login?redirect=/home')
+      router.replace('/login')
     }
   }, [loading, user, router])
 

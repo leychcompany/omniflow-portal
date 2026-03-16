@@ -2,47 +2,6 @@ import { createServerClient } from "@supabase/ssr";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
-// Public routes - no auth required
-const PUBLIC_ROUTES = [
-  "/login",
-  "/register",
-  "/forgot-password",
-  "/set-password",
-  "/auth/reset-password",
-];
-
-// Protected routes - require any authenticated user
-const PROTECTED_ROUTES = [
-  "/home",
-  "/settings",
-  "/logout",
-  "/ai-assistant",
-  "/training",
-  "/rfq",
-  "/support",
-  "/documents",
-  "/news",
-  "/software",
-];
-
-// Admin routes - require admin role
-const ADMIN_ROUTES = ["/admin"];
-
-function isPublicRoute(pathname: string): boolean {
-  return (
-    PUBLIC_ROUTES.includes(pathname) ||
-    PUBLIC_ROUTES.some((r) => pathname.startsWith(r))
-  );
-}
-
-function isProtectedRoute(pathname: string): boolean {
-  return PROTECTED_ROUTES.some((r) => pathname.startsWith(r));
-}
-
-function isAdminRoute(pathname: string): boolean {
-  return ADMIN_ROUTES.some((r) => pathname.startsWith(r));
-}
-
 function shouldSkipAuth(pathname: string): boolean {
   return (
     pathname.startsWith("/_next") ||
@@ -52,6 +11,10 @@ function shouldSkipAuth(pathname: string): boolean {
   );
 }
 
+/**
+ * Minimal middleware: only root redirect and /login redirect for authenticated users.
+ * Layouts protect their own routes via token validation (AdminAuthGuard, etc).
+ */
 export async function proxy(req: NextRequest) {
   const pathname = req.nextUrl.pathname;
 
@@ -63,7 +26,6 @@ export async function proxy(req: NextRequest) {
     request: { headers: req.headers },
   });
 
-  // Create Supabase client with getAll/setAll (recommended pattern for proper cookie refresh)
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -81,26 +43,8 @@ export async function proxy(req: NextRequest) {
     }
   );
 
-  // Use getUser() to validate JWT and trigger token refresh if needed (fixes stale cookie issues)
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+  const { data: { user } } = await supabase.auth.getUser();
   const isAuthenticated = !!user;
-
-  let userRole: string | null = null;
-  if (isAuthenticated && user) {
-    try {
-      const { data } = await supabase
-        .from("users")
-        .select("role")
-        .eq("id", user.id)
-        .single();
-      userRole = data?.role ?? null;
-    } catch {
-      // Ignore - role check will fail gracefully
-    }
-  }
 
   // Root redirect
   if (pathname === "/") {
@@ -109,26 +53,11 @@ export async function proxy(req: NextRequest) {
     );
   }
 
-  // Public routes - redirect authenticated users away from login/register
-  if (isPublicRoute(pathname)) {
-    if (
-      isAuthenticated &&
-      (pathname === "/login" || pathname === "/register" || pathname === "/forgot-password")
-    ) {
-      return NextResponse.redirect(new URL("/home", req.url));
-    }
-    return response;
-  }
-
-  // Protected and admin routes - require auth
-  if (!isAuthenticated) {
-    const loginUrl = new URL("/login", req.url);
-    loginUrl.searchParams.set("redirect", pathname);
-    return NextResponse.redirect(loginUrl);
-  }
-
-  // Admin routes - require admin role
-  if (isAdminRoute(pathname) && userRole !== "admin") {
+  // Authenticated on login/register -> go to home (layout-based protection handles the rest)
+  if (
+    isAuthenticated &&
+    (pathname === "/login" || pathname === "/register" || pathname === "/forgot-password")
+  ) {
     return NextResponse.redirect(new URL("/home", req.url));
   }
 

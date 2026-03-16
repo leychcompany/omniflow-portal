@@ -1,8 +1,9 @@
 'use client'
 
-import { useRouter, usePathname } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
+import { AdminAuthGuard } from './_components/admin-auth-guard'
 import {
   Users,
   GraduationCap,
@@ -28,7 +29,6 @@ const TAB_CONFIG: { id: AdminTabId; label: string; icon: React.ComponentType<{ c
 ]
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const router = useRouter()
   const pathname = usePathname()
   const segment = pathname.replace(/^\/admin\/?/, '').split('/')[0]
   const activeTab = (ADMIN_TABS.includes(segment as AdminTabId) ? segment : null) as AdminTabId | null
@@ -45,6 +45,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   return (
+    <AdminAuthGuard>
     <div className="min-h-screen bg-slate-50/80">
       <div className="fixed inset-0 -z-10 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(99,102,241,0.08),transparent)]" />
 
@@ -115,5 +116,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
       </nav>
     </div>
+    </AdminAuthGuard>
   )
 }
