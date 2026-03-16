@@ -103,7 +103,10 @@ export async function GET(request: NextRequest) {
       .select("tag_id, tags(name)");
     const tagCounts = new Map<string, number>();
     for (const row of manualTagsData ?? []) {
-      const name = (row.tags as { name: string } | null)?.name;
+      const tags = row.tags as unknown;
+      const name = (tags && typeof tags === "object" && !Array.isArray(tags) && "name" in tags)
+        ? String((tags as { name: unknown }).name || "").trim()
+        : null;
       if (name) {
         tagCounts.set(name, (tagCounts.get(name) ?? 0) + 1);
       }
