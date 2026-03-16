@@ -44,26 +44,62 @@ interface DashboardData {
   topTags?: { name: string; count: number }[]
 }
 
+const FIRST_ATTEMPT_TIMEOUT_MS = 55000
+const RETRY_TIMEOUT_MS = 30000
+const MAX_AUTO_RETRIES = 2
+
 export default function AdminDashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [retryKey, setRetryKey] = useState(0)
 
   useEffect(() => {
-    async function fetchDashboard() {
+    let cancelled = false
+
+    async function fetchDashboard(attempt = 0) {
+      const controller = new AbortController()
+      const timeoutMs = attempt === 0 ? FIRST_ATTEMPT_TIMEOUT_MS : RETRY_TIMEOUT_MS
+      const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
+
       try {
-        const res = await fetch('/api/admin/dashboard', { credentials: 'include' })
+        const res = await fetch('/api/admin/dashboard', {
+          credentials: 'include',
+          signal: controller.signal,
+        })
+        clearTimeout(timeoutId)
+        if (cancelled) return
+
         const json = await res.json()
-        if (!res.ok) throw new Error(json.error || 'Failed to load')
+        if (!res.ok) {
+          if (res.status === 401 || res.status === 403) {
+            window.location.href = '/login'
+            return
+          }
+          throw new Error(json.error || 'Failed to load')
+        }
         setData(json)
       } catch (e) {
-        setError(e instanceof Error ? e.message : 'Failed to load dashboard')
+        clearTimeout(timeoutId)
+        if (cancelled) return
+        if ((e as Error).name === 'AbortError' && attempt < MAX_AUTO_RETRIES) {
+          await fetchDashboard(attempt + 1)
+          return
+        }
+        if ((e as Error).name === 'AbortError') {
+          setError('Request timed out. Please try again.')
+        } else {
+          setError(e instanceof Error ? e.message : 'Failed to load dashboard')
+        }
       } finally {
-        setLoading(false)
+        if (!cancelled) setLoading(false)
       }
     }
     fetchDashboard()
-  }, [])
+    return () => {
+      cancelled = true
+    }
+  }, [retryKey])
 
   if (loading) {
     return (
@@ -76,8 +112,20 @@ export default function AdminDashboardPage() {
 
   if (error || !data) {
     return (
-      <div className="rounded-xl border border-red-200 bg-red-50 px-6 py-8 text-center">
+      <div className="rounded-xl border border-red-200 bg-red-50 px-6 py-8 text-center space-y-4">
         <p className="text-red-700 font-medium">{error || 'Failed to load dashboard'}</p>
+        <button
+          type="button"
+          onClick={() => {
+            setError(null)
+            setData(null)
+            setLoading(true)
+            setRetryKey((k) => k + 1)
+          }}
+          className="text-sm font-medium text-indigo-600 hover:text-indigo-700 underline"
+        >
+          Retry
+        </button>
       </div>
     )
   }
