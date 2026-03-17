@@ -88,7 +88,7 @@ export default function EditSoftwarePage() {
       let res: Response
 
       if (file) {
-        const getHeaders = async () => {
+        const getHeaders = async (): Promise<Record<string, string>> => {
           const { data: { session } } = await supabase.auth.getSession()
           return session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}
         }
