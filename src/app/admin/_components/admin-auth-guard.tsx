@@ -28,7 +28,7 @@ export function AdminAuthGuard({ children }: AdminAuthGuardProps) {
         const { data: { session } } = await Promise.race([sessionPromise, sessionTimeout]) as { data: { session: unknown } }
         if (cancelled) return
         if (!session) {
-          window.location.href = '/login'
+          window.location.href = '/api/auth/logout?redirect=/login'
           return
         }
         // Full validation with timeout
@@ -39,16 +39,24 @@ export function AdminAuthGuard({ children }: AdminAuthGuardProps) {
         const { data: { user } } = await Promise.race([userPromise, userTimeout]) as { data: { user: unknown } }
         if (cancelled) return
         if (!user) {
-          window.location.href = '/login'
+          window.location.href = '/api/auth/logout?redirect=/login'
           return
         }
         const controller = new AbortController()
         const timeoutId = setTimeout(() => controller.abort(), PROFILE_TIMEOUT_MS)
-        const res = await fetch('/api/profile', { credentials: 'include', signal: controller.signal })
+        const headers: HeadersInit = {}
+        if (session?.access_token) {
+          headers.Authorization = `Bearer ${session.access_token}`
+        }
+        const res = await fetch('/api/profile', {
+          credentials: 'include',
+          headers,
+          signal: controller.signal,
+        })
         clearTimeout(timeoutId)
         if (cancelled) return
         if (!res.ok) {
-          window.location.href = '/login'
+          window.location.href = '/api/auth/logout?redirect=/login'
           return
         }
         const profile = await res.json()
@@ -60,7 +68,7 @@ export function AdminAuthGuard({ children }: AdminAuthGuardProps) {
         setReady(true)
       } catch (e) {
         if (cancelled) return
-        window.location.href = '/login'
+        window.location.href = '/api/auth/logout?redirect=/login'
       }
     }
 
@@ -68,7 +76,7 @@ export function AdminAuthGuard({ children }: AdminAuthGuardProps) {
       setTimeout(() => reject(new Error('AUTH_TIMEOUT')), AUTH_TOTAL_TIMEOUT_MS)
     )
     Promise.race([check(), globalTimeout]).catch(() => {
-      if (!cancelled) window.location.href = '/login'
+      if (!cancelled) window.location.href = '/api/auth/logout?redirect=/login'
     })
 
     return () => {
