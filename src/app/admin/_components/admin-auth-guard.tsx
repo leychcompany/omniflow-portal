@@ -45,8 +45,9 @@ export function AdminAuthGuard({ children }: AdminAuthGuardProps) {
         const controller = new AbortController()
         const timeoutId = setTimeout(() => controller.abort(), PROFILE_TIMEOUT_MS)
         const headers: HeadersInit = {}
-        if (session?.access_token) {
-          headers.Authorization = `Bearer ${session.access_token}`
+        const token = (session as { access_token?: string } | null)?.access_token
+        if (token) {
+          headers.Authorization = `Bearer ${token}`
         }
         const res = await fetch('/api/profile', {
           credentials: 'include',
