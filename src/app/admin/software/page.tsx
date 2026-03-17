@@ -9,6 +9,7 @@ import { DeleteConfirmDialog } from '@/components/ui/delete-confirm-dialog'
 import { CardSkeleton } from '@/components/ui/card-skeleton'
 import { DashboardSkeleton } from '@/components/ui/dashboard-skeleton'
 import { SearchBarSkeleton } from '@/components/ui/search-bar-skeleton'
+import { fetchWithAdminAuth } from '@/lib/admin-fetch'
 import { AdminCardGrid, AdminCard } from '@/components/admin/admin-card-grid'
 import { AdminPageDashboard } from '@/components/admin/admin-page-dashboard'
 import {
@@ -34,7 +35,7 @@ export default function AdminSoftwarePage() {
     setSoftwareLoading(true)
     setSoftwareError('')
     try {
-      const res = await fetch('/api/software', { credentials: 'include' })
+      const res = await fetchWithAdminAuth('/api/software')
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed to load software')
       setSoftwareItems(Array.isArray(data) ? data : [])
@@ -51,7 +52,7 @@ export default function AdminSoftwarePage() {
     if (!deleteTarget) return
     setDeleteLoading(true)
     try {
-      const res = await fetch(`/api/software/${deleteTarget.id}`, { method: 'DELETE', credentials: 'include' })
+      const res = await fetchWithAdminAuth(`/api/software/${deleteTarget.id}`, { method: 'DELETE' })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed to delete')
       await fetchSoftware()

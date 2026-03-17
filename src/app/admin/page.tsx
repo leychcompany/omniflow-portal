@@ -13,6 +13,7 @@ import {
   Loader2,
   ChevronRight,
 } from 'lucide-react'
+import { fetchWithAdminAuth } from '@/lib/admin-fetch'
 import { DashboardStatCard } from './_components/dashboard-stat-card'
 import { DashboardActivityChart } from './_components/dashboard-activity-chart'
 import { DashboardRecentActivity } from './_components/dashboard-recent-activity'
@@ -63,8 +64,7 @@ export default function AdminDashboardPage() {
       const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
 
       try {
-        const res = await fetch('/api/admin/dashboard', {
-          credentials: 'include',
+        const res = await fetchWithAdminAuth('/api/admin/dashboard', {
           signal: controller.signal,
         })
         clearTimeout(timeoutId)

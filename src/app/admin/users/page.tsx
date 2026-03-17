@@ -14,6 +14,7 @@ import { AdminPageDashboard } from '@/components/admin/admin-page-dashboard'
 import { TablePagination } from '@/components/admin/table-pagination'
 import { UserDetailModal } from '@/components/admin/user-detail-modal'
 import { supabase } from '@/lib/supabase'
+import { fetchWithAdminAuth } from '@/lib/admin-fetch'
 import {
   Plus,
   Search,
@@ -60,7 +61,7 @@ export default function AdminUsersPage() {
     try {
       const params = new URLSearchParams({ page: String(page), limit: String(LIMIT) })
       if (searchTerm) params.set('q', searchTerm)
-      const res = await fetch(`/api/users?${params}`, { credentials: 'include' })
+      const res = await fetchWithAdminAuth(`/api/users?${params}`)
       const result = await res.json()
       if (!res.ok) throw new Error(result.error || 'Failed to load')
       const db = result.users || []
@@ -89,7 +90,7 @@ export default function AdminUsersPage() {
     setInvitesLoading(true)
     setInvitesError('')
     try {
-      const res = await fetch('/api/invites', { credentials: 'include' })
+      const res = await fetchWithAdminAuth('/api/invites')
       const result = await res.json()
       if (!res.ok) throw new Error(result.error || 'Failed to load')
       setInvites(result.invites || [])
@@ -133,10 +134,9 @@ export default function AdminUsersPage() {
   const toggleLock = async (userId: string) => {
     const u = users.find((x) => x.id === userId)
     if (!u) return
-    const res = await fetch(`/api/users/${userId}`, {
+    const res = await fetchWithAdminAuth(`/api/users/${userId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
       body: JSON.stringify({ locked: !u.locked }),
     })
     if (!res.ok) throw new Error('Failed')
@@ -147,10 +147,9 @@ export default function AdminUsersPage() {
     setResendingId(invite.id)
     try {
       const { data } = await supabase.from('users').select('role').eq('email', invite.email.toLowerCase()).single()
-      const res = await fetch('/api/invites', {
+      const res = await fetchWithAdminAuth('/api/invites', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify({ email: invite.email, role: data?.role || 'client' }),
       })
       if (!res.ok) throw new Error('Failed')
@@ -165,7 +164,7 @@ export default function AdminUsersPage() {
   const deleteInvite = async (id: string) => {
     setDeletingId(id)
     try {
-      const res = await fetch(`/api/invites/${id}`, { method: 'DELETE', credentials: 'include' })
+      const res = await fetchWithAdminAuth(`/api/invites/${id}`, { method: 'DELETE' })
       if (!res.ok) throw new Error('Failed')
       await fetchInvites()
       await fetchUsers()

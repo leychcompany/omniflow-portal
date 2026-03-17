@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { TagMultiSelect } from '@/components/ui/tag-multi-select'
 import { supabase } from '@/lib/supabase'
+import { fetchWithAdminAuth } from '@/lib/admin-fetch'
 import { uploadFileViaPresign } from '@/lib/upload-file-direct'
 import {
   Upload,
@@ -50,7 +51,7 @@ export default function EditManualPage() {
     let cancelled = false
     const fetchManual = async () => {
       try {
-        const res = await fetch(`/api/manuals/${id}`, { credentials: 'include' })
+        const res = await fetchWithAdminAuth(`/api/manuals/${id}`)
         const data = await res.json()
         if (!res.ok) throw new Error(data.error || 'Failed to load document')
         if (!cancelled) setForm({ ...data, tags: data.tags || [] })
@@ -65,7 +66,7 @@ export default function EditManualPage() {
   }, [id])
 
   useEffect(() => {
-    fetch('/api/tags', { credentials: 'include' })
+    fetch('/api/tags')
       .then((res) => res.ok ? res.json() : [])
       .then((tags) => {
         const names = (Array.isArray(tags) ? tags : [])
@@ -79,19 +80,16 @@ export default function EditManualPage() {
   const handleDeleteTagFromPool = async (tag: string) => {
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) return
-    const res = await fetch('/api/manuals/tags/delete', {
+    const res = await fetchWithAdminAuth('/api/manuals/tags/delete', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${session.access_token}`,
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ tag }),
     })
     if (!res.ok) throw new Error('Failed to delete tag')
     setForm((f) =>
       f ? { ...f, tags: (f.tags || []).filter((t) => t.toLowerCase() !== tag.toLowerCase()) } : f
     )
-    const tagsRes = await fetch('/api/tags', { credentials: 'include' })
+    const tagsRes = await fetch('/api/tags')
     const tags = tagsRes.ok ? await tagsRes.json() : []
     setAvailableTags(
       (Array.isArray(tags) ? tags : [])
@@ -112,11 +110,13 @@ export default function EditManualPage() {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) throw new Error('Session expired. Please log in again.')
 
-      const headers = { Authorization: `Bearer ${session.access_token}` }
+      const getHeaders = async (): Promise<Record<string, string>> => {
+        const { data: { session } } = await supabase.auth.getSession()
+        return session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {} as Record<string, string>
+      }
       let res: Response
 
       if (file) {
-        const getHeaders = async () => headers
         const folder = (form.tags?.[0] || 'uncategorized').replace(/[^a-zA-Z0-9_-]/g, '_')
         const { path, filename, size } = await uploadFileViaPresign(
           '/api/manuals/upload-url',
@@ -124,10 +124,9 @@ export default function EditManualPage() {
           { filename: file.name, folder, fileSize: file.size },
           file
         )
-        res = await fetch(`/api/manuals/${form.id}`, {
+        res = await fetchWithAdminAuth(`/api/manuals/${form.id}`, {
           method: 'PATCH',
-          headers: { ...headers, 'Content-Type': 'application/json' },
-          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             title: form.title,
             tags: form.tags || [],
@@ -138,10 +137,9 @@ export default function EditManualPage() {
           }),
         })
       } else {
-        res = await fetch(`/api/manuals/${form.id}`, {
+        res = await fetchWithAdminAuth(`/api/manuals/${form.id}`, {
           method: 'PATCH',
-          headers: { ...headers, 'Content-Type': 'application/json' },
-          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             title: form.title,
             tags: form.tags || [],
@@ -167,7 +165,7 @@ export default function EditManualPage() {
     setLoading(true)
     const fetchManual = async () => {
       try {
-        const res = await fetch(`/api/manuals/${id}`, { credentials: 'include' })
+        const res = await fetchWithAdminAuth(`/api/manuals/${id}`)
         const data = await res.json()
         if (!res.ok) throw new Error(data.error || 'Failed to load document')
         setForm({ ...data, tags: data.tags || [] })

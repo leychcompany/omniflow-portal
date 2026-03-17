@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { supabase } from '@/lib/supabase'
+import { fetchWithAdminAuth } from '@/lib/admin-fetch'
 import { Loader2, XCircle, Image } from 'lucide-react'
 
 interface Course {
@@ -38,7 +39,7 @@ export default function EditCoursePage() {
     }
     const fetchCourse = async () => {
       try {
-        const res = await fetch(`/api/courses/${id}`, { credentials: 'include' })
+        const res = await fetchWithAdminAuth(`/api/courses/${id}`)
         const data = await res.json()
         if (!res.ok) throw new Error(data.error || 'Failed to load course')
         setForm(data)
@@ -80,7 +81,7 @@ export default function EditCoursePage() {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) throw new Error('Session expired. Please log in again.')
 
-      const res = await fetch(`/api/courses/${form.id}`, {
+      const res = await fetchWithAdminAuth(`/api/courses/${form.id}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

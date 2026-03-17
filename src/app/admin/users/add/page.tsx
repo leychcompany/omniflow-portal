@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { supabase } from '@/lib/supabase'
+import { fetchWithAdminAuth } from '@/lib/admin-fetch'
 import { Plus, Mail, Key, Send, Loader2, XCircle, CheckCircle } from 'lucide-react'
 
 export default function AddUserPage() {
@@ -58,12 +59,9 @@ export default function AddUserPage() {
         payload.password = invitePassword.trim()
       }
 
-      const response = await fetch('/api/invites', {
+      const response = await fetchWithAdminAuth('/api/invites', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${session.access_token}`,
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       })
 

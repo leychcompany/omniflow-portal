@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { supabase } from '@/lib/supabase'
+import { fetchWithAdminAuth } from '@/lib/admin-fetch'
 import { Plus, Loader2, XCircle, Image } from 'lucide-react'
 
 export default function AddNewsPage() {
@@ -51,12 +52,9 @@ export default function AddNewsPage() {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) throw new Error('Session expired. Please log in again.')
 
-      const res = await fetch('/api/news', {
+      const res = await fetchWithAdminAuth('/api/news', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${session.access_token}`,
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title: form.title,
           excerpt: form.excerpt || null,

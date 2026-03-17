@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { DashboardSkeleton } from '@/components/ui/dashboard-skeleton'
 import { SearchBarSkeleton } from '@/components/ui/search-bar-skeleton'
 import { TableSkeleton } from '@/components/ui/table-skeleton'
+import { fetchWithAdminAuth } from '@/lib/admin-fetch'
 import { AdminPageDashboard } from '@/components/admin/admin-page-dashboard'
 import { BarChart3, Loader2, XCircle, RefreshCw, Activity } from 'lucide-react'
 import { formatDate } from '../_components/admin-types'
@@ -43,7 +44,7 @@ export default function AdminAnalyticsPage() {
       const params = new URLSearchParams()
       const filter = filterOverride ?? analyticsEventTypeFilter
       if (filter) params.set('event_type', filter)
-      const res = await fetch(`/api/analytics/events?${params}`, { credentials: 'include' })
+      const res = await fetchWithAdminAuth(`/api/analytics/events?${params}`)
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed to load analytics')
       setAnalyticsEvents(data.events ?? [])

@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { TagMultiSelect } from '@/components/ui/tag-multi-select'
 import { supabase } from '@/lib/supabase'
+import { fetchWithAdminAuth } from '@/lib/admin-fetch'
 import { uploadFileViaPresign } from '@/lib/upload-file-direct'
 import { Upload, Loader2, XCircle } from 'lucide-react'
 
@@ -41,12 +42,9 @@ export default function AddManualPage() {
   const handleDeleteTagFromPool = async (tag: string) => {
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) return
-    const res = await fetch('/api/manuals/tags/delete', {
+    const res = await fetchWithAdminAuth('/api/manuals/tags/delete', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${session.access_token}`,
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ tag }),
     })
     if (!res.ok) throw new Error('Failed to delete tag')
@@ -78,9 +76,9 @@ export default function AddManualPage() {
         file
       )
       setUploadPercent(90)
-      const res = await fetch('/api/manuals', {
+      const res = await fetchWithAdminAuth('/api/manuals', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title: form.title,
           tags: form.tags,

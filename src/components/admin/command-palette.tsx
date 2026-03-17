@@ -20,6 +20,7 @@ import {
   Package as PkgIcon,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { fetchWithAdminAuth } from '@/lib/admin-fetch'
 import { UserDetailModal } from '@/components/admin/user-detail-modal'
 import { cn } from '@/lib/utils'
 
@@ -84,7 +85,7 @@ export function CommandPalette() {
     }
     setSearchLoading(true)
     try {
-      const res = await fetch(`/api/admin/search?q=${encodeURIComponent(q)}`, { credentials: 'include' })
+      const res = await fetchWithAdminAuth(`/api/admin/search?q=${encodeURIComponent(q)}`)
       const data = await res.json()
       if (res.ok) {
         setSearchResults({

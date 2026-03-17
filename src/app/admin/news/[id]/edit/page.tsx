@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { supabase } from '@/lib/supabase'
+import { fetchWithAdminAuth } from '@/lib/admin-fetch'
 import { Loader2, XCircle, Image } from 'lucide-react'
 
 interface NewsArticle {
@@ -37,7 +38,7 @@ export default function EditNewsPage() {
     }
     const fetchArticle = async () => {
       try {
-        const res = await fetch(`/api/news/${id}`, { credentials: 'include' })
+        const res = await fetchWithAdminAuth(`/api/news/${id}`)
         const data = await res.json()
         if (!res.ok) throw new Error(data.error || 'Failed to load article')
         setForm(data)
@@ -79,12 +80,9 @@ export default function EditNewsPage() {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) throw new Error('Session expired. Please log in again.')
 
-      const res = await fetch(`/api/news/${form.id}`, {
+      const res = await fetchWithAdminAuth(`/api/news/${form.id}`, {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${session.access_token}`,
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title: form.title,
           excerpt: form.excerpt || null,

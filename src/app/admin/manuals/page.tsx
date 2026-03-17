@@ -11,6 +11,7 @@ import { DashboardSkeleton } from '@/components/ui/dashboard-skeleton'
 import { SearchBarSkeleton } from '@/components/ui/search-bar-skeleton'
 import { DataTable } from '@/components/admin/data-table'
 import { TablePagination } from '@/components/admin/table-pagination'
+import { fetchWithAdminAuth } from '@/lib/admin-fetch'
 import { AdminPageDashboard } from '@/components/admin/admin-page-dashboard'
 import { getManualsColumns } from './_components/manuals-columns'
 import { Plus, Search, FileText, XCircle, RefreshCw } from 'lucide-react'
@@ -38,7 +39,7 @@ export default function AdminManualsPage() {
     try {
       const params = new URLSearchParams({ page: String(page), limit: String(LIMIT) })
       if (searchTerm) params.set('q', searchTerm)
-      const res = await fetch(`/api/manuals?${params}`, { credentials: 'include' })
+      const res = await fetchWithAdminAuth(`/api/manuals?${params}`)
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed to load documents')
       setManuals(data.items ?? [])
@@ -65,7 +66,7 @@ export default function AdminManualsPage() {
     if (!deleteTarget) return
     setDeleteLoading(true)
     try {
-      const res = await fetch(`/api/manuals/${deleteTarget.id}`, { method: 'DELETE', credentials: 'include' })
+      const res = await fetchWithAdminAuth(`/api/manuals/${deleteTarget.id}`, { method: 'DELETE' })
       if (!res.ok) throw new Error('Failed to delete')
       await fetchManuals()
       toast.success('Document deleted')

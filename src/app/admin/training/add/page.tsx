@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { supabase } from '@/lib/supabase'
+import { fetchWithAdminAuth } from '@/lib/admin-fetch'
 import { Plus, Loader2, XCircle, Image } from 'lucide-react'
 
 export default function AddCoursePage() {
@@ -57,12 +58,9 @@ export default function AddCoursePage() {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) throw new Error('Session expired. Please log in again.')
 
-      const res = await fetch('/api/courses', {
+      const res = await fetchWithAdminAuth('/api/courses', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${session.access_token}`,
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           id: form.id.trim(),
           title: form.title,

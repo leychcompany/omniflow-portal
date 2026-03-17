@@ -5,6 +5,8 @@ import { useRouter, useParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import { fetchWithAdminAuth } from '@/lib/admin-fetch'
+import { supabase } from '@/lib/supabase'
 import { uploadFileViaPresign } from '@/lib/upload-file-direct'
 import { Upload, Loader2, XCircle, FileArchive, Image } from 'lucide-react'
 
@@ -61,7 +63,7 @@ export default function EditSoftwarePage() {
     }
     const fetchSoftware = async () => {
       try {
-        const res = await fetch(`/api/software/${id}`, { credentials: 'include' })
+        const res = await fetchWithAdminAuth(`/api/software/${id}`)
         const data = await res.json()
         if (!res.ok) throw new Error(data.error || 'Failed to load software')
         setForm(data)
@@ -86,17 +88,19 @@ export default function EditSoftwarePage() {
       let res: Response
 
       if (file) {
-        const getHeaders = async () => ({})
+        const getHeaders = async () => {
+          const { data: { session } } = await supabase.auth.getSession()
+          return session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}
+        }
         const { path, filename, size } = await uploadFileViaPresign(
           '/api/software/upload-url',
           getHeaders,
           { filename: file.name, fileSize: file.size },
           file
         )
-        res = await fetch(`/api/software/${form.id}`, {
+        res = await fetchWithAdminAuth(`/api/software/${form.id}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
           body: JSON.stringify({
             title: form.title,
             description: form.description || null,
@@ -107,10 +111,9 @@ export default function EditSoftwarePage() {
           }),
         })
       } else {
-        res = await fetch(`/api/software/${form.id}`, {
+        res = await fetchWithAdminAuth(`/api/software/${form.id}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
           body: JSON.stringify({
             title: form.title,
             description: form.description || null,

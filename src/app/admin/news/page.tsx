@@ -9,6 +9,7 @@ import { DeleteConfirmDialog } from '@/components/ui/delete-confirm-dialog'
 import { CardSkeleton } from '@/components/ui/card-skeleton'
 import { DashboardSkeleton } from '@/components/ui/dashboard-skeleton'
 import { SearchBarSkeleton } from '@/components/ui/search-bar-skeleton'
+import { fetchWithAdminAuth } from '@/lib/admin-fetch'
 import { AdminCardGrid, AdminCard } from '@/components/admin/admin-card-grid'
 import { AdminPageDashboard } from '@/components/admin/admin-page-dashboard'
 import {
@@ -34,7 +35,7 @@ export default function AdminNewsPage() {
     setNewsLoading(true)
     setNewsError('')
     try {
-      const res = await fetch('/api/news', { credentials: 'include' })
+      const res = await fetchWithAdminAuth('/api/news')
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed to load news')
       setNewsArticles(Array.isArray(data) ? data : [])
@@ -51,7 +52,7 @@ export default function AdminNewsPage() {
     if (!deleteTarget) return
     setDeleteLoading(true)
     try {
-      const res = await fetch(`/api/news/${deleteTarget.id}`, { method: 'DELETE', credentials: 'include' })
+      const res = await fetchWithAdminAuth(`/api/news/${deleteTarget.id}`, { method: 'DELETE' })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed to delete')
       await fetchNews()

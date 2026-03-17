@@ -9,6 +9,7 @@ import { DeleteConfirmDialog } from '@/components/ui/delete-confirm-dialog'
 import { CardSkeleton } from '@/components/ui/card-skeleton'
 import { DashboardSkeleton } from '@/components/ui/dashboard-skeleton'
 import { SearchBarSkeleton } from '@/components/ui/search-bar-skeleton'
+import { fetchWithAdminAuth } from '@/lib/admin-fetch'
 import { AdminCardGrid, AdminCard } from '@/components/admin/admin-card-grid'
 import { AdminPageDashboard } from '@/components/admin/admin-page-dashboard'
 import {
@@ -34,7 +35,7 @@ export default function AdminTrainingPage() {
     setCoursesLoading(true)
     setCoursesError('')
     try {
-      const res = await fetch('/api/courses', { credentials: 'include' })
+      const res = await fetchWithAdminAuth('/api/courses')
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed to load courses')
       setCourses(Array.isArray(data) ? data : [])
@@ -51,7 +52,7 @@ export default function AdminTrainingPage() {
     if (!deleteTarget) return
     setDeleteLoading(true)
     try {
-      const res = await fetch(`/api/courses/${deleteTarget.id}`, { method: 'DELETE', credentials: 'include' })
+      const res = await fetchWithAdminAuth(`/api/courses/${deleteTarget.id}`, { method: 'DELETE' })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed to delete')
       await fetchCourses()

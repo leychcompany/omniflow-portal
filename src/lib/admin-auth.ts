@@ -68,11 +68,11 @@ export async function verifyAdmin(req: NextRequest): Promise<
 
   const { data: userData, error: userError } = await supabaseAdmin
     .from("users")
-    .select("role")
+    .select("role, locked")
     .eq("id", userId)
     .single();
 
-  if (userError || !userData || userData.role !== "admin") {
+  if (userError || !userData || userData.role !== "admin" || userData.locked === true) {
     return {
       ok: false,
       response: NextResponse.json(

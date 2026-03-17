@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { supabase } from '@/lib/supabase'
+import { fetchWithAdminAuth } from '@/lib/admin-fetch'
 import { Loader2, XCircle, Shield, Lock, Unlock, Trash2, Mail, User } from 'lucide-react'
 
 interface UserDetail {
@@ -50,7 +51,7 @@ export function UserDetailModal({ userId, open, onOpenChange, adminCount = 0, on
     }
     setLoading(true)
     setError('')
-    fetch(`/api/users/${userId}`, { credentials: 'include' })
+    fetchWithAdminAuth(`/api/users/${userId}`)
       .then((res) => res.json())
       .then((data) => {
         if (data.error) throw new Error(data.error)
@@ -84,10 +85,9 @@ export function UserDetailModal({ userId, open, onOpenChange, adminCount = 0, on
     if (!user) return
     setActionLoading(true)
     try {
-      const res = await fetch(`/api/users/${user.id}`, {
+      const res = await fetchWithAdminAuth(`/api/users/${user.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify({ locked: !user.locked }),
       })
       if (!res.ok) throw new Error('Failed')
