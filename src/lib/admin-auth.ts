@@ -7,6 +7,8 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
+const COOKIE_AUTH_TIMEOUT_MS = 10000;
+
 async function getUserIdFromCookies(req: NextRequest): Promise<string | null> {
   const response = NextResponse.next();
   const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
@@ -21,9 +23,17 @@ async function getUserIdFromCookies(req: NextRequest): Promise<string | null> {
       },
     },
   });
-  const { data: { user }, error } = await supabase.auth.getUser();
-  if (error || !user) return null;
-  return user.id;
+  const userPromise = supabase.auth.getUser();
+  const timeoutPromise = new Promise<never>((_, reject) =>
+    setTimeout(() => reject(new Error("COOKIE_AUTH_TIMEOUT")), COOKIE_AUTH_TIMEOUT_MS)
+  );
+  try {
+    const { data: { user }, error } = await Promise.race([userPromise, timeoutPromise]);
+    if (error || !user) return null;
+    return user.id;
+  } catch {
+    return null;
+  }
 }
 
 export async function verifyAdmin(req: NextRequest): Promise<

@@ -8,16 +8,35 @@ interface AdminAuthGuardProps {
   children: ReactNode
 }
 
+const AUTH_TOTAL_TIMEOUT_MS = 12000
+const STEP_TIMEOUT_MS = 5000
+const PROFILE_TIMEOUT_MS = 8000
+
 export function AdminAuthGuard({ children }: AdminAuthGuardProps) {
   const [ready, setReady] = useState(false)
 
   useEffect(() => {
-    const PROFILE_TIMEOUT_MS = 10000
     let cancelled = false
 
     const check = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser()
+        // Use getSession first (faster, reads from storage)
+        const sessionPromise = supabase.auth.getSession()
+        const sessionTimeout = new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('AUTH_TIMEOUT')), STEP_TIMEOUT_MS)
+        )
+        const { data: { session } } = await Promise.race([sessionPromise, sessionTimeout]) as { data: { session: unknown } }
+        if (cancelled) return
+        if (!session) {
+          window.location.href = '/login'
+          return
+        }
+        // Full validation with timeout
+        const userPromise = supabase.auth.getUser()
+        const userTimeout = new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('AUTH_TIMEOUT')), STEP_TIMEOUT_MS)
+        )
+        const { data: { user } } = await Promise.race([userPromise, userTimeout]) as { data: { user: unknown } }
         if (cancelled) return
         if (!user) {
           window.location.href = '/login'
@@ -41,14 +60,17 @@ export function AdminAuthGuard({ children }: AdminAuthGuardProps) {
         setReady(true)
       } catch (e) {
         if (cancelled) return
-        if ((e as Error).name === 'AbortError') {
-          window.location.href = '/login'
-        } else {
-          window.location.href = '/login'
-        }
+        window.location.href = '/login'
       }
     }
-    check()
+
+    const globalTimeout = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('AUTH_TIMEOUT')), AUTH_TOTAL_TIMEOUT_MS)
+    )
+    Promise.race([check(), globalTimeout]).catch(() => {
+      if (!cancelled) window.location.href = '/login'
+    })
+
     return () => {
       cancelled = true
     }

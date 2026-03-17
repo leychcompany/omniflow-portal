@@ -2,23 +2,22 @@ import { createServerClient } from "@supabase/ssr";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
-function shouldSkipAuth(pathname: string): boolean {
+function shouldSkipEntirely(pathname: string): boolean {
   return (
     pathname.startsWith("/_next") ||
-    pathname.startsWith("/api") ||
     pathname.startsWith("/favicon.ico") ||
     /\.(ico|png|jpg|jpeg|svg|gif|webp)$/.test(pathname)
   );
 }
 
 /**
- * Minimal middleware: only root redirect and /login redirect for authenticated users.
- * Layouts protect their own routes via token validation (AdminAuthGuard, etc).
+ * Minimal middleware: root redirect, /login redirect, and Supabase session refresh for all routes (including /api).
+ * Supabase recommends running refresh on all routes that need auth; skipping /api left cookies stale in prod.
  */
 export async function proxy(req: NextRequest) {
   const pathname = req.nextUrl.pathname;
 
-  if (shouldSkipAuth(pathname)) {
+  if (shouldSkipEntirely(pathname)) {
     return NextResponse.next();
   }
 
@@ -45,6 +44,11 @@ export async function proxy(req: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser();
   const isAuthenticated = !!user;
+
+  // API routes: only refresh session (cookies updated in response), no redirects
+  if (pathname.startsWith("/api")) {
+    return response;
+  }
 
   // Root redirect
   if (pathname === "/") {
