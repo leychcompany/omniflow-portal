@@ -2,7 +2,6 @@
 
 import { useEffect, useState, type ReactNode } from 'react'
 import { usePathname } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
 import { AdminDashboardSkeleton } from './admin-dashboard-skeleton'
 import { useAdminBootstrap } from './admin-bootstrap-context'
 
@@ -10,19 +9,13 @@ interface AdminAuthGuardProps {
   children: ReactNode
 }
 
-const AUTH_TOTAL_TIMEOUT_MS = 20000
-const PROFILE_TIMEOUT_MS = 15000
+const AUTH_TOTAL_TIMEOUT_MS = 12000
+const FETCH_TIMEOUT_MS = 8000
 
-/** Headers with Bearer if session exists - avoids 401 retry */
-async function authHeaders(): Promise<HeadersInit> {
-  const { data: { session } } = await supabase.auth.getSession()
-  const headers: HeadersInit = { 'Content-Type': 'application/json' }
-  if (session?.access_token) {
-    (headers as Record<string, string>)['Authorization'] = `Bearer ${session.access_token}`
-  }
-  return headers
-}
-
+/**
+ * Auth check uses credentials: 'include' only - no getSession() which can hang
+ * on production (different domain, Supabase client init). Server validates via cookies.
+ */
 export function AdminAuthGuard({ children }: AdminAuthGuardProps) {
   const [ready, setReady] = useState(false)
   const pathname = usePathname()
@@ -35,18 +28,18 @@ export function AdminAuthGuard({ children }: AdminAuthGuardProps) {
     const check = async () => {
       try {
         const controller = new AbortController()
-        const timeoutId = setTimeout(() => controller.abort(), PROFILE_TIMEOUT_MS)
-        const headers = await authHeaders()
+        const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS)
 
         try {
           const url = isDashboard ? '/api/admin/bootstrap' : '/api/profile'
           const res = await fetch(url, {
             credentials: 'include',
-            headers,
             signal: controller.signal,
           })
 
+          clearTimeout(timeoutId)
           if (cancelled) return
+
           if (!res.ok) {
             if (res.status === 401) {
               window.location.href = '/api/auth/logout?redirect=/login'
@@ -72,11 +65,12 @@ export function AdminAuthGuard({ children }: AdminAuthGuardProps) {
           }
 
           setReady(true)
-        } finally {
+        } catch {
           clearTimeout(timeoutId)
+          throw new Error('FETCH_FAILED')
         }
       } catch {
-        if (!cancelled) window.location.href = '/home'
+        if (!cancelled) window.location.href = '/api/auth/logout?redirect=/login'
       }
     }
 
@@ -84,7 +78,7 @@ export function AdminAuthGuard({ children }: AdminAuthGuardProps) {
       setTimeout(() => reject(new Error('AUTH_TIMEOUT')), AUTH_TOTAL_TIMEOUT_MS)
     )
     Promise.race([check(), globalTimeout]).catch(() => {
-      if (!cancelled) window.location.href = '/home'
+      if (!cancelled) window.location.href = '/api/auth/logout?redirect=/login'
     })
 
     return () => {
