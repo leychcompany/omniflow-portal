@@ -161,7 +161,7 @@ export default function EditSoftwarePage() {
     <Card className="max-w-lg mx-auto border-0 shadow-xl bg-white">
       <CardHeader className="border-b border-slate-200 pb-4">
         <CardTitle className="flex items-center gap-2 text-xl">
-          <div className="p-2 bg-gradient-to-br from-cyan-600 to-cyan-700 rounded-lg">
+          <div className="p-2 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg">
             <Upload className="h-5 w-5 text-white" />
           </div>
           Edit Software
@@ -199,7 +199,7 @@ export default function EditSoftwarePage() {
               </div>
             </div>
           )}
-          <div className="border-2 border-dashed border-slate-200 rounded-lg p-6 text-center hover:border-cyan-300 transition-colors">
+          <div className="border-2 border-dashed border-slate-200 rounded-lg p-6 text-center hover:border-blue-300 transition-colors">
             <input type="file" accept=".zip,application/zip,application/x-zip-compressed" onChange={(e) => setFile(e.target.files?.[0] ?? null)} className="hidden" id="software-file" />
             <label htmlFor="software-file" className="cursor-pointer flex flex-col items-center gap-2">
               <Upload className="h-10 w-10 text-slate-400" />
@@ -215,7 +215,7 @@ export default function EditSoftwarePage() {
             </div>
             <div className="h-2 w-full rounded-full bg-slate-200 overflow-hidden">
               <div
-                className="h-full bg-cyan-600 transition-all duration-300 ease-out"
+                className="h-full bg-blue-600 transition-all duration-300 ease-out"
                 style={{ width: `${Math.min(uploadPercent, 99)}%` }}
               />
             </div>
@@ -229,7 +229,7 @@ export default function EditSoftwarePage() {
         )}
         <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">
           <Button variant="outline" onClick={() => router.push('/admin/software')} disabled={saving} className="hover:bg-slate-100">Cancel</Button>
-          <Button onClick={handleSubmit} disabled={saving} className="bg-gradient-to-r from-cyan-600 to-cyan-700 hover:from-cyan-700 hover:to-cyan-800 text-white shadow-lg hover:shadow-xl transition-all duration-200">
+          <Button onClick={handleSubmit} disabled={saving} className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl transition-all duration-200">
             {saving ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> {uploadPercent != null ? 'Uploading...' : 'Saving...'}</> : 'Update'}
           </Button>
         </div>

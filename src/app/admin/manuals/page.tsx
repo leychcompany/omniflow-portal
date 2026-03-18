@@ -112,7 +112,7 @@ export default function AdminManualsPage() {
             placeholder="Search documents..."
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
-            className="pl-11 h-11 bg-white border-slate-200 rounded-xl shadow-sm focus-visible:ring-2 focus-visible:ring-indigo-500/50 focus-visible:border-indigo-400"
+            className="pl-11 h-11 bg-white border-slate-200 rounded-xl shadow-sm focus-visible:ring-2 focus-visible:ring-blue-500/50 focus-visible:border-blue-400"
           />
         </div>
         <div className="flex gap-2">
@@ -120,7 +120,7 @@ export default function AdminManualsPage() {
             <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
-          <Button size="sm" onClick={() => router.push('/admin/manuals/add')} className="h-11 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-500/25">
+          <Button size="sm" onClick={() => router.push('/admin/manuals/add')} className="h-11 rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-500/25">
             <Plus className="h-4 w-4 mr-2" />
             Add Document
           </Button>
@@ -138,8 +138,8 @@ export default function AdminManualsPage() {
         </div>
       ) : manuals.length === 0 ? (
         <div className="border border-slate-200/80 bg-white rounded-2xl p-16 text-center shadow-sm">
-          <div className="w-16 h-16 rounded-2xl bg-indigo-50 flex items-center justify-center mx-auto mb-6">
-            <FileText className="h-8 w-8 text-indigo-500" />
+          <div className="w-16 h-16 rounded-2xl bg-blue-50 flex items-center justify-center mx-auto mb-6">
+            <FileText className="h-8 w-8 text-blue-500" />
           </div>
           <p className="text-base font-semibold text-slate-700 mb-2">
             {total === 0 ? 'No documents yet' : 'No matches found'}
@@ -148,7 +148,7 @@ export default function AdminManualsPage() {
             {total === 0 ? 'Upload your first PDF document to get started.' : 'Try a different search term.'}
           </p>
           {total === 0 && (
-            <Button size="sm" onClick={() => router.push('/admin/manuals/add')} className="rounded-xl bg-indigo-600 hover:bg-indigo-700 shadow-md shadow-indigo-500/25">
+            <Button size="sm" onClick={() => router.push('/admin/manuals/add')} className="rounded-xl bg-blue-600 hover:bg-blue-700 shadow-md shadow-blue-500/25">
               <Plus className="h-4 w-4 mr-2" />
               Add your first document
             </Button>

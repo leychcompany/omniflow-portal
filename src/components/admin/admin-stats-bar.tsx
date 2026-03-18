@@ -21,8 +21,8 @@ export function AdminStatsBar({ stats, className }: AdminStatsBarProps) {
       transition={{ duration: 0.3 }}
       className={cn(
         'flex flex-wrap gap-4 py-3 px-4 rounded-xl',
-        'bg-gradient-to-r from-indigo-50/80 to-slate-50/80',
-        'border border-indigo-100/60',
+        'bg-gradient-to-r from-blue-50/80 to-slate-50/80',
+        'border border-blue-100/60',
         className
       )}
     >

@@ -102,7 +102,7 @@ export default function AdminSoftwarePage() {
             placeholder="Search software..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-11 pr-4 py-2.5 rounded-xl border-slate-200 bg-white text-sm shadow-sm focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-400"
+            className="w-full pl-11 pr-4 py-2.5 rounded-xl border-slate-200 bg-white text-sm shadow-sm focus:ring-2 focus:ring-blue-500/50 focus:border-blue-400"
           />
         </div>
         <div className="flex gap-2">
@@ -110,7 +110,7 @@ export default function AdminSoftwarePage() {
             <RefreshCw className={`h-4 w-4 ${softwareLoading ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
-          <Button onClick={() => router.push('/admin/software/add')} className="gap-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-500/25">
+          <Button onClick={() => router.push('/admin/software/add')} className="gap-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-500/25">
             <Plus className="h-4 w-4" />
             Add Software
           </Button>

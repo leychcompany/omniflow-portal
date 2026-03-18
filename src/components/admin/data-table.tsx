@@ -56,7 +56,7 @@ export function DataTable<TData, TValue>({
               className={cn(
                 'border-b',
                 headerVariant === 'indigo'
-                  ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-600 hover:to-indigo-700 border-indigo-500/30'
+                  ? 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-600 hover:to-blue-700 border-blue-500/30'
                   : 'bg-slate-800 hover:bg-slate-800 border-slate-700'
               )}
             >
@@ -65,7 +65,7 @@ export function DataTable<TData, TValue>({
                   key={header.id}
                   className={cn(
                     'h-12 px-5 text-left font-semibold text-sm tracking-wider',
-                    headerVariant === 'indigo' ? 'text-white/95' : 'text-white'
+                    headerVariant === 'indigo' ? 'text-white' : 'text-white'
                   )}
                 >
                   {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
@@ -86,7 +86,7 @@ export function DataTable<TData, TValue>({
                   'border-b border-slate-100 last:border-0',
                   'transition-all duration-150',
                   rowIndex % 2 === 0 ? 'bg-white' : 'bg-slate-50/50',
-                  'hover:bg-indigo-50/40 hover:shadow-[inset_0_0_0_1px_rgba(99,102,241,0.1)]'
+                  'hover:bg-blue-50/40 hover:shadow-[inset_0_0_0_1px_rgba(59,130,246,0.1)]'
                 )}
               >
                 {row.getVisibleCells().map((cell) => (
@@ -124,7 +124,7 @@ export function SortableHeader({
       type="button"
       onClick={() => column.toggleSorting(sorted === 'asc')}
       className={cn(
-        'flex items-center gap-1.5 hover:text-indigo-200 transition-colors cursor-pointer select-none',
+        'flex items-center gap-1.5 hover:text-blue-200 transition-colors cursor-pointer select-none',
         className
       )}
     >

@@ -157,7 +157,7 @@ export function CommandPalette() {
 
   const itemClass = cn(
     'flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer text-sm',
-    'data-[selected=true]:bg-indigo-50 data-[selected=true]:text-indigo-700 data-[selected=true]:outline-none'
+    'data-[selected=true]:bg-blue-50 data-[selected=true]:text-blue-700 data-[selected=true]:outline-none'
   )
 
   return (
@@ -168,7 +168,7 @@ export function CommandPalette() {
         className={cn(
           'hidden md:flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-slate-500',
           'border border-slate-200/80 bg-white/50 backdrop-blur-sm',
-          'hover:border-indigo-300 hover:text-indigo-600 hover:bg-indigo-50/30',
+          'hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50/30',
           'transition-all duration-200 shadow-sm'
         )}
       >
@@ -249,7 +249,7 @@ export function CommandPalette() {
                           onSelect={() => handleSelect(m.href)}
                           className={itemClass}
                         >
-                          <FileText className="h-4 w-4 text-indigo-500 shrink-0" />
+                          <FileText className="h-4 w-4 text-blue-500 shrink-0" />
                           <div className="min-w-0 flex-1">
                             <p className="font-medium truncate">{m.label}</p>
                             {m.sublabel && <p className="text-xs text-slate-500 truncate">{m.sublabel}</p>}
@@ -267,7 +267,7 @@ export function CommandPalette() {
                           onSelect={() => handleSelect(c.href)}
                           className={itemClass}
                         >
-                          <GraduationCap className="h-4 w-4 text-emerald-500 shrink-0" />
+                          <GraduationCap className="h-4 w-4 text-blue-500 shrink-0" />
                           <p className="font-medium truncate">{c.label}</p>
                         </Command.Item>
                       ))}
@@ -282,7 +282,7 @@ export function CommandPalette() {
                           onSelect={() => handleSelect(n.href)}
                           className={itemClass}
                         >
-                          <NewsIcon className="h-4 w-4 text-amber-500 shrink-0" />
+                          <NewsIcon className="h-4 w-4 text-blue-500 shrink-0" />
                           <div className="min-w-0 flex-1">
                             <p className="font-medium truncate">{n.label}</p>
                             {n.sublabel && <p className="text-xs text-slate-500 truncate">{n.sublabel}</p>}
@@ -300,7 +300,7 @@ export function CommandPalette() {
                           onSelect={() => handleSelect(s.href)}
                           className={itemClass}
                         >
-                          <PkgIcon className="h-4 w-4 text-violet-500 shrink-0" />
+                          <PkgIcon className="h-4 w-4 text-blue-500 shrink-0" />
                           <p className="font-medium truncate">{s.label}</p>
                         </Command.Item>
                       ))}
@@ -338,7 +338,7 @@ export function CommandPalette() {
                       onSelect={() => handleSelect(cmd.href)}
                       className={itemClass}
                     >
-                      <Icon className="h-4 w-4 text-indigo-500 shrink-0" />
+                      <Icon className="h-4 w-4 text-blue-500 shrink-0" />
                       <span className="font-medium">{cmd.label}</span>
                     </Command.Item>
                   )

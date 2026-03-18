@@ -24,7 +24,7 @@ body {
   background: #dc2626;
 }
 
-/* Global smooth transitions for ALL elements - Force with !important */
+/* Global smooth transitions */
 * {
   transition: all 0.2s ease-in-out !important;
 }

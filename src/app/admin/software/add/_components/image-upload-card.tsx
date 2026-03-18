@@ -71,7 +71,7 @@ export function ImageUploadCard({ value, onChange, disabled }: ImageUploadCardPr
       <div
         className={cn(
           "rounded-xl border-2 border-dashed p-4 transition-all",
-          value ? "border-slate-200" : "border-slate-200 hover:border-cyan-300"
+          value ? "border-slate-200" : "border-slate-200 hover:border-blue-300"
         )}
       >
         {value ? (
@@ -96,7 +96,7 @@ export function ImageUploadCard({ value, onChange, disabled }: ImageUploadCardPr
                   />
                   <span
                     className={cn(
-                      "inline-flex items-center gap-1.5 text-sm text-cyan-600 hover:text-cyan-700 font-medium",
+                      "inline-flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-700 font-medium",
                       (disabled || uploading) && "opacity-50 cursor-not-allowed"
                     )}
                   >
@@ -147,7 +147,7 @@ export function ImageUploadCard({ value, onChange, disabled }: ImageUploadCardPr
                 )}
               >
                 {uploading ? (
-                  <Loader2 className="h-10 w-10 text-cyan-600 animate-spin" />
+                  <Loader2 className="h-10 w-10 text-blue-600 animate-spin" />
                 ) : (
                   <Image className="h-10 w-10 text-slate-400" />
                 )}
@@ -160,7 +160,7 @@ export function ImageUploadCard({ value, onChange, disabled }: ImageUploadCardPr
             <button
               type="button"
               onClick={() => setShowUrlInput(!showUrlInput)}
-              className="text-xs text-slate-500 hover:text-cyan-600 flex items-center gap-1"
+              className="text-xs text-slate-500 hover:text-blue-600 flex items-center gap-1"
             >
               <Link2 className="h-3 w-3" />
               {showUrlInput ? "Hide" : "Or paste image URL"}

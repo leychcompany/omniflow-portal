@@ -23,7 +23,7 @@ export function DashboardTopTags({ tags }: DashboardTopTagsProps) {
           <CardTitle className="text-base font-semibold">Top tags</CardTitle>
           <Link
             href="/admin/manuals"
-            className="text-xs font-medium text-indigo-600 hover:text-indigo-700 flex items-center gap-0.5"
+            className="text-xs font-medium text-blue-600 hover:text-blue-700 flex items-center gap-0.5"
           >
             Manage docs
             <ChevronRight className="h-3.5 w-3.5" />
@@ -45,14 +45,14 @@ export function DashboardTopTags({ tags }: DashboardTopTagsProps) {
                 className="flex items-center justify-between gap-3 py-2 px-2 rounded-lg hover:bg-slate-50/80 transition-colors"
               >
                 <span className="flex items-center gap-2 min-w-0">
-                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-indigo-50 text-indigo-600">
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-blue-50 text-blue-600">
                     <Tag className="h-3.5 w-3.5" />
                   </span>
                   <span className="text-sm font-medium text-slate-800 truncate">{tag.name}</span>
                 </span>
                 <span className={cn(
                   'shrink-0 rounded-full px-2 py-0.5 text-xs font-medium',
-                  'bg-indigo-50 text-indigo-700 border border-indigo-100'
+                  'bg-blue-50 text-blue-700 border border-blue-100'
                 )}>
                   {tag.count}
                 </span>

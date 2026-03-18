@@ -28,7 +28,7 @@ export function getManualsColumns(
         const m = row.original
         return (
           <div className="flex items-start gap-3 min-w-0">
-            <div className="shrink-0 p-2 rounded-lg bg-indigo-50 text-indigo-600">
+            <div className="shrink-0 p-2 rounded-lg bg-blue-50 text-blue-600">
               <FileText className="h-4 w-4" />
             </div>
             <div className="min-w-0">
@@ -56,7 +56,7 @@ export function getManualsColumns(
             {tags.map((tag) => (
               <span
                 key={tag}
-                className="inline-flex px-2 py-0.5 rounded-md text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-100"
+                className="inline-flex px-2 py-0.5 rounded-md text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100"
               >
                 {tag}
               </span>
@@ -105,7 +105,7 @@ export function getManualsColumns(
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg"
+              className="h-8 w-8 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg"
               asChild
             >
               <a href={`/api/manuals/${manual.id}/view`} target="_blank" rel="noopener noreferrer" title="View PDF">
@@ -115,7 +115,7 @@ export function getManualsColumns(
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg"
+              className="h-8 w-8 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg"
               onClick={() => router.push(`/admin/manuals/${manual.id}/edit`)}
               title="Edit"
             >

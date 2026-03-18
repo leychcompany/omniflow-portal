@@ -124,11 +124,11 @@ export default function AddManualPage() {
         </div>
         <div>
           <label className="text-sm font-medium text-slate-700 mb-2 block">Description</label>
-          <textarea className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-400" rows={2} placeholder="Brief description" value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} disabled={loading} />
+          <textarea className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-400" rows={2} placeholder="Brief description" value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} disabled={loading} />
         </div>
         <div>
           <label className="text-sm font-medium text-slate-700 mb-2 block">PDF File</label>
-          <div className="border-2 border-dashed border-slate-200 rounded-lg p-6 text-center hover:border-indigo-400 transition-colors">
+          <div className="border-2 border-dashed border-slate-200 rounded-lg p-6 text-center hover:border-blue-400 transition-colors">
             <input type="file" accept=".pdf,application/pdf" onChange={(e) => setFile(e.target.files?.[0] ?? null)} className="hidden" id="manual-file" />
             <label htmlFor="manual-file" className="cursor-pointer flex flex-col items-center gap-2">
               <Upload className="h-10 w-10 text-slate-400" />
@@ -158,7 +158,7 @@ export default function AddManualPage() {
         )}
         <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">
           <Button variant="outline" onClick={() => router.push('/admin/manuals')} disabled={loading} className="hover:bg-slate-100">Cancel</Button>
-          <Button onClick={handleSubmit} disabled={loading} className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-500/25">
+          <Button onClick={handleSubmit} disabled={loading} className="bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-500/25">
             {loading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Uploading...</> : 'Upload'}
           </Button>
         </div>

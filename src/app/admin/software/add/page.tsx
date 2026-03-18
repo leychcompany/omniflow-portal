@@ -68,14 +68,14 @@ export default function AddSoftwarePage() {
       </div>
 
       <Card className="border-0 shadow-xl bg-white overflow-hidden">
-        <CardHeader className="bg-gradient-to-r from-cyan-600 to-cyan-700 text-white">
+        <CardHeader className="bg-gradient-to-r from-blue-600 to-blue-700 text-white">
           <CardTitle className="flex items-center gap-3 text-xl">
             <div className="p-2.5 bg-white/20 rounded-xl">
               <Upload className="h-6 w-6" />
             </div>
             Add Software
           </CardTitle>
-          <CardDescription className="text-cyan-100">
+          <CardDescription className="text-blue-100">
             Upload a ZIP file and add a preview image. Max 1 GB per file.
           </CardDescription>
         </CardHeader>
@@ -94,7 +94,7 @@ export default function AddSoftwarePage() {
           <div>
             <label className="text-sm font-medium text-slate-700 mb-2 block">Description</label>
             <textarea
-              className="w-full px-3 py-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 text-sm resize-none"
+              className="w-full px-3 py-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm resize-none"
               rows={3}
               placeholder="Brief description of the software..."
               value={form.description}
@@ -120,10 +120,10 @@ export default function AddSoftwarePage() {
           />
 
           {loading && (
-            <div className="rounded-lg bg-cyan-50 border border-cyan-200 p-4">
+            <div className="rounded-lg bg-blue-50 border border-blue-200 p-4">
               <div className="flex items-center gap-3">
-                <Loader2 className="h-5 w-5 text-cyan-600 animate-spin shrink-0" />
-                <p className="text-sm font-medium text-cyan-900">
+                <Loader2 className="h-5 w-5 text-blue-600 animate-spin shrink-0" />
+                <p className="text-sm font-medium text-blue-900">
                   Uploading and saving...
                 </p>
               </div>
@@ -148,7 +148,7 @@ export default function AddSoftwarePage() {
             <Button
               onClick={handleSubmit}
               disabled={loading || !form.title.trim() || !zipFile}
-              className="bg-cyan-600 hover:bg-cyan-700 text-white"
+              className="bg-blue-600 hover:bg-blue-700 text-white"
             >
               {loading ? (
                 <>

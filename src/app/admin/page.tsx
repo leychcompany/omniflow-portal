@@ -104,7 +104,7 @@ export default function AdminDashboardPage() {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-24 gap-4">
-        <Loader2 className="h-10 w-10 animate-spin text-indigo-600" />
+        <Loader2 className="h-10 w-10 animate-spin text-blue-600" />
         <p className="text-sm text-slate-500">Loading dashboard...</p>
       </div>
     )
@@ -122,7 +122,7 @@ export default function AdminDashboardPage() {
             setLoading(true)
             setRetryKey((k) => k + 1)
           }}
-          className="text-sm font-medium text-indigo-600 hover:text-indigo-700 underline"
+          className="text-sm font-medium text-blue-600 hover:text-blue-700 underline"
         >
           Retry
         </button>
@@ -156,28 +156,28 @@ export default function AdminDashboardPage() {
         <DashboardStatCard
           label="Documents"
           value={counts.manuals}
-          icon={<BookOpen className="h-5 w-5 text-indigo-600" />}
+          icon={<BookOpen className="h-5 w-5 text-blue-600" />}
           accent="manuals"
           href="/admin/manuals"
         />
         <DashboardStatCard
           label="Courses"
           value={counts.courses}
-          icon={<GraduationCap className="h-5 w-5 text-emerald-600" />}
+          icon={<GraduationCap className="h-5 w-5 text-blue-600" />}
           accent="training"
           href="/admin/training"
         />
         <DashboardStatCard
           label="Software"
           value={counts.software}
-          icon={<Package className="h-5 w-5 text-violet-600" />}
+          icon={<Package className="h-5 w-5 text-blue-600" />}
           accent="software"
           href="/admin/software"
         />
         <DashboardStatCard
           label="News"
           value={counts.news}
-          icon={<Newspaper className="h-5 w-5 text-amber-600" />}
+          icon={<Newspaper className="h-5 w-5 text-blue-600" />}
           accent="news"
           href="/admin/news"
         />
@@ -190,7 +190,7 @@ export default function AdminDashboardPage() {
         <DashboardStatCard
           label="Pending Invites"
           value={counts.invites}
-          icon={<Mail className="h-5 w-5 text-cyan-600" />}
+          icon={<Mail className="h-5 w-5 text-blue-600" />}
           accent="analytics"
           href="/admin/users"
         />
@@ -210,10 +210,10 @@ export default function AdminDashboardPage() {
                 <p className="text-sm text-slate-500">Logins and downloads by day</p>
               </div>
               <div className="flex gap-3">
-                <span className="rounded-lg border border-indigo-100 bg-indigo-50/80 px-3 py-1.5 text-sm font-medium text-indigo-700">
+                <span className="rounded-lg border border-blue-100 bg-blue-50/80 px-3 py-1.5 text-sm font-medium text-blue-700">
                   {totals7d.logins} logins (7d)
                 </span>
-                <span className="rounded-lg border border-cyan-100 bg-cyan-50/80 px-3 py-1.5 text-sm font-medium text-cyan-700">
+                <span className="rounded-lg border border-blue-100 bg-blue-50/80 px-3 py-1.5 text-sm font-medium text-blue-700">
                   {totals7d.downloads} downloads (7d)
                 </span>
               </div>
@@ -245,21 +245,21 @@ export default function AdminDashboardPage() {
           className="group flex items-center justify-between rounded-xl border border-slate-200 bg-white px-5 py-4 shadow-sm transition-all hover:border-slate-300 hover:shadow-md"
         >
           <span className="font-medium text-slate-700">Manage Users</span>
-          <ChevronRight className="h-5 w-5 text-slate-400 group-hover:text-indigo-600 transition-colors" />
+          <ChevronRight className="h-5 w-5 text-slate-400 group-hover:text-blue-600 transition-colors" />
         </Link>
         <Link
           href="/admin/manuals"
           className="group flex items-center justify-between rounded-xl border border-slate-200 bg-white px-5 py-4 shadow-sm transition-all hover:border-slate-300 hover:shadow-md"
         >
           <span className="font-medium text-slate-700">Manage Documents</span>
-          <ChevronRight className="h-5 w-5 text-slate-400 group-hover:text-indigo-600 transition-colors" />
+          <ChevronRight className="h-5 w-5 text-slate-400 group-hover:text-blue-600 transition-colors" />
         </Link>
         <Link
           href="/admin/analytics"
           className="group flex items-center justify-between rounded-xl border border-slate-200 bg-white px-5 py-4 shadow-sm transition-all hover:border-slate-300 hover:shadow-md"
         >
           <span className="font-medium text-slate-700">View Analytics</span>
-          <ChevronRight className="h-5 w-5 text-slate-400 group-hover:text-indigo-600 transition-colors" />
+          <ChevronRight className="h-5 w-5 text-slate-400 group-hover:text-blue-600 transition-colors" />
         </Link>
       </motion.div>
     </div>

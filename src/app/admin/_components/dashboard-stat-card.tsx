@@ -36,7 +36,7 @@ export function DashboardStatCard({
         </p>
       </div>
       {href && (
-        <ChevronRight className="h-5 w-5 shrink-0 text-slate-400 group-hover:text-indigo-600 transition-colors" />
+        <ChevronRight className="h-5 w-5 shrink-0 text-slate-400 group-hover:text-blue-600 transition-colors" />
       )}
     </>
   )

@@ -103,8 +103,8 @@ export function FileDropzone({
         className={cn(
           "rounded-xl border-2 border-dashed p-6 text-center transition-all",
           isDragOver && !disabled && !isUploading
-            ? "border-cyan-400 bg-cyan-50/50"
-            : "border-slate-200 hover:border-cyan-300",
+            ? "border-blue-400 bg-blue-50/50"
+            : "border-slate-200 hover:border-blue-300",
           (disabled || isUploading) && "opacity-60 cursor-not-allowed"
         )}
       >
@@ -127,7 +127,7 @@ export function FileDropzone({
             <div className="flex flex-col items-center gap-2">
               <div className="flex items-center gap-3 p-2 bg-slate-100 rounded-lg">
                 {isUploading ? (
-                  <Loader2 className="h-8 w-8 text-cyan-600 animate-spin" />
+                  <Loader2 className="h-8 w-8 text-blue-600 animate-spin" />
                 ) : (
                   <Upload className="h-8 w-8 text-slate-500" />
                 )}

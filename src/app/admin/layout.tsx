@@ -57,7 +57,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <nav className="hidden md:flex items-center gap-0.5 flex-1 min-w-0">
           <Link
             href="/home"
-            className="flex items-center justify-center h-9 w-9 rounded-lg text-slate-500 hover:text-indigo-600 hover:bg-indigo-50/50 transition-colors shrink-0 mr-2 border-r border-slate-200 pr-2"
+            className="flex items-center justify-center h-9 w-9 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-blue-50/50 transition-colors shrink-0 mr-2 border-r border-slate-200 pr-2"
             title="Back to Portal"
           >
             <Home className="h-4 w-4" />

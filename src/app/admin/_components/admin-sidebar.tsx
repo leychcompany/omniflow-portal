@@ -46,7 +46,7 @@ export function AdminSidebar({ activeTab, onSignOut }: AdminSidebarProps) {
     >
       {/* Brand / Logo area */}
       <div className="flex h-16 shrink-0 items-center gap-3 border-b border-slate-200/60 px-5">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 shadow-lg shadow-indigo-500/25">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg shadow-blue-500/25">
           <LayoutDashboard className="h-4 w-4 text-white" />
         </div>
         <div className="min-w-0 flex-1">

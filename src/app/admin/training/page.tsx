@@ -101,7 +101,7 @@ export default function AdminTrainingPage() {
             placeholder="Search courses..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-11 pr-4 py-2.5 rounded-xl border-slate-200 bg-white text-sm shadow-sm focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-400"
+            className="w-full pl-11 pr-4 py-2.5 rounded-xl border-slate-200 bg-white text-sm shadow-sm focus:ring-2 focus:ring-blue-500/50 focus:border-blue-400"
           />
         </div>
         <div className="flex gap-2">
@@ -109,7 +109,7 @@ export default function AdminTrainingPage() {
             <RefreshCw className={`h-4 w-4 ${coursesLoading ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
-          <Button onClick={() => router.push('/admin/training/add')} className="gap-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-500/25">
+          <Button onClick={() => router.push('/admin/training/add')} className="gap-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-500/25">
             <Plus className="h-4 w-4" />
             Add Course
           </Button>
@@ -142,7 +142,7 @@ export default function AdminTrainingPage() {
                   <div className="flex items-center gap-2 flex-wrap">
                     <h3 className="font-semibold text-slate-900 truncate">{course.title}</h3>
                     {course.featured && (
-                      <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-medium shrink-0">Featured</span>
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 font-medium shrink-0">Featured</span>
                     )}
                   </div>
                   <p className="text-sm text-slate-500 mt-1 line-clamp-2">{course.description || '—'}</p>

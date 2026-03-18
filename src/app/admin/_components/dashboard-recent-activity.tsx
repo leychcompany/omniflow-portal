@@ -19,10 +19,10 @@ interface DashboardRecentActivityProps {
 }
 
 const EVENT_CONFIG: Record<string, { icon: React.ElementType; label: string; color: string }> = {
-  login: { icon: LogIn, label: 'Login', color: 'text-emerald-600 bg-emerald-50' },
+  login: { icon: LogIn, label: 'Login', color: 'text-blue-600 bg-blue-50' },
   logout: { icon: LogOut, label: 'Logout', color: 'text-slate-600 bg-slate-100' },
-  document_download: { icon: FileDown, label: 'Document', color: 'text-indigo-600 bg-indigo-50' },
-  software_download: { icon: Package, label: 'Software', color: 'text-violet-600 bg-violet-50' },
+  document_download: { icon: FileDown, label: 'Document', color: 'text-blue-600 bg-blue-50' },
+  software_download: { icon: Package, label: 'Software', color: 'text-blue-600 bg-blue-50' },
 }
 
 function formatTimeAgo(dateStr: string) {
@@ -47,7 +47,7 @@ export function DashboardRecentActivity({ events }: DashboardRecentActivityProps
           <CardTitle className="text-base font-semibold">Recent activity</CardTitle>
           <Link
             href="/admin/analytics"
-            className="text-xs font-medium text-indigo-600 hover:text-indigo-700 flex items-center gap-0.5"
+            className="text-xs font-medium text-blue-600 hover:text-blue-700 flex items-center gap-0.5"
           >
             View all
             <ChevronRight className="h-3.5 w-3.5" />

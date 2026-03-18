@@ -93,7 +93,7 @@ export default function AdminAnalyticsPage() {
           <select
             value={analyticsEventTypeFilter}
             onChange={(e) => handleFilterChange(e.target.value)}
-            className="w-full sm:w-auto h-11 px-4 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 shadow-sm focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-400"
+            className="w-full sm:w-auto h-11 px-4 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 shadow-sm focus:ring-2 focus:ring-blue-500/50 focus:border-blue-400"
           >
             <option value="">All events</option>
             <option value="login">Login</option>
@@ -126,8 +126,8 @@ export default function AdminAnalyticsPage() {
         </div>
       ) : analyticsEvents.length === 0 ? (
         <div className="border border-slate-200/80 bg-white rounded-2xl p-16 text-center shadow-sm">
-          <div className="w-16 h-16 rounded-2xl bg-cyan-50 flex items-center justify-center mx-auto mb-6">
-            <Activity className="h-8 w-8 text-cyan-500" />
+          <div className="w-16 h-16 rounded-2xl bg-blue-50 flex items-center justify-center mx-auto mb-6">
+            <Activity className="h-8 w-8 text-blue-500" />
           </div>
           <p className="text-base font-semibold text-slate-700 mb-2">No activity yet</p>
           <p className="text-sm text-slate-500 max-w-sm mx-auto">
@@ -160,7 +160,7 @@ export default function AdminAnalyticsPage() {
                     <td className="py-4 px-4">
                       <Badge
                         variant="secondary"
-                        className="text-xs border-cyan-200 bg-cyan-50/60 text-cyan-800 font-medium"
+                        className="text-xs border-blue-200 bg-blue-50/60 text-blue-800 font-medium"
                       >
                         {evt.event_type.replaceAll('_', ' ')}
                       </Badge>
