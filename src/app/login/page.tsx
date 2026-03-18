@@ -10,7 +10,8 @@ import { Logo } from '@/components/Logo'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/auth-store'
 import { recordAuthEvent } from '@/lib/record-analytics-event'
-import { Eye, EyeOff, Loader2, Shield, Users, Zap, BookOpen, ArrowRight } from 'lucide-react'
+import { useTheme } from 'next-themes'
+import { Eye, EyeOff, Loader2, Shield, Users, Zap, BookOpen, ArrowRight, Sun, Moon } from 'lucide-react'
 
 function LoginForm() {
   const [email, setEmail] = useState('')
@@ -21,6 +22,7 @@ function LoginForm() {
   
   const router = useRouter()
   const { setUser, setMustChangePassword } = useAuthStore()
+  const { theme, setTheme } = useTheme()
   const hashHandledRef = useRef(false)
 
   useEffect(() => {
@@ -129,36 +131,36 @@ function LoginForm() {
       icon: Shield,
       title: 'Secure Access',
       description: 'Enterprise-grade security for your corporate data',
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-50'
+      color: 'text-blue-600 dark:text-blue-400',
+      bgColor: 'bg-blue-50 dark:bg-blue-500/20'
     },
     {
       icon: Zap,
       title: 'AI Assistant',
       description: 'Get instant help with technical questions',
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-50'
+      color: 'text-purple-600 dark:text-purple-400',
+      bgColor: 'bg-purple-50 dark:bg-purple-500/20'
     },
     {
       icon: BookOpen,
       title: 'Resources',
       description: 'Access documents, training, and documentation',
-      color: 'text-green-600',
-      bgColor: 'bg-green-50'
+      color: 'text-green-600 dark:text-green-400',
+      bgColor: 'bg-green-50 dark:bg-green-500/20'
     },
     {
       icon: Users,
       title: 'Support',
       description: 'Direct access to our expert support team',
-      color: 'text-orange-600',
-      bgColor: 'bg-orange-50'
+      color: 'text-orange-600 dark:text-orange-400',
+      bgColor: 'bg-orange-50 dark:bg-orange-500/20'
     }
   ]
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-[#0a0a0a] dark:via-[#0f0f0f] dark:to-[#0a0a0a]">
       {/* Background Pattern */}
-      <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmM2Y0ZjYiIGZpbGwtb3BhY2l0eT0iMC40Ij48Y2lyY2xlIGN4PSIzMCIgY3k9IjMwIiByPSIyIi8+PC9nPjwvZz48L3N2Zz4=')] opacity-40"></div>
+      <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmM2Y0ZjYiIGZpbGwtb3BhY2l0eT0iMC40Ij48Y2lyY2xlIGN4PSIzMCIgY3k9IjMwIiByPSIyIi8+PC9nPjwvZz48L3N2Zz4=')] dark:bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNiI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMiIvPjwvZz48L3N2Zz4=')] opacity-40"></div>
       
       <div className="relative min-h-screen flex">
         {/* Left Side - Features */}
@@ -200,19 +202,27 @@ function LoginForm() {
         </div>
 
         {/* Right Side - Login Form */}
-        <div className="flex-1 flex flex-col justify-center px-4 sm:px-6 lg:px-8 py-12">
+        <div className="flex-1 flex flex-col justify-center px-4 sm:px-6 lg:px-8 py-12 relative">
+          <button
+            type="button"
+            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            className="absolute top-4 right-4 sm:top-6 sm:right-6 p-2 rounded-lg text-slate-500 dark:text-zinc-400 hover:text-slate-700 dark:hover:text-zinc-200 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
+            aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+          >
+            {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+          </button>
           <div className="mx-auto w-full max-w-md">
-            {/* Mobile Logo */}
+            {/* Mobile Logo - auto switches light/dark via Logo component */}
             <div className="lg:hidden text-center mb-8">
               <Logo width={180} height={63} className="mx-auto" />
             </div>
 
-            <Card className="shadow-2xl border-0 bg-white/95 backdrop-blur-sm">
+            <Card className="shadow-2xl border-0 bg-white/95 dark:bg-[#141414]/95 backdrop-blur-sm dark:border-white/10">
               <CardHeader className="space-y-2 text-center pb-8">
-                <CardTitle className="text-2xl font-bold text-slate-900">
+                <CardTitle className="text-2xl font-bold text-slate-900 dark:text-zinc-100">
                   Sign In
                 </CardTitle>
-                <CardDescription className="text-slate-600">
+                <CardDescription className="text-slate-600 dark:text-zinc-400">
                   Enter your credentials to access your account
                 </CardDescription>
               </CardHeader>
@@ -220,7 +230,7 @@ function LoginForm() {
               <CardContent className="space-y-6">
                 <form onSubmit={handleLogin} className="space-y-6">
                   <div className="space-y-2">
-                    <label htmlFor="email" className="text-sm font-medium text-slate-700">
+                    <label htmlFor="email" className="text-sm font-medium text-slate-700 dark:text-zinc-300">
                       Email Address
                     </label>
                     <Input
@@ -230,12 +240,12 @@ function LoginForm() {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
-                      className="h-12 border-slate-200 focus:border-slate-400 focus:ring-slate-400"
+                      className="h-12"
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <label htmlFor="password" className="text-sm font-medium text-slate-700">
+                    <label htmlFor="password" className="text-sm font-medium text-slate-700 dark:text-zinc-300">
                       Password
                     </label>
                     <div className="relative">
@@ -246,11 +256,11 @@ function LoginForm() {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required
-                        className="h-12 pr-12 border-slate-200 focus:border-slate-400 focus:ring-slate-400"
+                        className="h-12 pr-12"
                       />
                       <button
                         type="button"
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-zinc-500 hover:text-slate-600 dark:hover:text-zinc-300 transition-colors"
                         onClick={() => setShowPassword(!showPassword)}
                       >
                         {showPassword ? (
@@ -263,15 +273,15 @@ function LoginForm() {
                   </div>
 
                   {error && (
-                    <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm flex items-center space-x-2">
-                      <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                    <div className="bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 text-red-700 dark:text-red-400 px-4 py-3 rounded-lg text-sm flex items-center space-x-2">
+                      <div className="w-2 h-2 bg-red-500 dark:bg-red-400 rounded-full"></div>
                       <span>{error}</span>
                     </div>
                   )}
 
                   <Button
                     type="submit"
-                    className="w-full h-12 bg-gradient-to-r from-slate-900 to-slate-800 hover:from-slate-800 hover:to-slate-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
+                    className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-lg transition-all duration-200"
                     disabled={loading}
                   >
                     {loading ? (
@@ -292,16 +302,16 @@ function LoginForm() {
                   <button
                     type="button"
                     onClick={() => router.push('/forgot-password')}
-                    className="text-sm text-slate-600 hover:text-slate-800 font-medium transition-colors"
+                    className="text-sm text-slate-600 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200 font-medium transition-colors"
                   >
                     Forgot your password?
                   </button>
-                  <div className="pt-4 border-t border-slate-200">
+                  <div className="pt-4 border-t border-slate-200 dark:border-white/10">
                     <Link href="/register" className="block">
                       <Button
                         type="button"
                         variant="outline"
-                        className="w-full h-11 border-2 border-slate-300 hover:border-slate-400 hover:bg-slate-50 font-semibold"
+                        className="w-full h-11 border-2 border-slate-300 dark:border-white/20 hover:border-slate-400 dark:hover:border-white/30 hover:bg-slate-50 dark:hover:bg-white/5 font-semibold"
                       >
                         Create account
                       </Button>
@@ -320,10 +330,10 @@ function LoginForm() {
 export default function LoginPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-[#0a0a0a] dark:via-[#0f0f0f] dark:to-[#0a0a0a] flex items-center justify-center">
         <div className="text-center">
           <Logo width={180} height={63} className="mx-auto mb-4" />
-          <Loader2 className="h-8 w-8 animate-spin mx-auto text-slate-600" />
+          <Loader2 className="h-8 w-8 animate-spin mx-auto text-slate-600 dark:text-zinc-400" />
         </div>
       </div>
     }>
