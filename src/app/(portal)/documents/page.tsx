@@ -43,7 +43,10 @@ export default function DocumentsPage() {
         if (!res.ok) throw new Error('Failed to load documents')
         return res.json()
       })
-      .then((data) => setDocuments(Array.isArray(data) ? data : []))
+      .then((data) => {
+        const items = data?.items ?? data
+        setDocuments(Array.isArray(items) ? items : [])
+      })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false))
   }, [])
