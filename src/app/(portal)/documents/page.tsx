@@ -8,16 +8,15 @@ import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { useAuthStore } from '@/store/auth-store'
 import { 
-  ArrowLeft, 
   FileText, 
   Download,
   BookOpen,
   File,
-  Loader2,
   Filter,
   X,
   Shield
 } from 'lucide-react'
+import { PortalPageSkeleton } from '@/components/portal/portal-page-skeleton'
 
 interface Manual {
   id: string
@@ -96,43 +95,27 @@ export default function DocumentsPage() {
   }
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <Loader2 className="h-10 w-10 animate-spin text-orange-600" />
-      </div>
-    )
+    return <PortalPageSkeleton />
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <p className="text-red-600">{error}</p>
+      <div className="flex items-center justify-center py-24">
+        <p className="text-red-600 dark:text-red-400">{error}</p>
       </div>
     )
   }
 
   if (user?.locked === true) {
     return (
-      <div className="min-h-screen bg-slate-50 flex flex-col">
-        <header className="bg-white border-b border-slate-200/50 shadow-sm">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center justify-between py-4">
-              <Button variant="ghost" className="flex items-center gap-2" asChild>
-                <Link href="/home" prefetch>
-                  <ArrowLeft className="h-4 w-4" />
-                </Link>
-              </Button>
-            </div>
-          </div>
-        </header>
-        <div className="flex-1 flex items-center justify-center p-8">
+      <div className="flex-1 flex items-center justify-center p-8">
           <Card className="max-w-md w-full border-0 shadow-lg">
             <CardContent className="pt-8 pb-8 text-center">
-              <div className="mx-auto p-4 bg-amber-100 rounded-full w-fit mb-4">
-                <Shield className="h-12 w-12 text-amber-600" />
+              <div className="mx-auto p-4 bg-amber-100 dark:bg-amber-950/50 rounded-full w-fit mb-4">
+                <Shield className="h-12 w-12 text-amber-600 dark:text-amber-400" />
               </div>
-              <h2 className="text-xl font-semibold text-slate-900 mb-2">Account pending approval</h2>
-              <p className="text-slate-600 mb-6">
+              <h2 className="text-xl font-semibold text-slate-900 dark:text-zinc-100 mb-2">Account pending approval</h2>
+              <p className="text-slate-600 dark:text-zinc-400 mb-6">
                 Your account is awaiting admin approval. Documents will be available once an administrator unlocks your account.
               </p>
               <Button asChild>
@@ -140,44 +123,22 @@ export default function DocumentsPage() {
               </Button>
             </CardContent>
           </Card>
-        </div>
-      </div>
-    )
-  }
+    </div>
+  )
+}
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* Header */}
-      <header className="bg-white border-b border-slate-200/50 shadow-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between py-4">
-            <div className="flex items-center space-x-4">
-              <Button variant="ghost" className="flex items-center gap-2 px-3 touch-manipulation active:opacity-80" asChild>
-                <Link href="/home" prefetch>
-                  <ArrowLeft className="h-4 w-4" />
-                </Link>
-              </Button>
-              <div className="flex items-center space-x-3">
-                <div className="p-2 bg-orange-100 rounded-lg">
-                  <BookOpen className="h-6 w-6 text-orange-600" />
-                </div>
-                <div>
-                  <h1 className="text-xl font-semibold text-slate-900">Documents</h1>
-                  <p className="text-sm text-slate-600">Technical documentation and guides</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <div className="max-w-7xl mx-auto w-full">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-zinc-100">Documents</h1>
+        <p className="text-slate-600 dark:text-zinc-400 mt-1">Technical documentation and guides</p>
+      </div>
+      <div>
         {/* Documents List */}
         <div className="space-y-6">
           <div>
-            <h2 className="text-2xl font-bold text-slate-900 mb-2">Available Documents</h2>
-            <p className="text-slate-600">Download technical documentation and guides</p>
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-zinc-100 mb-2">Available Documents</h2>
+            <p className="text-slate-600 dark:text-zinc-400">Download technical documentation and guides</p>
           </div>
 
           {/* Filters */}
@@ -188,7 +149,7 @@ export default function DocumentsPage() {
                 <button
                   type="button"
                   onClick={() => setFilterSheetOpen(true)}
-                  className="shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 text-sm font-medium transition-colors"
+                  className="shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-lg bg-slate-100 dark:bg-white/[0.06] text-slate-700 dark:text-zinc-300 hover:bg-slate-200 dark:hover:bg-white/[0.1] text-sm font-medium transition-colors"
                 >
                   <Filter className="h-4 w-4" />
                   Filter
@@ -201,7 +162,7 @@ export default function DocumentsPage() {
                 {selectedTags.map((tag) => (
                   <Badge
                     key={tag.toLowerCase()}
-                    className="shrink-0 bg-orange-100 text-orange-800 border-orange-200 hover:bg-orange-200/80 cursor-pointer gap-1 pl-2 pr-1 py-1 text-xs"
+                    className="shrink-0 bg-orange-100 dark:bg-orange-950/50 text-orange-800 dark:text-orange-300 border-orange-200 dark:border-orange-800 hover:bg-orange-200/80 dark:hover:bg-orange-900/50 cursor-pointer gap-1 pl-2 pr-1 py-1 text-xs"
                     onClick={(e) => {
                       e.stopPropagation()
                       toggleTag(tag)
@@ -214,7 +175,7 @@ export default function DocumentsPage() {
                   </Badge>
                 ))}
                 {selectedTags.length > 0 && (
-                  <span className="shrink-0 text-xs text-slate-500">
+                    <span className="shrink-0 text-xs text-slate-500 dark:text-zinc-400">
                     {filteredDocuments.length} of {documents.length}
                   </span>
                 )}
@@ -224,9 +185,9 @@ export default function DocumentsPage() {
               <Dialog open={filterSheetOpen} onOpenChange={setFilterSheetOpen}>
                 <DialogContent className="fixed bottom-0 inset-x-0 top-auto m-0 w-full min-w-0 max-w-full m-0 rounded-t-2xl max-h-[70vh] overflow-y-auto overflow-x-hidden md:hidden">
                   <div className="mb-4 min-w-0">
-                    <h3 className="text-lg font-semibold text-slate-900">Filter by tags</h3>
+                    <h3 className="text-lg font-semibold text-slate-900 dark:text-zinc-100">Filter by tags</h3>
                     {selectedTags.length > 0 && (
-                      <p className="text-sm text-slate-500 mt-1">
+                      <p className="text-sm text-slate-500 dark:text-zinc-400 mt-1">
                         Showing {filteredDocuments.length} of {documents.length} documents
                       </p>
                     )}
@@ -245,12 +206,12 @@ export default function DocumentsPage() {
                               inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all
                               ${selected
                                 ? 'bg-orange-600 text-white shadow-sm hover:bg-orange-700'
-                                : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-transparent hover:border-slate-200'
+                                : 'bg-slate-100 dark:bg-white/[0.06] text-slate-700 dark:text-zinc-300 hover:bg-slate-200 dark:hover:bg-white/[0.1] border border-transparent hover:border-slate-200 dark:hover:border-white/[0.08]'
                               }
                             `}
                           >
                             {tag}
-                            <span className={`text-xs ${selected ? 'text-orange-200' : 'text-slate-400'}`}>
+                            <span className={`text-xs ${selected ? 'text-orange-200' : 'text-slate-400 dark:text-zinc-500'}`}>
                               ({count})
                             </span>
                           </button>
@@ -258,7 +219,7 @@ export default function DocumentsPage() {
                       })}
                     </div>
                   </div>
-                  <div className="mt-6 pt-4 border-t border-slate-200">
+                  <div className="mt-6 pt-4 border-t border-slate-200 dark:border-white/[0.08]">
                     <Button
                       onClick={() => setFilterSheetOpen(false)}
                       className="w-full bg-orange-600 hover:bg-orange-700 text-white"
@@ -271,14 +232,14 @@ export default function DocumentsPage() {
 
               {/* Desktop: full card */}
               <div className="hidden md:block">
-                <Card className="border-slate-200/80 bg-white shadow-sm overflow-hidden">
-                  <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/50">
+                <Card className="border-slate-200/80 dark:border-white/[0.08] bg-white dark:bg-[#141414] shadow-sm overflow-hidden">
+                  <div className="px-4 py-3 border-b border-slate-100 dark:border-white/[0.06] bg-slate-50/50 dark:bg-white/[0.03]">
                     <div className="flex items-center justify-between gap-4 flex-wrap">
                       <div className="flex items-center gap-2">
-                        <Filter className="h-4 w-4 text-slate-500" />
-                        <span className="text-sm font-medium text-slate-700">Filter by tags</span>
+                        <Filter className="h-4 w-4 text-slate-500 dark:text-zinc-400" />
+                        <span className="text-sm font-medium text-slate-700 dark:text-zinc-300">Filter by tags</span>
                         {selectedTags.length > 0 && (
-                          <span className="text-xs text-slate-500">
+                          <span className="text-xs text-slate-500 dark:text-zinc-400">
                             (showing {filteredDocuments.length} of {documents.length} documents)
                           </span>
                         )}
@@ -287,7 +248,7 @@ export default function DocumentsPage() {
                         <button
                           type="button"
                           onClick={clearFilters}
-                          className="text-xs font-medium text-orange-600 hover:text-orange-700 transition-colors"
+                          className="text-xs font-medium text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 transition-colors"
                         >
                           Clear all
                         </button>
@@ -309,12 +270,12 @@ export default function DocumentsPage() {
                                 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all
                                 ${selected
                                   ? 'bg-orange-600 text-white shadow-sm hover:bg-orange-700'
-                                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-transparent hover:border-slate-200'
+                                  : 'bg-slate-100 dark:bg-white/[0.06] text-slate-700 dark:text-zinc-300 hover:bg-slate-200 dark:hover:bg-white/[0.1] border border-transparent hover:border-slate-200 dark:hover:border-white/[0.08]'
                                 }
                               `}
                             >
                               {tag}
-                              <span className={`text-xs ${selected ? 'text-orange-200' : 'text-slate-400'}`}>
+                              <span className={`text-xs ${selected ? 'text-orange-200' : 'text-slate-400 dark:text-zinc-500'}`}>
                                 ({count})
                               </span>
                             </button>
@@ -333,7 +294,7 @@ export default function DocumentsPage() {
               <Card key={doc.id} className="border-0 shadow-sm hover:shadow-lg transition-all flex flex-col">
                 <CardContent className="p-6 flex flex-col flex-1 min-h-0">
                   <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-slate-900 w-full mb-2 truncate" title={doc.title}>
+                    <h3 className="text-lg font-semibold text-slate-900 dark:text-zinc-100 w-full mb-2 truncate" title={doc.title}>
                       {doc.title}
                     </h3>
                     <div className="flex flex-wrap items-center gap-1.5 mb-3">
@@ -349,15 +310,15 @@ export default function DocumentsPage() {
                           .map((tag) => (
                             <span
                               key={tag.toLowerCase()}
-                              className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-slate-100 text-slate-700 whitespace-nowrap"
+                              className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-slate-100 dark:bg-white/[0.06] text-slate-700 dark:text-zinc-300 whitespace-nowrap"
                             >
                               {tag}
                             </span>
                           ))
                       })()}
                     </div>
-                    <p className="text-slate-600 mb-3 line-clamp-2">{doc.description}</p>
-                    <div className="flex items-center gap-4 text-sm text-slate-500">
+                    <p className="text-slate-600 dark:text-zinc-400 mb-3 line-clamp-2">{doc.description}</p>
+                    <div className="flex items-center gap-4 text-sm text-slate-500 dark:text-zinc-400">
                       <div className="flex items-center gap-1">
                         <FileText className="h-4 w-4 shrink-0" />
                         {doc.size}
@@ -368,7 +329,7 @@ export default function DocumentsPage() {
                       </div>
                     </div>
                   </div>
-                  <div className="mt-4 pt-4 border-t border-slate-100">
+                  <div className="mt-4 pt-4 border-t border-slate-100 dark:border-white/[0.06]">
                     <Button
                       variant="outline"
                       size="sm"
@@ -385,7 +346,7 @@ export default function DocumentsPage() {
           </div>
 
           {filteredDocuments.length === 0 && (
-            <div className="text-center py-10 text-slate-600">
+            <div className="text-center py-10 text-slate-600 dark:text-zinc-400">
               {selectedTags.length > 0
                 ? 'No documents match the selected tags.'
                 : 'No documents found.'}

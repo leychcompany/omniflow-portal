@@ -5,8 +5,8 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { Logo } from '@/components/Logo'
-import { ArrowLeft, Send, Loader2 } from 'lucide-react'
+import { Send, Loader2 } from 'lucide-react'
+import { PortalPageSkeleton } from '@/components/portal/portal-page-skeleton'
 
 type Status = 'idle' | 'submitting' | 'success' | 'error'
 
@@ -17,7 +17,7 @@ interface Course {
 
 export default function TrainingRequestPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-slate-50 flex items-center justify-center"><Loader2 className="h-10 w-10 animate-spin text-purple-600" /></div>}>
+    <Suspense fallback={<PortalPageSkeleton />}>
       <TrainingRequestInner />
     </Suspense>
   )
@@ -105,39 +105,19 @@ function TrainingRequestInner() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
-      <header className="bg-white border-b border-slate-200/50 shadow-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between py-4">
-            <div className="flex items-center space-x-4">
-              <Button
-                variant="ghost"
-                onClick={() => router.push('/training')}
-                className="flex items-center gap-2 px-3 touch-manipulation active:opacity-80"
-              >
-                <ArrowLeft className="h-4 w-4" />
-              </Button>
-              <div className="flex items-center space-x-3">
-                <Logo width={140} height={49} href="https://www.omniflow.com" />
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <div className="max-w-3xl mx-auto w-full">
         <Card className="border-0 shadow-lg">
           <CardHeader>
             <div>
-              <CardTitle className="text-xl">Request Training</CardTitle>
-              <CardDescription>Tell us which training you want and how to reach you.</CardDescription>
+              <CardTitle className="text-xl text-slate-900 dark:text-zinc-100">Request Training</CardTitle>
+              <CardDescription className="text-slate-600 dark:text-zinc-400">Tell us which training you want and how to reach you.</CardDescription>
             </div>
           </CardHeader>
           <CardContent>
             <form className="space-y-6" onSubmit={handleSubmit}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-700">Full Name</label>
+                  <label className="text-sm font-medium text-slate-700 dark:text-zinc-300">Full Name</label>
                   <Input
                     name="name"
                     value={form.name}
@@ -147,7 +127,7 @@ function TrainingRequestInner() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-700">Email</label>
+                  <label className="text-sm font-medium text-slate-700 dark:text-zinc-300">Email</label>
                   <Input
                     name="email"
                     type="email"
@@ -161,7 +141,7 @@ function TrainingRequestInner() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-700">Phone</label>
+                  <label className="text-sm font-medium text-slate-700 dark:text-zinc-300">Phone</label>
                   <Input
                     name="phone"
                     value={form.phone}
@@ -170,7 +150,7 @@ function TrainingRequestInner() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-700">Company</label>
+                  <label className="text-sm font-medium text-slate-700 dark:text-zinc-300">Company</label>
                   <Input
                     name="company"
                     value={form.company}
@@ -181,12 +161,12 @@ function TrainingRequestInner() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700">Training Class</label>
+                <label className="text-sm font-medium text-slate-700 dark:text-zinc-300">Training Class</label>
                 <select
                   name="courseId"
                   value={form.courseId}
                   onChange={handleChange}
-                  className="w-full p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                  className="w-full p-3 border border-slate-200 dark:border-white/[0.12] rounded-lg bg-white dark:bg-white/[0.04] text-slate-900 dark:text-zinc-100 focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                   required
                   disabled={coursesLoading}
                 >
@@ -203,22 +183,22 @@ function TrainingRequestInner() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700">Notes</label>
+                <label className="text-sm font-medium text-slate-700 dark:text-zinc-300">Notes</label>
                 <textarea
                   name="message"
                   value={form.message}
                   onChange={handleChange}
                   placeholder="Any specific goals, dates, or locations?"
                   rows={4}
-                  className="w-full p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                  className="w-full p-3 border border-slate-200 dark:border-white/[0.12] rounded-lg bg-white dark:bg-white/[0.04] text-slate-900 dark:text-zinc-100 focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                 />
               </div>
 
               {status === 'error' && (
-                <p className="text-sm text-red-600">{error}</p>
+                <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
               )}
               {status === 'success' && (
-                <p className="text-sm text-green-600">Request sent. We will contact you shortly.</p>
+                <p className="text-sm text-green-600 dark:text-green-400">Request sent. We will contact you shortly.</p>
               )}
 
               <div className="flex items-center gap-3">

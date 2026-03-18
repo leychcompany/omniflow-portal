@@ -1,20 +1,9 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import { Logo } from '@/components/Logo'
 import { useAuthStore } from '@/store/auth-store'
 import { supabase } from '@/lib/supabase'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
 import {
   Bot,
   GraduationCap,
@@ -22,21 +11,14 @@ import {
   Headphones,
   BookOpen,
   Shield,
-  Settings,
-  Crown,
-  LogOut,
   ChevronRight,
   Package,
   Newspaper,
-  LayoutDashboard,
   Tag,
   Loader2,
   Download,
-  Moon,
-  Sun,
 } from 'lucide-react'
 import { CarouselCard } from './_components/carousel-card'
-import { useTheme } from 'next-themes'
 
 const LOCKED_FEATURE_IDS = ['ai-assistant', 'view-documents', 'software']
 
@@ -95,56 +77,8 @@ function formatDate(dateStr: string) {
   })
 }
 
-function NavLink({
-  item,
-  isLocked,
-}: {
-  item: (typeof navItems)[0]
-  isLocked: boolean
-}) {
-  const pathname = usePathname()
-  const isDisabled = isLocked && LOCKED_FEATURE_IDS.includes(item.id)
-  const isActive = pathname === item.href
-  const Icon = item.icon
-
-  const className = `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-    isDisabled
-      ? 'text-slate-400 cursor-not-allowed opacity-60'
-      : isActive
-        ? 'bg-blue-600 text-white dark:bg-blue-600 dark:text-white'
-        : 'text-slate-600 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-white/[0.04] hover:text-slate-900 dark:hover:text-zinc-100'
-  }`
-
-  const content = (
-    <>
-      <Icon className="h-5 w-5 shrink-0" />
-      <span>{item.title}</span>
-      <ChevronRight className={`h-4 w-4 ml-auto shrink-0 ${isActive ? 'text-white/80' : 'text-slate-400'}`} />
-    </>
-  )
-
-  if (item.external) {
-    return (
-      <a href={item.href} target="_blank" rel="noopener noreferrer" className={className}>
-        {content}
-      </a>
-    )
-  }
-
-  if (isDisabled) {
-    return <span className={className}>{content}</span>
-  }
-
-  return (
-    <Link href={item.href} className={className}>
-      {content}
-    </Link>
-  )
-}
-
 export default function HomePage() {
-  const router = useRouter()
-  const { user, loading } = useAuthStore()
+  const { user } = useAuthStore()
   const [documentsCount, setDocumentsCount] = useState(0)
   const [trainingCount, setTrainingCount] = useState(0)
   const [softwareCount, setSoftwareCount] = useState(0)
@@ -183,12 +117,6 @@ export default function HomePage() {
   }, [])
 
   useEffect(() => {
-    if (!loading && user === null) {
-      router.replace('/login')
-    }
-  }, [loading, user, router])
-
-  useEffect(() => {
     if (typeof window === 'undefined' || hashHandledRef.current) return
     const hashParams = new URLSearchParams(window.location.hash.substring(1))
     const accessToken = hashParams.get('access_token')
@@ -206,147 +134,9 @@ export default function HomePage() {
 
   const stats = getDashboardStats(documentsCount, trainingCount, softwareCount, newsCount, tagsCount, user?.locked === true)
   const isLocked = user?.locked === true
-  const { theme, setTheme } = useTheme()
-  const [mounted, setMounted] = useState(false)
-  useEffect(() => setMounted(true), [])
 
   return (
-    <div className="min-h-screen flex bg-slate-100 dark:bg-[#0a0a0a]">
-      {/* Sidebar - sticky so footer stays visible when page scrolls */}
-      <aside className="hidden lg:flex flex-col w-64 shrink-0 sticky top-0 h-screen bg-white dark:bg-[#0f0f0f] border-r border-slate-200 dark:border-white/[0.06]">
-        <div className="p-5 border-b border-slate-100 dark:border-white/[0.06] shrink-0">
-          <Logo width={120} height={42} href="https://www.omniflow.com" />
-        </div>
-        <nav className="flex-1 min-h-0 p-3 space-y-0.5 overflow-y-auto">
-          <Link
-            href="/home"
-            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium bg-blue-50 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400"
-          >
-            <LayoutDashboard className="h-5 w-5 shrink-0" />
-            <span>Dashboard</span>
-            <ChevronRight className="h-4 w-4 ml-auto text-blue-500" />
-          </Link>
-          {navItems.map((item) => (
-            <NavLink key={item.id} item={item} isLocked={isLocked} />
-          ))}
-        </nav>
-        <div className="p-3 border-t border-slate-100 dark:border-white/[0.06] shrink-0 space-y-2">
-          {user?.role === 'admin' && (
-            <Link
-              href="/admin"
-              className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium text-slate-600 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-white/[0.04] transition-colors"
-            >
-              <Crown className="h-4 w-4 shrink-0 text-blue-600 dark:text-blue-400" />
-              <span>Admin Panel</span>
-              <ChevronRight className="h-4 w-4 ml-auto text-slate-400" />
-            </Link>
-          )}
-          {mounted && (
-            <button
-              type="button"
-              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-              className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium text-slate-600 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-white/[0.04] transition-colors"
-            aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-            >
-              {theme === 'dark' ? (
-                <Sun className="h-4 w-4 shrink-0" />
-              ) : (
-                <Moon className="h-4 w-4 shrink-0" />
-              )}
-              <span>{theme === 'dark' ? 'Light mode' : 'Dark mode'}</span>
-            </button>
-          )}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/[0.04] transition-colors text-left">
-                <Avatar className="h-9 w-9 shrink-0">
-                  <AvatarImage src={undefined} alt={user?.email || 'User'} />
-                  <AvatarFallback className="bg-blue-600 dark:bg-blue-500 text-white text-sm font-semibold">
-                    {user?.email?.charAt(0).toUpperCase() || 'U'}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-slate-900 dark:text-zinc-100 truncate">
-                    {user?.name || user?.email?.split('@')[0] || 'User'}
-                  </p>
-                  <p className="text-xs text-slate-500 dark:text-zinc-500 truncate">{user?.email || ''}</p>
-                </div>
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" side="right" className="min-w-48 rounded-xl">
-              <DropdownMenuItem onClick={() => router.push('/settings')}>
-                <Settings className="h-4 w-4 mr-2" />
-                Settings
-              </DropdownMenuItem>
-              {user?.role === 'admin' && (
-                <DropdownMenuItem onClick={() => router.push('/admin')}>
-                  <Crown className="h-4 w-4 mr-2 text-blue-600" />
-                  Admin Panel
-                </DropdownMenuItem>
-              )}
-              <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link href="/logout" prefetch={false}>
-                  <LogOut className="h-4 w-4 mr-2" />
-                  Logout
-                </Link>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </aside>
-
-      {/* Main */}
-      <div className="flex-1 flex flex-col min-w-0">
-        <header className="lg:hidden sticky top-0 z-50 flex items-center justify-between px-4 py-3 bg-white dark:bg-[#0f0f0f] border-b border-slate-200 dark:border-white/[0.06]">
-          <Logo width={110} height={38} href="https://www.omniflow.com" />
-          <div className="flex items-center gap-2">
-            {mounted && (
-              <button
-                type="button"
-                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                className="p-2 rounded-lg text-slate-600 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-white/[0.04]"
-                aria-label={theme === 'dark' ? 'Light mode' : 'Dark mode'}
-              >
-                {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-              </button>
-            )}
-            <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button className="flex items-center gap-2 p-2 rounded-full hover:bg-slate-100">
-                <Avatar className="h-8 w-8">
-                  <AvatarImage src={undefined} alt={user?.email || 'User'} />
-                  <AvatarFallback className="bg-blue-600 text-white text-sm font-semibold">
-                    {user?.email?.charAt(0).toUpperCase() || 'U'}
-                  </AvatarFallback>
-                </Avatar>
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="min-w-48 rounded-xl">
-              <DropdownMenuItem onClick={() => router.push('/settings')}>
-                <Settings className="h-4 w-4 mr-2" />
-                Settings
-              </DropdownMenuItem>
-              {user?.role === 'admin' && (
-                <DropdownMenuItem onClick={() => router.push('/admin')}>
-                  <Crown className="h-4 w-4 mr-2 text-blue-600" />
-                  Admin Panel
-                </DropdownMenuItem>
-              )}
-              <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link href="/logout" prefetch={false}>
-                  <LogOut className="h-4 w-4 mr-2" />
-                  Logout
-                </Link>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          </div>
-        </header>
-
-        <main className="flex-1 p-6 sm:p-8 min-w-0 overflow-y-auto">
-          <div className="w-full">
+    <div className="w-full">
             <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-zinc-100 tracking-tight">
               Welcome back{user?.name ? `, ${user.name.split(' ')[0]}` : ''}
             </h1>
@@ -527,7 +317,16 @@ export default function HomePage() {
                     )
                     if (item.external) {
                       return (
-                        <a key={item.id} href={item.href} target="_blank" rel="noopener noreferrer">
+                        <a
+                          key={item.id}
+                          href={item.href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => {
+                            e.preventDefault()
+                            window.open(item.href, '_blank', 'noopener,noreferrer')
+                          }}
+                        >
                           {content}
                         </a>
                       )
@@ -540,9 +339,6 @@ export default function HomePage() {
                   })}
               </div>
             </div>
-          </div>
-        </main>
-      </div>
     </div>
   )
 }

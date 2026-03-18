@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -11,8 +10,8 @@ import {
   Newspaper, 
   Calendar, 
   TrendingUp,
-  Loader2
 } from 'lucide-react'
+import { PortalPageSkeleton } from '@/components/portal/portal-page-skeleton'
 
 const normalizeSlug = (value: string) =>
   value
@@ -34,7 +33,6 @@ interface NewsArticle {
 }
 
 export default function NewsPage() {
-  const router = useRouter()
   const [articles, setArticles] = useState<NewsArticle[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -67,53 +65,23 @@ export default function NewsPage() {
   }
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <Loader2 className="h-10 w-10 animate-spin text-indigo-600" />
-      </div>
-    )
+    return <PortalPageSkeleton />
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <p className="text-red-600">{error}</p>
+      <div className="flex items-center justify-center py-24">
+        <p className="text-red-600 dark:text-red-400">{error}</p>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* Header */}
-      <header className="bg-white border-b border-slate-200/50 shadow-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between py-4">
-            <div className="flex items-center space-x-4">
-              <Button variant="ghost" className="flex items-center gap-2 px-3 touch-manipulation active:opacity-80" asChild>
-                <Link href="/home" prefetch>
-                  <ArrowLeft className="h-4 w-4" />
-                </Link>
-              </Button>
-              <div className="flex items-center space-x-3">
-                <div className="p-2 bg-indigo-100 rounded-lg">
-                  <Newspaper className="h-6 w-6 text-indigo-600" />
-                </div>
-                <div>
-                  <h1 className="text-xl font-bold text-slate-900">News</h1>
-                  <p className="text-sm text-slate-600">Latest company updates and announcements</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <div className="max-w-7xl mx-auto w-full">
         {featuredArticle && (
           <div className="mb-8">
-            <h2 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-indigo-600" />
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-zinc-100 mb-4 flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
               Featured Article
             </h2>
             <Card className="border-0 shadow-lg overflow-hidden">
@@ -140,9 +108,9 @@ export default function NewsPage() {
                       Featured
                     </Badge>
                   </div>
-                  <h3 className="text-xl font-bold text-slate-900 mb-3">{featuredArticle.title}</h3>
-                  <p className="text-slate-600 mb-4">{featuredArticle.excerpt || ''}</p>
-                  <div className="flex items-center gap-4 text-sm text-slate-500 mb-4">
+                  <h3 className="text-xl font-bold text-slate-900 dark:text-zinc-100 mb-3">{featuredArticle.title}</h3>
+                  <p className="text-slate-600 dark:text-zinc-400 mb-4">{featuredArticle.excerpt || ''}</p>
+                  <div className="flex items-center gap-4 text-sm text-slate-500 dark:text-zinc-400 mb-4">
                     <div className="flex items-center gap-1">
                       <Calendar className="h-4 w-4" />
                       {formatDate(featuredArticle.published_at)}
@@ -164,7 +132,7 @@ export default function NewsPage() {
 
         {sortedArticles.length > 0 ? (
           <div>
-            <h2 className="text-lg font-semibold text-slate-900 mb-4">
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-zinc-100 mb-4">
               {featuredArticle ? 'More Articles' : 'Latest Articles'}
             </h2>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -185,11 +153,11 @@ export default function NewsPage() {
                     )}
                   </div>
                   <CardContent className="p-4">
-                    <h3 className="font-semibold text-slate-900 mb-2 line-clamp-2">{article.title}</h3>
-                    <p className="text-sm text-slate-600 mb-3 line-clamp-2">{article.excerpt || ''}</p>
+                    <h3 className="font-semibold text-slate-900 dark:text-zinc-100 mb-2 line-clamp-2">{article.title}</h3>
+                    <p className="text-sm text-slate-600 dark:text-zinc-400 mb-3 line-clamp-2">{article.excerpt || ''}</p>
                     <div className="flex items-center justify-between">
-                      <span className="text-xs text-slate-500">{formatDate(article.published_at)}</span>
-                      <Button asChild size="sm" variant="ghost" className="text-indigo-600 hover:text-indigo-700">
+                      <span className="text-xs text-slate-500 dark:text-zinc-400">{formatDate(article.published_at)}</span>
+                      <Button asChild size="sm" variant="ghost" className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300">
                         <Link href={`/news/${article.slug}`}>Read More</Link>
                       </Button>
                     </div>
@@ -200,12 +168,11 @@ export default function NewsPage() {
           </div>
         ) : !featuredArticle ? (
           <div className="text-center py-12">
-            <Newspaper className="h-12 w-12 text-slate-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-slate-900 mb-2">No articles found</h3>
-            <p className="text-slate-600">Please check back later.</p>
+            <Newspaper className="h-12 w-12 text-slate-400 dark:text-zinc-500 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-zinc-100 mb-2">No articles found</h3>
+            <p className="text-slate-600 dark:text-zinc-400">Please check back later.</p>
           </div>
         ) : null}
-      </div>
     </div>
   )
 }

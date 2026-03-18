@@ -2,19 +2,17 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { 
-  ArrowLeft, 
   GraduationCap, 
   Play, 
   CheckCircle, 
   Calendar,
   Video,
-  Loader2
 } from 'lucide-react'
+import { PortalPageSkeleton } from '@/components/portal/portal-page-skeleton'
 
 interface Course {
   id: string
@@ -27,7 +25,6 @@ interface Course {
 }
 
 export default function TrainingPage() {
-  const router = useRouter()
   const [courses, setCourses] = useState<Course[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -47,59 +44,27 @@ export default function TrainingPage() {
   const otherCourses = featuredCourse ? courses.filter((c) => c.id !== featuredCourse.id) : courses
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 flex items-center justify-center">
-        <Loader2 className="h-10 w-10 animate-spin text-purple-600" />
-      </div>
-    )
+    return <PortalPageSkeleton />
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 flex items-center justify-center">
-        <p className="text-red-600">{error}</p>
+      <div className="flex items-center justify-center py-24">
+        <p className="text-red-600 dark:text-red-400">{error}</p>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
-      {/* Header */}
-      <header className="bg-white border-b border-slate-200/50 shadow-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between py-4">
-            <div className="flex items-center space-x-4">
-              <Button variant="ghost" className="flex items-center gap-2 px-3 touch-manipulation active:opacity-80" asChild>
-                <Link href="/home" prefetch>
-                  <ArrowLeft className="h-4 w-4" />
-                </Link>
-              </Button>
-              <div className="flex items-center space-x-3">
-                <div className="p-2 bg-purple-100 rounded-lg">
-                  <GraduationCap className="h-6 w-6 text-purple-600" />
-                </div>
-                <div>
-                  <h1 className="text-xl font-semibold text-slate-900">Training Programs</h1>
-                  <p className="text-sm text-slate-600">Enhance your skills and knowledge</p>
-                </div>
-              </div>
-            </div>
-            
-            <div className="flex items-center space-x-2"></div>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-7xl mx-auto w-full py-6">
         {/* Welcome Section */}
         <div className="mb-8">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-slate-900 mb-2">
+              <h1 className="text-3xl font-bold text-slate-900 dark:text-zinc-100 mb-2">
                 Training Center 🎓
               </h1>
-              <p className="text-slate-600 text-lg">
+              <p className="text-slate-600 dark:text-zinc-400 text-lg">
                 Access comprehensive training programs and earn certifications
               </p>
             </div>
@@ -117,20 +82,20 @@ export default function TrainingPage() {
         <div className="space-y-6">
             {/* Featured Course */}
             {featuredCourse && (
-            <Card className="border-0 shadow-lg bg-gradient-to-r from-purple-50 to-blue-50">
+            <Card className="border-0 shadow-lg bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-950/30 dark:to-blue-950/30">
               <CardContent className="p-8">
                 <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
                   <div className="flex-1">
                     <div className="flex items-center space-x-2 mb-4">
-                      <Badge className="bg-purple-100 text-purple-800">
+                      <Badge className="bg-purple-100 dark:bg-purple-500/20 text-purple-800 dark:text-purple-300">
                         <CheckCircle className="h-3 w-3 mr-1" />
                         Featured
                       </Badge>
                     </div>
-                    <h2 className="text-2xl font-bold text-slate-900 mb-3">
+                    <h2 className="text-2xl font-bold text-slate-900 dark:text-zinc-100 mb-3">
                       {featuredCourse.title}
                     </h2>
-                    <p className="text-slate-600 mb-4">
+                    <p className="text-slate-600 dark:text-zinc-400 mb-4">
                       {featuredCourse.description}
                     </p>
                     <div className="mb-6" />
@@ -147,7 +112,7 @@ export default function TrainingPage() {
                     </div>
                   </div>
                   <div className="mt-6 lg:mt-0 lg:ml-8">
-                    <div className="w-64 h-40 rounded-lg overflow-hidden bg-slate-100">
+                    <div className="w-64 h-40 rounded-lg overflow-hidden bg-slate-100 dark:bg-white/[0.04]">
                       {featuredCourse?.thumbnail ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
@@ -156,8 +121,8 @@ export default function TrainingPage() {
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-200 to-blue-200">
-                          <Video className="h-16 w-16 text-purple-600" />
+                        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-200 to-blue-200 dark:from-purple-900/50 dark:to-blue-900/50">
+                          <Video className="h-16 w-16 text-purple-600 dark:text-purple-400" />
                         </div>
                       )}
                     </div>
@@ -174,7 +139,7 @@ export default function TrainingPage() {
                   <CardContent className="p-0">
                     <div className="relative">
                       {course.thumbnail ? (
-                        <div className="w-full h-48 overflow-hidden rounded-t-lg bg-slate-100">
+                        <div className="w-full h-48 overflow-hidden rounded-t-lg bg-slate-100 dark:bg-white/[0.04]">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
                             src={course.thumbnail}
@@ -183,20 +148,20 @@ export default function TrainingPage() {
                           />
                         </div>
                       ) : (
-                        <div className="w-full h-48 bg-gradient-to-br from-slate-100 to-slate-200 rounded-t-lg flex items-center justify-center">
-                          <Video className="h-12 w-12 text-slate-400" />
+                        <div className="w-full h-48 bg-gradient-to-br from-slate-100 to-slate-200 dark:from-white/[0.04] dark:to-white/[0.08] rounded-t-lg flex items-center justify-center">
+                          <Video className="h-12 w-12 text-slate-400 dark:text-zinc-500" />
                         </div>
                       )}
                     </div>
                     
                     <div className="p-6">
                     <div className="flex items-center justify-between mb-3">
-                        <h3 className="font-semibold text-slate-900 group-hover:text-purple-600 transition-colors">
+                        <h3 className="font-semibold text-slate-900 dark:text-zinc-100 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
                           {course.title}
                         </h3>
                       </div>
                       
-                      <p className="text-sm text-slate-600 mb-4 line-clamp-2">
+                      <p className="text-sm text-slate-600 dark:text-zinc-400 mb-4 line-clamp-2">
                         {course.description}
                       </p>
                       
@@ -217,7 +182,6 @@ export default function TrainingPage() {
               ))}
             </div>
           </div>
-      </div>
     </div>
   )
 }

@@ -108,6 +108,11 @@ button {
   border: 1px solid rgba(255, 255, 255, 0.18);
 }
 
+.dark .glass {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
 /* Gradient text */
 .gradient-text {
   background: linear-gradient(135deg, #dc2626, #ef4444);
@@ -164,6 +169,10 @@ button {
   animation: shimmer 2s infinite;
 }
 
+.dark .shimmer {
+  background: linear-gradient(90deg, #1a1a1a 25%, #2a2a2a 50%, #1a1a1a 75%);
+}
+
 @keyframes shimmer {
   0% {
     background-position: -200% 0;
@@ -215,6 +224,10 @@ button {
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   background-color: #e5e7eb;
   border-radius: 0.375rem;
+}
+
+.dark .loading-skeleton {
+  background-color: #27272a;
 }
 
 /* Status indicators */

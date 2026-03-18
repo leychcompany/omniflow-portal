@@ -2,20 +2,17 @@
 
 import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Logo } from '@/components/Logo'
 import { useAuthStore } from '@/store/auth-store'
 import { chatbaseService, ChatbaseMessage } from '@/lib/chatbase'
 import { 
   Send, 
   Bot, 
   User, 
-  ArrowLeft, 
   Loader2, 
   Copy, 
   ThumbsUp, 
@@ -46,7 +43,6 @@ interface QuickReply {
 }
 
 export default function AIAssistantPage() {
-  const router = useRouter()
   const { user } = useAuthStore()
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -161,76 +157,48 @@ export default function AIAssistantPage() {
 
   if (user?.locked === true) {
     return (
-      <div className="min-h-screen bg-slate-50 flex flex-col">
-        <header className="bg-white border-b border-slate-200/50 shadow-sm">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center justify-between py-4">
-              <Button variant="ghost" className="flex items-center gap-2" asChild>
-                <Link href="/home" prefetch>
-                  <ArrowLeft className="h-4 w-4" />
-                </Link>
-              </Button>
+      <div className="flex-1 flex items-center justify-center p-8">
+        <Card className="max-w-md w-full border-0 shadow-lg">
+          <CardContent className="pt-8 pb-8 text-center">
+            <div className="mx-auto p-4 bg-amber-100 dark:bg-amber-950/50 rounded-full w-fit mb-4">
+              <Shield className="h-12 w-12 text-amber-600 dark:text-amber-400" />
             </div>
-          </div>
-        </header>
-        <div className="flex-1 flex items-center justify-center p-8">
-          <Card className="max-w-md w-full border-0 shadow-lg">
-            <CardContent className="pt-8 pb-8 text-center">
-              <div className="mx-auto p-4 bg-amber-100 rounded-full w-fit mb-4">
-                <Shield className="h-12 w-12 text-amber-600" />
-              </div>
-              <h2 className="text-xl font-semibold text-slate-900 mb-2">Account pending approval</h2>
-              <p className="text-slate-600 mb-6">
-                Your account is awaiting admin approval. AI Assistant will be available once an administrator unlocks your account.
-              </p>
-              <Button asChild>
-                <Link href="/home">Back to Home</Link>
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
+            <h2 className="text-xl font-semibold text-slate-900 dark:text-zinc-100 mb-2">Account pending approval</h2>
+            <p className="text-slate-600 dark:text-zinc-400 mb-6">
+              Your account is awaiting admin approval. AI Assistant will be available once an administrator unlocks your account.
+            </p>
+            <Button asChild>
+              <Link href="/home">Back to Home</Link>
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     )
   }
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden bg-slate-50 md:min-h-screen md:h-auto">
-      {/* Header - fixed on mobile, in-flow on desktop */}
-      <header className="fixed top-0 left-0 right-0 shrink-0 bg-white border-b border-slate-200/50 shadow-sm z-50 md:relative md:top-auto">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between py-4">
-            <div className="flex items-center space-x-4">
-              <Button variant="ghost" className="flex items-center gap-2 px-3 touch-manipulation active:opacity-80" asChild>
-                <Link href="/home" prefetch>
-                  <ArrowLeft className="h-4 w-4" />
-                </Link>
-              </Button>
-              <div className="flex items-center space-x-3">
-                <div className="w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-green-100"></div>
-                <div>
-                  <h1 className="text-xl font-bold text-slate-900">AI Assistant</h1>
-                  <p className="text-sm text-slate-600">Online</p>
-                </div>
-              </div>
-            </div>
-            
-            <div className="flex items-center space-x-3">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={clearChat}
-                className="flex items-center gap-2 px-4 py-2"
-              >
-                <RefreshCw className="h-4 w-4" />
-                Clear Chat
-              </Button>
-            </div>
+    <div className="flex-1 flex flex-col min-h-0 max-w-7xl mx-auto w-full -mt-6 -mx-2 sm:mx-0 sm:mt-0">
+      {/* Page bar */}
+      <div className="shrink-0 flex items-center justify-between gap-4 px-4 py-3 mb-2">
+        <div className="flex items-center gap-3">
+          <div className="w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-green-100 dark:border-green-900/50" />
+          <div>
+            <h1 className="text-xl font-bold text-slate-900 dark:text-zinc-100">AI Assistant</h1>
+            <p className="text-sm text-slate-600 dark:text-zinc-400">Online</p>
           </div>
         </div>
-      </header>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={clearChat}
+          className="flex items-center gap-2"
+        >
+          <RefreshCw className="h-4 w-4" />
+          Clear Chat
+        </Button>
+      </div>
 
-      {/* Main Content - pt-16 on mobile for fixed header */}
-      <div className="flex-1 flex flex-col min-h-0 pt-16 md:pt-0 md:max-w-7xl md:mx-auto md:px-4 md:py-6 md:min-h-0">
+      <div className="flex-1 flex flex-col min-h-0">
         <div className="flex flex-col lg:flex-row gap-8 flex-1 min-h-0 md:h-[calc(100vh-200px)]">
           {/* Chat Area - full width on mobile, expands to fill */}
           <div className="flex-1 min-w-0 flex flex-col min-h-0 md:min-h-[calc(100vh-200px)]">
@@ -254,7 +222,7 @@ export default function AIAssistantPage() {
                             <div className={`inline-block max-w-full p-4 rounded-2xl ${
                               message.isUser
                                 ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-br-sm'
-                                : 'bg-white border border-slate-200 text-slate-900 rounded-bl-sm shadow-sm'
+                                : 'bg-white dark:bg-[#141414] border border-slate-200 dark:border-white/[0.08] text-slate-900 dark:text-zinc-100 rounded-bl-sm shadow-sm'
                             }`}>
                               <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">{message.text}</p>
                             </div>
@@ -269,7 +237,7 @@ export default function AIAssistantPage() {
                           <div className="w-8 h-8 bg-gradient-to-br from-red-600 to-red-700 rounded-full flex items-center justify-center mr-2 mb-0.5 shadow-lg">
                             <Sparkles className="h-4 w-4 text-white" />
                           </div>
-                          <div className="bg-white border border-slate-200 rounded-2xl rounded-bl-sm p-4 shadow-sm">
+                          <div className="bg-white dark:bg-[#141414] border border-slate-200 dark:border-white/[0.08] rounded-2xl rounded-bl-sm p-4 shadow-sm">
                             <div className="flex items-center space-x-2">
                               <div className="flex space-x-1">
                                 <div className="w-2 h-2 bg-red-600 rounded-full animate-bounce"></div>
@@ -287,15 +255,15 @@ export default function AIAssistantPage() {
                 </div>
 
                 {/* Input Area - fixed at bottom on mobile */}
-                <div className="fixed bottom-0 left-0 right-0 shrink-0 bg-white border-t border-slate-200 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] z-50 md:relative md:bottom-auto md:pb-4">
-                  <div className="flex items-center bg-slate-50 rounded-3xl px-4 py-2">
+                <div className="fixed bottom-0 left-0 right-0 shrink-0 bg-white dark:bg-[#0f0f0f] border-t border-slate-200 dark:border-white/[0.08] p-4 pb-[max(1rem,env(safe-area-inset-bottom))] z-50 md:relative md:bottom-auto md:pb-4">
+                  <div className="flex items-center bg-slate-50 dark:bg-white/[0.04] rounded-3xl px-4 py-2">
                     <input
                       type="text"
                       value={inputText}
                       onChange={(e) => setInputText(e.target.value)}
                       onKeyPress={handleKeyPress}
                       placeholder="Type your message..."
-                      className="flex-1 min-w-0 border-0 bg-transparent focus:ring-0 focus:border-0 focus:outline-none text-base py-2 md:text-sm"
+                      className="flex-1 min-w-0 border-0 bg-transparent focus:ring-0 focus:border-0 focus:outline-none text-base py-2 md:text-sm text-slate-900 dark:text-zinc-100 placeholder:text-slate-400 dark:placeholder:text-zinc-500"
                     />
                     <Button
                       onClick={handleSendMessage}
@@ -303,7 +271,7 @@ export default function AIAssistantPage() {
                       className={`w-10 h-10 shrink-0 rounded-full p-0 transition-all duration-200 ${
                         inputText.trim() 
                           ? 'bg-gradient-to-br from-red-600 to-red-700 hover:from-red-700 hover:to-red-800' 
-                          : 'bg-slate-300'
+                          : 'bg-slate-300 dark:bg-zinc-600'
                       }`}
                     >
                       <Send className="h-4 w-4 text-white" />
@@ -319,12 +287,12 @@ export default function AIAssistantPage() {
             <Card className="h-full border-0 shadow-sm">
               <CardContent className="p-6 h-full flex flex-col">
                 <div className="mb-6">
-                  <h3 className="text-lg font-semibold text-slate-900 mb-2">Quick Replies</h3>
-                  <p className="text-sm text-slate-600">Click to ask common questions</p>
+                  <h3 className="text-lg font-semibold text-slate-900 dark:text-zinc-100 mb-2">Quick Replies</h3>
+                  <p className="text-sm text-slate-600 dark:text-zinc-400">Click to ask common questions</p>
                 </div>
                 
                 <div className="flex-1 overflow-y-auto">
-                  <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Quick actions</div>
+                  <div className="text-xs font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-3">Quick actions</div>
                   <div className="flex flex-wrap gap-2">
                     {quickReplies.map((reply, index) => {
                       const Icon = reply.icon

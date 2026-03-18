@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { useAuthStore } from '@/store/auth-store'
-import { ArrowLeft, Settings, Loader2, CheckCircle, XCircle } from 'lucide-react'
+import { Settings, Loader2, CheckCircle, XCircle } from 'lucide-react'
+import { PortalPageSkeleton } from '@/components/portal/portal-page-skeleton'
 
 export default function SettingsPage() {
   const router = useRouter()
@@ -72,56 +73,28 @@ export default function SettingsPage() {
   }
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <Loader2 className="h-10 w-10 animate-spin text-slate-600" />
-      </div>
-    )
+    return <PortalPageSkeleton />
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="bg-white border-b border-slate-200/50 shadow-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between py-4">
-            <div className="flex items-center space-x-4">
-              <Button variant="ghost" className="flex items-center gap-2 px-3 touch-manipulation active:opacity-80" asChild>
-                <Link href="/home" prefetch>
-                  <ArrowLeft className="h-4 w-4" />
-                </Link>
-              </Button>
-              <div className="flex items-center space-x-3">
-                <div className="p-2 bg-slate-100 rounded-lg">
-                  <Settings className="h-6 w-6 text-slate-600" />
-                </div>
-                <div>
-                  <h1 className="text-xl font-semibold text-slate-900">User Settings</h1>
-                  <p className="text-sm text-slate-600">Update your profile information</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-2xl mx-auto w-full">
         <Card className="border-0 shadow-lg">
           <CardHeader>
-            <CardTitle>Profile</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-slate-900 dark:text-zinc-100">Profile</CardTitle>
+            <CardDescription className="text-slate-600 dark:text-zinc-400">
               Update your name and business details. Your email cannot be changed.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="bg-slate-50 rounded-lg p-4">
-                <label className="text-sm font-medium text-slate-600">Email</label>
-                <p className="text-slate-900 mt-1">{user?.email}</p>
+              <div className="bg-slate-50 dark:bg-white/[0.04] rounded-lg p-4">
+                <label className="text-sm font-medium text-slate-600 dark:text-zinc-400">Email</label>
+                <p className="text-slate-900 dark:text-zinc-100 mt-1">{user?.email}</p>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label htmlFor="first_name" className="text-sm font-medium text-slate-700">
+                  <label htmlFor="first_name" className="text-sm font-medium text-slate-700 dark:text-zinc-300">
                     First Name
                   </label>
                   <Input
@@ -134,7 +107,7 @@ export default function SettingsPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <label htmlFor="last_name" className="text-sm font-medium text-slate-700">
+                  <label htmlFor="last_name" className="text-sm font-medium text-slate-700 dark:text-zinc-300">
                     Last Name
                   </label>
                   <Input
@@ -149,7 +122,7 @@ export default function SettingsPage() {
               </div>
 
               <div className="space-y-2">
-                <label htmlFor="company" className="text-sm font-medium text-slate-700">
+                <label htmlFor="company" className="text-sm font-medium text-slate-700 dark:text-zinc-300">
                   Company
                 </label>
                 <Input
@@ -163,7 +136,7 @@ export default function SettingsPage() {
               </div>
 
               <div className="space-y-2">
-                <label htmlFor="title" className="text-sm font-medium text-slate-700">
+                <label htmlFor="title" className="text-sm font-medium text-slate-700 dark:text-zinc-300">
                   Title
                 </label>
                 <Input
@@ -177,14 +150,14 @@ export default function SettingsPage() {
               </div>
 
               {error && (
-                <div className="flex items-center gap-2 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                <div className="flex items-center gap-2 p-4 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800/50 rounded-lg text-red-700 dark:text-red-400 text-sm">
                   <XCircle className="h-5 w-5 shrink-0" />
                   <span>{error}</span>
                 </div>
               )}
 
               {success && (
-                <div className="flex items-center gap-2 p-4 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-700 text-sm">
+                <div className="flex items-center gap-2 p-4 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/50 rounded-lg text-emerald-700 dark:text-emerald-400 text-sm">
                   <CheckCircle className="h-5 w-5 shrink-0" />
                   <span>Profile updated successfully.</span>
                 </div>
@@ -194,7 +167,7 @@ export default function SettingsPage() {
                 <Button
                   type="submit"
                   disabled={saving}
-                  className="bg-slate-900 hover:bg-slate-800"
+                  className="bg-slate-900 dark:bg-zinc-100 hover:bg-slate-800 dark:hover:bg-zinc-200 text-white dark:text-zinc-900"
                 >
                   {saving ? (
                     <>

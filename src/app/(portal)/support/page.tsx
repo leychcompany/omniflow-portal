@@ -8,9 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Logo } from '@/components/Logo'
 import {
-  ArrowLeft, 
   Headphones, 
   Plus, 
   Clock, 
@@ -258,42 +256,15 @@ export default function SupportPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
-      {/* Header */}
-      <header className="bg-white border-b border-slate-200/50 shadow-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between py-4">
-            <div className="flex items-center space-x-4">
-              <Button variant="ghost" className="flex items-center gap-2 px-3 touch-manipulation active:opacity-80" asChild>
-                <Link href="/home" prefetch>
-                  <ArrowLeft className="h-4 w-4" />
-                </Link>
-              </Button>
-              <div className="flex items-center space-x-3">
-                <div className="p-2 bg-red-100 rounded-lg">
-                  <Headphones className="h-6 w-6 text-red-600" />
-                </div>
-                <div>
-                  <h1 className="text-xl font-semibold text-slate-900">Support Center</h1>
-                  <p className="text-sm text-slate-600">Get help when you need it</p>
-                </div>
-              </div>
-            </div>
-            
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-7xl mx-auto w-full py-6">
         {/* Welcome Section */}
         <div className="mb-8">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-slate-900 mb-2">
+              <h1 className="text-3xl font-bold text-slate-900 dark:text-zinc-100 mb-2">
                 Support Center 🎧
               </h1>
-              <p className="text-slate-600 text-lg">
+              <p className="text-slate-600 dark:text-zinc-400 text-lg">
                 Get help from our expert support team
               </p>
             </div>
@@ -322,11 +293,11 @@ export default function SupportPage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
           <Card className="border-0 shadow-sm hover:shadow-lg transition-all cursor-pointer h-full">
             <CardContent className="p-6 text-center flex flex-col h-full">
-              <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mx-auto mb-4 shrink-0">
-                <Phone className="h-6 w-6 text-blue-600" />
+              <div className="w-12 h-12 bg-blue-100 dark:bg-blue-500/20 rounded-xl flex items-center justify-center mx-auto mb-4 shrink-0">
+                <Phone className="h-6 w-6 text-blue-600 dark:text-blue-400" />
               </div>
-              <h3 className="font-semibold text-slate-900 mb-2">Phone Support</h3>
-              <p className="text-sm text-slate-600 mb-2">+1 (281) 240-6161</p>
+              <h3 className="font-semibold text-slate-900 dark:text-zinc-100 mb-2">Phone Support</h3>
+              <p className="text-sm text-slate-600 dark:text-zinc-400 mb-2">+1 (281) 240-6161</p>
               <Button asChild variant="outline" size="sm" className="mt-auto">
                 <a href="tel:+12812406161">Call Now</a>
               </Button>
@@ -334,13 +305,13 @@ export default function SupportPage() {
           </Card>
           <Card className="border-0 shadow-sm hover:shadow-lg transition-all cursor-pointer h-full">
             <CardContent className="p-6 text-center flex flex-col h-full">
-              <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center mx-auto mb-4 shrink-0">
-                <FileText className="h-6 w-6 text-orange-600" />
+              <div className="w-12 h-12 bg-orange-100 dark:bg-orange-500/20 rounded-xl flex items-center justify-center mx-auto mb-4 shrink-0">
+                <FileText className="h-6 w-6 text-orange-600 dark:text-orange-400" />
               </div>
-              <h3 className="font-semibold text-slate-900 mb-2">Documents</h3>
-              <p className="text-sm text-slate-600 mb-4">Self-help resources</p>
+              <h3 className="font-semibold text-slate-900 dark:text-zinc-100 mb-2">Documents</h3>
+              <p className="text-sm text-slate-600 dark:text-zinc-400 mb-4">Self-help resources</p>
               <Button asChild variant="outline" size="sm" className="mt-auto">
-                <a href="/documents">Browse</a>
+                <Link href="/documents">Browse</Link>
               </Button>
             </CardContent>
           </Card>
@@ -349,8 +320,8 @@ export default function SupportPage() {
         {/* Content */}
         <Card ref={ticketFormRef} className="border-0 shadow-sm scroll-mt-24 md:scroll-mt-6">
           <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Headphones className="h-5 w-5 text-red-600" />
+            <CardTitle className="flex items-center space-x-2 text-slate-900 dark:text-zinc-100">
+              <Headphones className="h-5 w-5 text-red-600 dark:text-red-400" />
               <span>Create Support Ticket</span>
             </CardTitle>
             <CardDescription>
@@ -361,7 +332,7 @@ export default function SupportPage() {
               <form className="space-y-6" onSubmit={handleSubmit}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-700">Subject</label>
+                    <label className="text-sm font-medium text-slate-700 dark:text-zinc-300">Subject</label>
                     <Input
                       name="subject"
                       value={form.subject}
@@ -371,7 +342,7 @@ export default function SupportPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-700">Email</label>
+                    <label className="text-sm font-medium text-slate-700 dark:text-zinc-300">Email</label>
                     <Input
                       name="email"
                       type="email"
@@ -385,12 +356,12 @@ export default function SupportPage() {
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-700">Category</label>
+                    <label className="text-sm font-medium text-slate-700 dark:text-zinc-300">Category</label>
                     <select
                       name="category"
                       value={form.category}
                       onChange={handleChange}
-                      className="w-full p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                      className="w-full p-3 border border-slate-200 dark:border-white/[0.12] rounded-lg bg-white dark:bg-white/[0.04] text-slate-900 dark:text-zinc-100 focus:ring-2 focus:ring-red-500 focus:border-red-500"
                     >
                       <option>Technical</option>
                       <option>Billing</option>
@@ -399,12 +370,12 @@ export default function SupportPage() {
                     </select>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-700">Priority</label>
+                    <label className="text-sm font-medium text-slate-700 dark:text-zinc-300">Priority</label>
                     <select
                       name="priority"
                       value={form.priority}
                       onChange={handleChange}
-                      className="w-full p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                      className="w-full p-3 border border-slate-200 dark:border-white/[0.12] rounded-lg bg-white dark:bg-white/[0.04] text-slate-900 dark:text-zinc-100 focus:ring-2 focus:ring-red-500 focus:border-red-500"
                     >
                       <option>Low</option>
                       <option>Medium</option>
@@ -415,12 +386,12 @@ export default function SupportPage() {
                 </div>
                 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-700">Description</label>
+                  <label className="text-sm font-medium text-slate-700 dark:text-zinc-300">Description</label>
                   <textarea 
                     name="description"
                     value={form.description}
                     onChange={handleChange}
-                    className="w-full p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                    className="w-full p-3 border border-slate-200 dark:border-white/[0.12] rounded-lg bg-white dark:bg-white/[0.04] text-slate-900 dark:text-zinc-100 focus:ring-2 focus:ring-red-500 focus:border-red-500"
                     rows={6}
                     placeholder="Please provide detailed information about your issue..."
                     required
@@ -429,15 +400,15 @@ export default function SupportPage() {
                 
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <label className="text-sm font-medium text-slate-700">Attachments</label>
-                    <span className="text-xs text-slate-500">Up to {MAX_FILES} files, {Math.round(MAX_FILE_SIZE / (1024 * 1024))}MB each</span>
+                    <label className="text-sm font-medium text-slate-700 dark:text-zinc-300">Attachments</label>
+                    <span className="text-xs text-slate-500 dark:text-zinc-500">Up to {MAX_FILES} files, {Math.round(MAX_FILE_SIZE / (1024 * 1024))}MB each</span>
                   </div>
                   <div
-                    className="border-2 border-dashed border-slate-200 rounded-lg p-6 text-center"
+                    className="border-2 border-dashed border-slate-200 dark:border-white/[0.12] rounded-lg p-6 text-center"
                     onClick={() => fileInputRef.current?.click()}
                   >
-                    <FileText className="h-8 w-8 text-slate-400 mx-auto mb-2" />
-                    <p className="text-sm text-slate-600">Click to choose files</p>
+                    <FileText className="h-8 w-8 text-slate-400 dark:text-zinc-500 mx-auto mb-2" />
+                    <p className="text-sm text-slate-600 dark:text-zinc-400">Click to choose files</p>
                     <Input
                       ref={fileInputRef}
                       type="file"
@@ -452,8 +423,8 @@ export default function SupportPage() {
                   {attachments.length > 0 && (
                     <div className="space-y-2">
                       {attachments.map(file => (
-                        <div key={file.name} className="flex items-center justify-between rounded-md border border-slate-200 px-3 py-2">
-                          <span className="text-sm text-slate-700 truncate">{file.name}</span>
+                        <div key={file.name} className="flex items-center justify-between rounded-md border border-slate-200 dark:border-white/[0.08] px-3 py-2">
+                          <span className="text-sm text-slate-700 dark:text-zinc-300 truncate">{file.name}</span>
                           <Button
                             type="button"
                             variant="ghost"
@@ -469,10 +440,10 @@ export default function SupportPage() {
                 </div>
 
                 {error && (
-                  <p className="text-sm text-red-600">{error}</p>
+                  <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
                 )}
                 {status === 'success' && (
-                  <p className="text-sm text-green-600">Ticket submitted. Our team will contact you soon.</p>
+                  <p className="text-sm text-green-600 dark:text-green-400">Ticket submitted. Our team will contact you soon.</p>
                 )}
                 
                 <div className="flex items-center space-x-4 pt-2">
@@ -494,7 +465,6 @@ export default function SupportPage() {
               </form>
             </CardContent>
         </Card>
-      </div>
     </div>
   )
 }

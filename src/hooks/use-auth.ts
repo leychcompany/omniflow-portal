@@ -6,11 +6,13 @@ import type { User } from "@/types";
 import { useCallback, useEffect } from "react";
 
 export function useAuth() {
-  const { user, setUser, setLoading, setMustChangePassword } = useAuthStore();
+  const { user, setUser, setMustChangePassword } = useAuthStore();
 
   const markInvitesAsUsed = useCallback(async () => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       if (!session) return;
 
       await fetch("/api/invites/mark-used", {
@@ -22,57 +24,56 @@ export function useAuth() {
     }
   }, []);
 
-  const fetchUserProfile = useCallback(
-    async (_userId: string) => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        const headers: HeadersInit = { "Content-Type": "application/json" };
-        if (session?.access_token) {
-          headers["Authorization"] = `Bearer ${session.access_token}`;
-        }
-        const res = await fetch(`/api/profile?t=${Date.now()}`, {
-          credentials: "include",
-          headers,
-          cache: "no-store",
-        });
-        if (!res.ok) {
-          console.error("Error fetching user profile:", await res.json().catch(() => ({})));
-          setUser(null);
-          useAuthStore.getState().signOut();
-          setLoading(false);
-          return;
-        }
-        const data = (await res.json()) as User;
-        setUser(data);
-        await markInvitesAsUsed();
-      } catch (error) {
-        console.error("Error fetching user profile:", error);
+  const fetchUserProfile = useCallback(async () => {
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const headers: HeadersInit = { "Content-Type": "application/json" };
+      if (session?.access_token) {
+        headers["Authorization"] = `Bearer ${session.access_token}`;
+      }
+      const res = await fetch(`/api/profile?t=${Date.now()}`, {
+        credentials: "include",
+        headers,
+        cache: "no-store",
+      });
+      if (!res.ok) {
+        console.error(
+          "Error fetching user profile:",
+          await res.json().catch(() => ({})),
+        );
         setUser(null);
         useAuthStore.getState().signOut();
-      } finally {
-        setLoading(false);
+        return;
       }
-    },
-    [markInvitesAsUsed, setLoading, setUser]
-  );
+      const data = (await res.json()) as User;
+      setUser(data);
+      await markInvitesAsUsed();
+    } catch (error) {
+      console.error("Error fetching user profile:", error);
+      setUser(null);
+      useAuthStore.getState().signOut();
+    }
+  }, [markInvitesAsUsed, setUser]);
 
   useEffect(() => {
+    let finished = false;
     const refreshProfile = () => {
-      setLoading(true);
       supabase.auth
         .getSession()
         .then(({ data: { session } }) => {
+          if (finished) return;
           if (session?.user) {
-            fetchUserProfile(session.user.id);
+            fetchUserProfile();
           } else {
             setUser(null);
-            setLoading(false);
           }
         })
         .catch((error) => {
+          if (finished) return;
           console.error("useAuth: Error getting session:", error);
           setUser(null);
-          setLoading(false);
         });
     };
 
@@ -86,24 +87,29 @@ export function useAuth() {
     const handleRefreshEvent = () => refreshProfile();
     document.addEventListener("auth:refreshProfile", handleRefreshEvent);
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (session?.user) {
-        await fetchUserProfile(session.user.id);
+        await fetchUserProfile();
       } else {
         setUser(null);
-        setLoading(false);
       }
     });
 
     return () => {
+      finished = true;
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       document.removeEventListener("auth:refreshProfile", handleRefreshEvent);
       subscription.unsubscribe();
     };
-  }, [fetchUserProfile, setLoading, setUser]);
+  }, [fetchUserProfile, setUser]);
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
     if (error) throw error;
     setMustChangePassword(/Aa![0-9]{3,}$/.test(password));
   };
@@ -116,8 +122,11 @@ export function useAuth() {
   const resetPassword = async (email: string) => {
     const redirectUrl = process.env.NEXT_PUBLIC_APP_URL
       ? `${process.env.NEXT_PUBLIC_APP_URL}/auth/reset-password`
-      : (typeof window !== "undefined" ? window.location.origin : "") + "/auth/reset-password";
-    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: redirectUrl });
+      : (typeof window !== "undefined" ? window.location.origin : "") +
+        "/auth/reset-password";
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: redirectUrl,
+    });
     if (error) throw error;
   };
 

@@ -6,7 +6,7 @@ Planning document for implementing all UX enhancements on the home dashboard.
 
 ## 1. Dark Mode
 
-**Status:** [ ] Not started  
+**Status:** [x] Done  
 **Priority:** High
 **Effort:** Medium
 
@@ -20,12 +20,12 @@ Toggle between light and dark theme across the portal.
 - Persist preference (localStorage)
 
 ### Tasks
-- [ ] Audit current theme setup
-- [ ] Define design tokens (light + dark palette)
-- [ ] Add theme toggle in header/settings
-- [ ] Apply dark styles to: sidebar, cards, carousels, stats, modals
-- [ ] Ensure contrast and readability
-- [ ] Test with `prefers-color-scheme`
+- [x] Audit current theme setup
+- [x] Define design tokens (light + dark palette)
+- [x] Add theme toggle in header/settings
+- [x] Apply dark styles to: sidebar, cards, carousels, stats, modals
+- [x] Ensure contrast and readability
+- [x] Test with `prefers-color-scheme`
 
 ### Dependencies
 - None
@@ -93,7 +93,7 @@ Replace “No software yet” / “No courses yet” with clear, friendly empty 
 
 ## 5. Skeleton Loading
 
-**Status:** [ ] Not started  
+**Status:** [x] Done  
 **Priority:** High  
 **Effort:** Low
 
@@ -108,12 +108,12 @@ Replace spinners with skeleton placeholders for stats, carousels, and lists.
 - Any list/tables (documents, software, etc.)
 
 ### Tasks
-- [ ] Create `Skeleton` or `SkeletonCard` component
-- [ ] Match dimensions to real content
-- [ ] Add shimmer animation (optional)
-- [ ] Replace Loader2 with skeletons in home
-- [ ] Apply to other pages (documents, software, news, training)
-- [ ] Ensure no layout shift when content loads
+- [x] Create `Skeleton` or `SkeletonCard` component
+- [x] Match dimensions to real content
+- [x] Add shimmer animation (optional)
+- [x] Replace Loader2 with skeletons in home
+- [x] Apply to other pages (documents, software, news, training)
+- [x] Ensure no layout shift when content loads
 
 ### Dependencies
 - None
@@ -126,11 +126,9 @@ Suggested order by impact vs effort:
 
 | Order | Item         | Rationale                        |
 |-------|--------------|----------------------------------|
-| 1     | Skeleton     | Quick win, immediate UX gain      |
-| 2     | Empty States | Easy, improves perceived quality  |
-| 3     | Dark Mode    | Strong visual impact, common ask  |
-| 4     | Mini Charts  | Requires backend, good differentiator |
-| 5     | Draggable    | Most complex, nice-to-have        |
+| 1     | Skeleton     | Quick win, immediate UX gain [x]   |
+| 2     | Dark Mode    | Strong visual impact, common ask [x] |
+| 3     | Mini Charts  | Requires backend, good differentiator |
 
 ---
 
