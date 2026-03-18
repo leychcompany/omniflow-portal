@@ -64,7 +64,7 @@ export function AdminPageDashboard({
                 key={stat.label}
                 className={cn('rounded-lg px-4 py-2.5 text-center', colors.pills)}
               >
-                <p className="text-lg font-semibold text-slate-900 tabular-nums leading-none">
+                <p className="text-lg font-semibold text-slate-900 dark:text-zinc-100 tabular-nums leading-none">
                   {stat.value}
                 </p>
                 <p className="text-[11px] font-medium text-slate-500 dark:text-zinc-400 uppercase tracking-wider mt-1">

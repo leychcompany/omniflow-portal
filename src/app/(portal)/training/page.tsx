@@ -67,7 +67,7 @@ export default function TrainingPage() {
               </p>
             </div>
             <div className="mt-4 sm:mt-0">
-              <Button asChild className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white shadow-lg hover:shadow-xl transition-all">
+              <Button asChild className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-500/25 hover:shadow-xl transition-all">
                 <Link href="/training/request">
                   <Calendar className="h-4 w-4 mr-2" />
                   Schedule Training
@@ -80,12 +80,12 @@ export default function TrainingPage() {
         <div className="space-y-6">
             {/* Featured Course */}
             {featuredCourse && (
-            <Card className="border-0 shadow-lg bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-950/30 dark:to-blue-950/30">
+            <Card className="border-0 shadow-lg bg-gradient-to-r from-blue-50 to-slate-50 dark:from-blue-950/30 dark:to-slate-950/30">
               <CardContent className="p-8">
                 <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
                   <div className="flex-1">
                     <div className="flex items-center space-x-2 mb-4">
-                      <Badge className="bg-purple-100 dark:bg-purple-500/20 text-purple-800 dark:text-purple-300">
+                      <Badge className="bg-blue-100 dark:bg-blue-500/20 text-blue-800 dark:text-blue-300">
                         <CheckCircle className="h-3 w-3 mr-1" />
                         Featured
                       </Badge>
@@ -100,7 +100,7 @@ export default function TrainingPage() {
                     <div className="flex items-center space-x-4">
                       <Button
                         asChild
-                        className="bg-purple-600 hover:bg-purple-700 text-white transition-all duration-200"
+                        className="bg-blue-600 hover:bg-blue-700 text-white transition-all duration-200"
                       >
                         <Link href={`/training/request?course=${featuredCourse.id}`}>
                           <Play className="h-4 w-4 mr-2" />
@@ -119,8 +119,8 @@ export default function TrainingPage() {
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-200 to-blue-200 dark:from-purple-900/50 dark:to-blue-900/50">
-                          <Video className="h-16 w-16 text-purple-600 dark:text-purple-400" />
+                        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-200 to-slate-200 dark:from-blue-900/50 dark:to-slate-900/50">
+                          <Video className="h-16 w-16 text-blue-600 dark:text-blue-400" />
                         </div>
                       )}
                     </div>
@@ -154,7 +154,7 @@ export default function TrainingPage() {
                     
                     <div className="p-6">
                     <div className="flex items-center justify-between mb-3">
-                        <h3 className="font-semibold text-slate-900 dark:text-zinc-100 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+                        <h3 className="font-semibold text-slate-900 dark:text-zinc-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                           {course.title}
                         </h3>
                       </div>
@@ -166,7 +166,7 @@ export default function TrainingPage() {
                       <div className="mb-4" />
                       <Button 
                         asChild
-                        className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-white"
                         variant="default"
                       >
                         <Link href={`/training/request?course=${course.id}`}>

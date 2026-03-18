@@ -177,9 +177,9 @@ export default function AIAssistantPage() {
   }
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 max-w-7xl mx-auto w-full -mt-6 -mx-2 sm:mx-0 sm:mt-0">
+    <div className="flex flex-col h-[calc(100dvh-1.5rem)] max-h-[calc(100dvh-1.5rem)] min-h-[320px] w-full -mt-6 -mb-6 -mr-6 sm:-mt-8 sm:-mb-8 sm:-mr-8 max-w-none pl-0">
       {/* Page bar */}
-      <div className="shrink-0 flex items-center justify-between gap-4 px-4 py-3 mb-2">
+      <div className="shrink-0 flex items-center justify-between gap-4 px-2 py-2 mb-1">
         <div className="flex items-center gap-3">
           <div className="w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-green-100 dark:border-green-900/50" />
           <div>
@@ -198,11 +198,11 @@ export default function AIAssistantPage() {
         </Button>
       </div>
 
-      <div className="flex-1 flex flex-col min-h-0">
-        <div className="flex flex-col lg:flex-row gap-8 flex-1 min-h-0 md:h-[calc(100vh-200px)]">
-          {/* Chat Area - full width on mobile, expands to fill */}
-          <div className="flex-1 min-w-0 flex flex-col min-h-0 md:min-h-[calc(100vh-200px)]">
-            <Card className="flex-1 flex flex-col min-h-0 border-0 shadow-sm md:rounded-lg h-full">
+      <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+        <div className="flex flex-col lg:flex-row gap-4 lg:gap-5 flex-1 min-h-0 overflow-hidden">
+          {/* Chat Area - scrolls internally */}
+          <div className="flex-1 min-w-0 flex flex-col min-h-0 overflow-hidden">
+            <Card className="flex-1 flex flex-col min-h-0 border-0 shadow-sm md:rounded-lg overflow-hidden h-full">
               <CardContent className="p-0 flex-1 flex flex-col min-h-0">
                 {/* Messages - scrollable only, pb-20 on mobile for fixed input */}
                 <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0 pt-10 pb-24 px-4 md:pt-10 md:pb-8 md:px-8 scrollbar-hide">

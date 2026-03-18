@@ -166,7 +166,7 @@ function TrainingRequestInner() {
                   name="courseId"
                   value={form.courseId}
                   onChange={handleChange}
-                  className="w-full p-3 border border-slate-200 dark:border-white/[0.12] rounded-lg bg-white dark:bg-white/[0.04] text-slate-900 dark:text-zinc-100 focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                  className="w-full p-3 border border-slate-200 dark:border-white/[0.12] rounded-lg bg-white dark:bg-white/[0.04] text-slate-900 dark:text-zinc-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   required
                   disabled={coursesLoading}
                 >
@@ -190,7 +190,7 @@ function TrainingRequestInner() {
                   onChange={handleChange}
                   placeholder="Any specific goals, dates, or locations?"
                   rows={4}
-                  className="w-full p-3 border border-slate-200 dark:border-white/[0.12] rounded-lg bg-white dark:bg-white/[0.04] text-slate-900 dark:text-zinc-100 focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                  className="w-full p-3 border border-slate-200 dark:border-white/[0.12] rounded-lg bg-white dark:bg-white/[0.04] text-slate-900 dark:text-zinc-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
 
@@ -204,7 +204,7 @@ function TrainingRequestInner() {
               <div className="flex items-center gap-3">
                 <Button
                   type="submit"
-                  className="bg-purple-600 hover:bg-purple-700 text-white"
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
                   disabled={status === 'submitting'}
                 >
                   <Send className="h-4 w-4 mr-2" />
@@ -214,7 +214,6 @@ function TrainingRequestInner() {
             </form>
           </CardContent>
         </Card>
-      </div>
     </div>
   )
 }

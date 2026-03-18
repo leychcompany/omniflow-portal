@@ -271,7 +271,7 @@ export default function SupportPage() {
             <div className="mt-4 sm:mt-0 flex flex-wrap gap-3">
               <Button
                 asChild
-                className="bg-red-600 hover:bg-red-700 text-white transition-all duration-200"
+                className="bg-blue-600 hover:bg-blue-700 text-white transition-all duration-200"
               >
                 <a href="tel:+12812406161">
                   <Phone className="h-4 w-4 mr-2" />
@@ -280,7 +280,7 @@ export default function SupportPage() {
               </Button>
               <Button
                 onClick={() => ticketFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-                className="bg-red-600 hover:bg-red-700 text-white transition-all duration-200"
+                className="bg-blue-600 hover:bg-blue-700 text-white transition-all duration-200"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 New Ticket
@@ -321,7 +321,7 @@ export default function SupportPage() {
         <Card ref={ticketFormRef} className="border-0 shadow-sm scroll-mt-24 md:scroll-mt-6">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2 text-slate-900 dark:text-zinc-100">
-              <Headphones className="h-5 w-5 text-red-600 dark:text-red-400" />
+              <Headphones className="h-5 w-5 text-blue-600 dark:text-blue-400" />
               <span>Create Support Ticket</span>
             </CardTitle>
             <CardDescription>
@@ -361,7 +361,7 @@ export default function SupportPage() {
                       name="category"
                       value={form.category}
                       onChange={handleChange}
-                      className="w-full p-3 border border-slate-200 dark:border-white/[0.12] rounded-lg bg-white dark:bg-white/[0.04] text-slate-900 dark:text-zinc-100 focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                      className="w-full p-3 border border-slate-200 dark:border-white/[0.12] rounded-lg bg-white dark:bg-white/[0.04] text-slate-900 dark:text-zinc-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     >
                       <option>Technical</option>
                       <option>Billing</option>
@@ -375,7 +375,7 @@ export default function SupportPage() {
                       name="priority"
                       value={form.priority}
                       onChange={handleChange}
-                      className="w-full p-3 border border-slate-200 dark:border-white/[0.12] rounded-lg bg-white dark:bg-white/[0.04] text-slate-900 dark:text-zinc-100 focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                      className="w-full p-3 border border-slate-200 dark:border-white/[0.12] rounded-lg bg-white dark:bg-white/[0.04] text-slate-900 dark:text-zinc-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     >
                       <option>Low</option>
                       <option>Medium</option>
@@ -391,7 +391,7 @@ export default function SupportPage() {
                     name="description"
                     value={form.description}
                     onChange={handleChange}
-                    className="w-full p-3 border border-slate-200 dark:border-white/[0.12] rounded-lg bg-white dark:bg-white/[0.04] text-slate-900 dark:text-zinc-100 focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                    className="w-full p-3 border border-slate-200 dark:border-white/[0.12] rounded-lg bg-white dark:bg-white/[0.04] text-slate-900 dark:text-zinc-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     rows={6}
                     placeholder="Please provide detailed information about your issue..."
                     required
@@ -449,7 +449,7 @@ export default function SupportPage() {
                 <div className="flex items-center space-x-4 pt-2">
                   <Button
                     type="submit"
-                    className="bg-red-600 hover:bg-red-700 text-white transition-all duration-200"
+                    className="bg-blue-600 hover:bg-blue-700 text-white transition-all duration-200"
                     disabled={status === 'submitting'}
                   >
                     <Send className="h-4 w-4 mr-2" />
