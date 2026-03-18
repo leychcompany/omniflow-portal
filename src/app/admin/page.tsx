@@ -10,10 +10,11 @@ import {
   Package,
   Newspaper,
   Mail,
-  Loader2,
+  Home,
   ChevronRight,
 } from 'lucide-react'
 import { fetchWithAdminAuth } from '@/lib/admin-fetch'
+import { AdminDashboardSkeleton } from './_components/admin-dashboard-skeleton'
 import { DashboardStatCard } from './_components/dashboard-stat-card'
 import { DashboardActivityChart } from './_components/dashboard-activity-chart'
 import { DashboardRecentActivity } from './_components/dashboard-recent-activity'
@@ -102,18 +103,13 @@ export default function AdminDashboardPage() {
   }, [retryKey])
 
   if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center py-24 gap-4">
-        <Loader2 className="h-10 w-10 animate-spin text-blue-600" />
-        <p className="text-sm text-slate-500">Loading dashboard...</p>
-      </div>
-    )
+    return <AdminDashboardSkeleton />
   }
 
   if (error || !data) {
     return (
-      <div className="rounded-xl border border-red-200 bg-red-50 px-6 py-8 text-center space-y-4">
-        <p className="text-red-700 font-medium">{error || 'Failed to load dashboard'}</p>
+      <div className="rounded-xl border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/30 px-6 py-8 text-center space-y-4">
+        <p className="text-red-700 dark:text-red-400 font-medium">{error || 'Failed to load dashboard'}</p>
         <button
           type="button"
           onClick={() => {
@@ -122,7 +118,7 @@ export default function AdminDashboardPage() {
             setLoading(true)
             setRetryKey((k) => k + 1)
           }}
-          className="text-sm font-medium text-blue-600 hover:text-blue-700 underline"
+          className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 underline"
         >
           Retry
         </button>
@@ -139,8 +135,8 @@ export default function AdminDashboardPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
       >
-        <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Dashboard</h1>
-        <p className="text-slate-600 mt-1">
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-zinc-100 tracking-tight">Dashboard</h1>
+        <p className="text-slate-600 dark:text-zinc-400 mt-1">
           Overview of your portal metrics and recent activity
         </p>
       </motion.div>
@@ -149,50 +145,57 @@ export default function AdminDashboardPage() {
         <DashboardStatCard
           label="Users"
           value={counts.users}
-          icon={<Users className="h-5 w-5 text-blue-600" />}
+          icon={<Users className="h-5 w-5 text-slate-600 dark:text-slate-300" />}
           accent="users"
           href="/admin/users"
         />
         <DashboardStatCard
           label="Documents"
           value={counts.manuals}
-          icon={<BookOpen className="h-5 w-5 text-blue-600" />}
+          icon={<BookOpen className="h-5 w-5 text-slate-600 dark:text-slate-300" />}
           accent="manuals"
           href="/admin/manuals"
         />
         <DashboardStatCard
           label="Courses"
           value={counts.courses}
-          icon={<GraduationCap className="h-5 w-5 text-blue-600" />}
+          icon={<GraduationCap className="h-5 w-5 text-slate-600 dark:text-slate-300" />}
           accent="training"
           href="/admin/training"
         />
         <DashboardStatCard
           label="Software"
           value={counts.software}
-          icon={<Package className="h-5 w-5 text-blue-600" />}
+          icon={<Package className="h-5 w-5 text-slate-600 dark:text-slate-300" />}
           accent="software"
           href="/admin/software"
         />
         <DashboardStatCard
           label="News"
           value={counts.news}
-          icon={<Newspaper className="h-5 w-5 text-blue-600" />}
+          icon={<Newspaper className="h-5 w-5 text-slate-600 dark:text-slate-300" />}
           accent="news"
           href="/admin/news"
         />
         <DashboardStatCard
           label="Admins"
           value={counts.admins}
-          icon={<Users className="h-5 w-5 text-slate-600" />}
+          icon={<Users className="h-5 w-5 text-slate-600 dark:text-slate-300" />}
           accent="dashboard"
         />
         <DashboardStatCard
           label="Pending Invites"
           value={counts.invites}
-          icon={<Mail className="h-5 w-5 text-blue-600" />}
+          icon={<Mail className="h-5 w-5 text-slate-600 dark:text-slate-300" />}
           accent="analytics"
           href="/admin/users"
+        />
+        <DashboardStatCard
+          label="Back to Portal"
+          icon={<Home className="h-5 w-5 text-slate-600 dark:text-slate-300" />}
+          accent="dashboard"
+          href="/home"
+          hideValue
         />
       </div>
 
@@ -202,18 +205,18 @@ export default function AdminDashboardPage() {
         transition={{ duration: 0.3, delay: 0.1 }}
         className="grid gap-6 lg:grid-cols-[1fr_340px]"
       >
-        <Card className="border-slate-200 shadow-sm">
+        <Card>
           <CardHeader className="pb-2">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <CardTitle className="text-base font-semibold">Activity (last 14 days)</CardTitle>
-                <p className="text-sm text-slate-500">Logins and downloads by day</p>
+                <p className="text-sm text-slate-500 dark:text-zinc-400">Logins and downloads by day</p>
               </div>
               <div className="flex gap-3">
-                <span className="rounded-lg border border-blue-100 bg-blue-50/80 px-3 py-1.5 text-sm font-medium text-blue-700">
+                <span className="rounded-lg border border-blue-100 dark:border-blue-500/30 bg-blue-50/80 dark:bg-blue-500/15 px-3 py-1.5 text-sm font-medium text-blue-700 dark:text-blue-400">
                   {totals7d.logins} logins (7d)
                 </span>
-                <span className="rounded-lg border border-blue-100 bg-blue-50/80 px-3 py-1.5 text-sm font-medium text-blue-700">
+                <span className="rounded-lg border border-blue-100 dark:border-blue-500/30 bg-blue-50/80 dark:bg-blue-500/15 px-3 py-1.5 text-sm font-medium text-blue-700 dark:text-blue-400">
                   {totals7d.downloads} downloads (7d)
                 </span>
               </div>
@@ -242,24 +245,24 @@ export default function AdminDashboardPage() {
       >
         <Link
           href="/admin/users"
-          className="group flex items-center justify-between rounded-xl border border-slate-200 bg-white px-5 py-4 shadow-sm transition-all hover:border-slate-300 hover:shadow-md"
+          className="group flex items-center justify-between rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-[#141414] px-5 py-4 shadow-sm transition-all hover:border-slate-300 dark:hover:border-white/[0.12] hover:shadow-md"
         >
-          <span className="font-medium text-slate-700">Manage Users</span>
-          <ChevronRight className="h-5 w-5 text-slate-400 group-hover:text-blue-600 transition-colors" />
+          <span className="font-medium text-slate-700 dark:text-zinc-200">Manage Users</span>
+          <ChevronRight className="h-5 w-5 text-slate-400 dark:text-zinc-500 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" />
         </Link>
         <Link
           href="/admin/manuals"
-          className="group flex items-center justify-between rounded-xl border border-slate-200 bg-white px-5 py-4 shadow-sm transition-all hover:border-slate-300 hover:shadow-md"
+          className="group flex items-center justify-between rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-[#141414] px-5 py-4 shadow-sm transition-all hover:border-slate-300 dark:hover:border-white/[0.12] hover:shadow-md"
         >
-          <span className="font-medium text-slate-700">Manage Documents</span>
-          <ChevronRight className="h-5 w-5 text-slate-400 group-hover:text-blue-600 transition-colors" />
+          <span className="font-medium text-slate-700 dark:text-zinc-200">Manage Documents</span>
+          <ChevronRight className="h-5 w-5 text-slate-400 dark:text-zinc-500 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" />
         </Link>
         <Link
           href="/admin/analytics"
-          className="group flex items-center justify-between rounded-xl border border-slate-200 bg-white px-5 py-4 shadow-sm transition-all hover:border-slate-300 hover:shadow-md"
+          className="group flex items-center justify-between rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-[#141414] px-5 py-4 shadow-sm transition-all hover:border-slate-300 dark:hover:border-white/[0.12] hover:shadow-md"
         >
-          <span className="font-medium text-slate-700">View Analytics</span>
-          <ChevronRight className="h-5 w-5 text-slate-400 group-hover:text-blue-600 transition-colors" />
+          <span className="font-medium text-slate-700 dark:text-zinc-200">View Analytics</span>
+          <ChevronRight className="h-5 w-5 text-slate-400 dark:text-zinc-500 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" />
         </Link>
       </motion.div>
     </div>

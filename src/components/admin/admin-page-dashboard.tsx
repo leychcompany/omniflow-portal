@@ -36,10 +36,10 @@ export function AdminPageDashboard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}
       className={cn(
-        'group rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden',
+        'group rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-[#141414] shadow-sm overflow-hidden',
         'border-l-4',
         colors.border,
-        'transition-shadow duration-200 hover:shadow-md hover:border-slate-300',
+        'transition-shadow duration-200 hover:shadow-md hover:border-slate-300 dark:hover:border-white/[0.12]',
         className
       )}
     >
@@ -50,11 +50,11 @@ export function AdminPageDashboard({
               {icon}
             </div>
             <div>
-              <h2 className="text-base font-semibold text-slate-900 tracking-tight">
+              <h2 className="text-base font-semibold text-slate-900 dark:text-zinc-100 tracking-tight">
                 {title}
               </h2>
               {description && (
-                <p className="text-sm text-slate-500 mt-0.5">{description}</p>
+                <p className="text-sm text-slate-500 dark:text-zinc-400 mt-0.5">{description}</p>
               )}
             </div>
           </div>
@@ -67,7 +67,7 @@ export function AdminPageDashboard({
                 <p className="text-lg font-semibold text-slate-900 tabular-nums leading-none">
                   {stat.value}
                 </p>
-                <p className="text-[11px] font-medium text-slate-500 uppercase tracking-wider mt-1">
+                <p className="text-[11px] font-medium text-slate-500 dark:text-zinc-400 uppercase tracking-wider mt-1">
                   {stat.label}
                 </p>
               </div>

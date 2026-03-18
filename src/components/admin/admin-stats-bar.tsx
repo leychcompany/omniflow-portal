@@ -28,10 +28,10 @@ export function AdminStatsBar({ stats, className }: AdminStatsBarProps) {
     >
       {stats.map((stat, i) => (
         <div key={stat.label} className="flex items-center gap-2">
-          <span className="text-sm text-slate-500">{stat.label}</span>
-          <span className="font-semibold text-slate-800">{stat.value}</span>
+          <span className="text-sm text-slate-500 dark:text-zinc-400">{stat.label}</span>
+          <span className="font-semibold text-slate-800 dark:text-zinc-200">{stat.value}</span>
           {i < stats.length - 1 && (
-            <span className="text-slate-300 mx-1">•</span>
+            <span className="text-slate-300 dark:text-zinc-600 mx-1">•</span>
           )}
         </div>
       ))}

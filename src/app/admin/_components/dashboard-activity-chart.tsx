@@ -1,5 +1,6 @@
 'use client'
 
+import { useTheme } from 'next-themes'
 import {
   BarChart,
   Bar,
@@ -22,7 +23,27 @@ interface DashboardActivityChartProps {
   data: DayData[]
 }
 
+const LIGHT = {
+  grid: '#e2e8f0',
+  tick: '#64748b',
+  tooltipBg: 'white',
+  tooltipBorder: '#e2e8f0',
+  label: '#334155',
+}
+
+const DARK = {
+  grid: '#27272a',
+  tick: '#a1a1aa',
+  tooltipBg: '#18181b',
+  tooltipBorder: 'rgba(255,255,255,0.12)',
+  label: '#fafafa',
+}
+
 export function DashboardActivityChart({ data }: DashboardActivityChartProps) {
+  const { resolvedTheme } = useTheme()
+  const isDark = resolvedTheme === 'dark'
+  const c = isDark ? DARK : LIGHT
+
   return (
     <div className="h-[280px] w-full">
       <ResponsiveContainer width="100%" height="100%">
@@ -30,32 +51,32 @@ export function DashboardActivityChart({ data }: DashboardActivityChartProps) {
           data={data}
           margin={{ top: 12, right: 12, left: 0, bottom: 0 }}
         >
-          <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+          <CartesianGrid strokeDasharray="3 3" stroke={c.grid} vertical={false} />
           <XAxis
             dataKey="label"
-            tick={{ fontSize: 12, fill: '#64748b' }}
-            axisLine={{ stroke: '#e2e8f0' }}
+            tick={{ fontSize: 12, fill: c.tick }}
+            axisLine={{ stroke: c.grid }}
             tickLine={false}
           />
           <YAxis
-            tick={{ fontSize: 12, fill: '#64748b' }}
+            tick={{ fontSize: 12, fill: c.tick }}
             axisLine={false}
             tickLine={false}
             allowDecimals={false}
           />
           <Tooltip
             contentStyle={{
-              backgroundColor: 'white',
-              border: '1px solid #e2e8f0',
+              backgroundColor: c.tooltipBg,
+              border: `1px solid ${c.tooltipBorder}`,
               borderRadius: '8px',
               boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
             }}
-            labelStyle={{ fontWeight: 600, color: '#334155' }}
+            labelStyle={{ fontWeight: 600, color: c.label }}
           />
           <Legend
             wrapperStyle={{ paddingTop: 12 }}
             formatter={(value) => (
-              <span className="text-sm text-slate-600 capitalize">
+              <span className={isDark ? 'text-sm text-zinc-400 capitalize' : 'text-sm text-slate-600 capitalize'}>
                 {value.replace('_', ' ')}
               </span>
             )}

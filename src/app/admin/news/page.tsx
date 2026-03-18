@@ -127,9 +127,9 @@ export default function AdminNewsPage() {
           </div>
         </div>
       ) : filteredNews.length === 0 ? (
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-16 text-center shadow-sm">
-          <Newspaper className="h-12 w-12 text-zinc-300 mx-auto mb-4" />
-          <p className="text-sm text-zinc-600">
+        <div className="rounded-2xl border border-slate-200/80 dark:border-white/[0.08] bg-white dark:bg-[#141414] p-16 text-center shadow-sm">
+          <Newspaper className="h-12 w-12 text-zinc-300 dark:text-zinc-500 mx-auto mb-4" />
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
             {newsArticles.length === 0 ? 'No articles. Add one to get started.' : 'No matches.'}
           </p>
         </div>
@@ -140,17 +140,17 @@ export default function AdminNewsPage() {
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="font-semibold text-slate-900 truncate">{article.title}</h3>
+                    <h3 className="font-semibold text-slate-900 dark:text-zinc-100 truncate">{article.title}</h3>
                     {article.featured && (
-                      <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 font-medium shrink-0">Featured</span>
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-500/20 text-blue-800 dark:text-blue-400 font-medium shrink-0">Featured</span>
                     )}
                   </div>
-                  <p className="text-sm text-slate-500 mt-1 line-clamp-2">{article.excerpt || '—'}</p>
-                  <p className="text-xs text-slate-400 mt-2">{formatDate(article.published_at)}</p>
+                  <p className="text-sm text-slate-500 dark:text-zinc-400 mt-1 line-clamp-2">{article.excerpt || '—'}</p>
+                  <p className="text-xs text-slate-400 dark:text-zinc-500 mt-2">{formatDate(article.published_at)}</p>
                 </div>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 rounded-lg text-slate-400 hover:text-slate-700">
+                    <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 rounded-lg text-slate-400 dark:text-zinc-500 hover:text-slate-700 dark:hover:text-zinc-200">
                       <MoreHorizontal className="h-4 w-4" />
                       <span className="sr-only">Open menu</span>
                     </Button>

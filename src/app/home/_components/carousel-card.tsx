@@ -123,22 +123,22 @@ export function CarouselCard({
   const dotsCount = totalSlides
 
   return (
-    <div className={cn('rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm', className)}>
-      <div className="p-3 border-b border-slate-100 bg-blue-50/50 flex items-center justify-between gap-2">
-        <h2 className="text-sm font-semibold text-slate-900 flex items-center gap-2 shrink-0">
+    <div className={cn('rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-[#141414] overflow-hidden shadow-sm', className)}>
+      <div className="p-3 border-b border-slate-100 dark:border-white/[0.06] bg-blue-50/50 dark:bg-white/[0.03] flex items-center justify-between gap-2">
+        <h2 className="text-sm font-semibold text-slate-900 dark:text-zinc-100 flex items-center gap-2 shrink-0">
           {icon}
           {title}
         </h2>
         <div className="flex items-center gap-1 ml-auto">
-          <Link href={viewAllHref} className="text-xs font-medium text-blue-600 hover:text-blue-700 shrink-0">
+          <Link href={viewAllHref} className="text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 shrink-0">
             View all
           </Link>
-          <span className="text-slate-200 mx-1">|</span>
+          <span className="text-slate-200 dark:text-zinc-600 mx-1">|</span>
           <div className="flex items-center gap-1">
             <button
               type="button"
               onClick={() => scroll(-1)}
-              className="flex h-8 w-8 items-center justify-center rounded-md hover:bg-slate-100 text-slate-500 hover:text-slate-700 transition-colors"
+              className="flex h-8 w-8 items-center justify-center rounded-md hover:bg-slate-100 dark:hover:bg-white/[0.06] text-slate-500 dark:text-zinc-400 hover:text-slate-700 dark:hover:text-zinc-200 transition-colors"
               aria-label="Previous"
             >
               <ChevronLeft className="h-4 w-4" />
@@ -146,7 +146,7 @@ export function CarouselCard({
             <button
               type="button"
               onClick={() => scroll(1)}
-              className="flex h-8 w-8 items-center justify-center rounded-md hover:bg-slate-100 text-slate-500 hover:text-slate-700 transition-colors"
+              className="flex h-8 w-8 items-center justify-center rounded-md hover:bg-slate-100 dark:hover:bg-white/[0.06] text-slate-500 dark:text-zinc-400 hover:text-slate-700 dark:hover:text-zinc-200 transition-colors"
               aria-label="Next"
             >
               <ChevronRight className="h-4 w-4" />
@@ -185,7 +185,7 @@ export function CarouselCard({
                 onClick={() => goTo(i)}
                 className={cn(
                   'h-1.5 rounded-full transition-all',
-                  i === activeIndex ? 'w-5 bg-blue-600' : 'w-1.5 bg-slate-200 hover:bg-slate-300'
+                  i === activeIndex ? 'w-5 bg-blue-600 dark:bg-blue-500' : 'w-1.5 bg-slate-200 dark:bg-white/20 hover:bg-slate-300 dark:hover:bg-white/30'
                 )}
                 aria-label={`Go to slide ${i + 1}`}
               />

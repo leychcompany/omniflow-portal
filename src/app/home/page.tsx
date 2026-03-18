@@ -32,8 +32,11 @@ import {
   Tag,
   Loader2,
   Download,
+  Moon,
+  Sun,
 } from 'lucide-react'
 import { CarouselCard } from './_components/carousel-card'
+import { useTheme } from 'next-themes'
 
 const LOCKED_FEATURE_IDS = ['ai-assistant', 'view-documents', 'software']
 
@@ -108,8 +111,8 @@ function NavLink({
     isDisabled
       ? 'text-slate-400 cursor-not-allowed opacity-60'
       : isActive
-        ? 'bg-blue-600 text-white'
-        : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+        ? 'bg-blue-600 text-white dark:bg-blue-600 dark:text-white'
+        : 'text-slate-600 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-white/[0.04] hover:text-slate-900 dark:hover:text-zinc-100'
   }`
 
   const content = (
@@ -203,18 +206,21 @@ export default function HomePage() {
 
   const stats = getDashboardStats(documentsCount, trainingCount, softwareCount, newsCount, tagsCount, user?.locked === true)
   const isLocked = user?.locked === true
+  const { theme, setTheme } = useTheme()
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => setMounted(true), [])
 
   return (
-    <div className="min-h-screen flex bg-slate-100">
-      {/* Sidebar */}
-      <aside className="hidden lg:flex flex-col w-64 shrink-0 bg-white border-r border-slate-200">
-        <div className="p-5 border-b border-slate-100">
+    <div className="min-h-screen flex bg-slate-100 dark:bg-[#0a0a0a]">
+      {/* Sidebar - sticky so footer stays visible when page scrolls */}
+      <aside className="hidden lg:flex flex-col w-64 shrink-0 sticky top-0 h-screen bg-white dark:bg-[#0f0f0f] border-r border-slate-200 dark:border-white/[0.06]">
+        <div className="p-5 border-b border-slate-100 dark:border-white/[0.06] shrink-0">
           <Logo width={120} height={42} href="https://www.omniflow.com" />
         </div>
-        <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto">
+        <nav className="flex-1 min-h-0 p-3 space-y-0.5 overflow-y-auto">
           <Link
             href="/home"
-            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium bg-blue-50 text-blue-700"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium bg-blue-50 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400"
           >
             <LayoutDashboard className="h-5 w-5 shrink-0" />
             <span>Dashboard</span>
@@ -224,21 +230,46 @@ export default function HomePage() {
             <NavLink key={item.id} item={item} isLocked={isLocked} />
           ))}
         </nav>
-        <div className="p-3 border-t border-slate-100">
+        <div className="p-3 border-t border-slate-100 dark:border-white/[0.06] shrink-0 space-y-2">
+          {user?.role === 'admin' && (
+            <Link
+              href="/admin"
+              className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium text-slate-600 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-white/[0.04] transition-colors"
+            >
+              <Crown className="h-4 w-4 shrink-0 text-blue-600 dark:text-blue-400" />
+              <span>Admin Panel</span>
+              <ChevronRight className="h-4 w-4 ml-auto text-slate-400" />
+            </Link>
+          )}
+          {mounted && (
+            <button
+              type="button"
+              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+              className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium text-slate-600 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-white/[0.04] transition-colors"
+            aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+            >
+              {theme === 'dark' ? (
+                <Sun className="h-4 w-4 shrink-0" />
+              ) : (
+                <Moon className="h-4 w-4 shrink-0" />
+              )}
+              <span>{theme === 'dark' ? 'Light mode' : 'Dark mode'}</span>
+            </button>
+          )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg hover:bg-slate-50 transition-colors text-left">
+              <button className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/[0.04] transition-colors text-left">
                 <Avatar className="h-9 w-9 shrink-0">
                   <AvatarImage src={undefined} alt={user?.email || 'User'} />
-                  <AvatarFallback className="bg-blue-600 text-white text-sm font-semibold">
+                  <AvatarFallback className="bg-blue-600 dark:bg-blue-500 text-white text-sm font-semibold">
                     {user?.email?.charAt(0).toUpperCase() || 'U'}
                   </AvatarFallback>
                 </Avatar>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-slate-900 truncate">
+                  <p className="text-sm font-medium text-slate-900 dark:text-zinc-100 truncate">
                     {user?.name || user?.email?.split('@')[0] || 'User'}
                   </p>
-                  <p className="text-xs text-slate-500 truncate">{user?.email || ''}</p>
+                  <p className="text-xs text-slate-500 dark:text-zinc-500 truncate">{user?.email || ''}</p>
                 </div>
               </button>
             </DropdownMenuTrigger>
@@ -267,9 +298,20 @@ export default function HomePage() {
 
       {/* Main */}
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="lg:hidden sticky top-0 z-50 flex items-center justify-between px-4 py-3 bg-white border-b border-slate-200">
+        <header className="lg:hidden sticky top-0 z-50 flex items-center justify-between px-4 py-3 bg-white dark:bg-[#0f0f0f] border-b border-slate-200 dark:border-white/[0.06]">
           <Logo width={110} height={38} href="https://www.omniflow.com" />
-          <DropdownMenu>
+          <div className="flex items-center gap-2">
+            {mounted && (
+              <button
+                type="button"
+                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                className="p-2 rounded-lg text-slate-600 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-white/[0.04]"
+                aria-label={theme === 'dark' ? 'Light mode' : 'Dark mode'}
+              >
+                {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+              </button>
+            )}
+            <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="flex items-center gap-2 p-2 rounded-full hover:bg-slate-100">
                 <Avatar className="h-8 w-8">
@@ -300,23 +342,24 @@ export default function HomePage() {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+          </div>
         </header>
 
-        <main className="flex-1 p-6 sm:p-8 min-w-0">
+        <main className="flex-1 p-6 sm:p-8 min-w-0 overflow-y-auto">
           <div className="w-full">
-            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-zinc-100 tracking-tight">
               Welcome back{user?.name ? `, ${user.name.split(' ')[0]}` : ''}
             </h1>
-            <p className="text-slate-500 mt-1">
+            <p className="text-slate-500 dark:text-zinc-400 mt-1">
               {user?.company ? `at ${user.company}` : "Here's what's available in your portal"}
             </p>
 
             {isLocked && (
-              <div className="mt-6 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
-                <Shield className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+              <div className="mt-6 flex items-start gap-3 rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/50 px-4 py-3">
+                <Shield className="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
                 <div>
-                  <p className="font-medium text-amber-900 text-sm">Account pending approval</p>
-                  <p className="text-amber-800/90 text-sm mt-0.5">
+                  <p className="font-medium text-amber-900 dark:text-amber-100 text-sm">Account pending approval</p>
+                  <p className="text-amber-800/90 dark:text-amber-200/90 text-sm mt-0.5">
                     Some features will be available once an administrator unlocks your account.
                   </p>
                 </div>
@@ -332,14 +375,14 @@ export default function HomePage() {
                     key={i}
                     href={stat.href}
                     prefetch
-                    className="group flex items-center gap-4 rounded-xl bg-white border border-slate-200 px-4 py-4 shadow-sm hover:shadow-md hover:border-blue-200 transition-all"
+                    className="group flex items-center gap-4 rounded-xl bg-white dark:bg-[#141414] border border-slate-200 dark:border-white/[0.08] px-4 py-4 shadow-sm hover:shadow-md hover:border-blue-200 dark:hover:border-blue-500/50 transition-all"
                   >
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-500/10 text-blue-600">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400">
                       <Icon className="h-5 w-5" />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-lg font-bold text-slate-900 tabular-nums">{stat.value}</p>
-                      <p className="text-xs text-slate-500 truncate">{stat.label}</p>
+                      <p className="text-lg font-bold text-slate-900 dark:text-zinc-100 tabular-nums">{stat.value}</p>
+                      <p className="text-xs text-slate-500 dark:text-zinc-400 truncate">{stat.label}</p>
                     </div>
                   </Link>
                 )
@@ -349,9 +392,9 @@ export default function HomePage() {
             {/* Software (left) + Latest news (right) */}
             <div className="mt-10 grid grid-cols-1 lg:grid-cols-2 gap-6">
               {loadingData || software.length === 0 ? (
-                <div className="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm">
-                  <div className="p-3 border-b border-slate-100 bg-blue-50/50 flex items-center justify-between">
-                    <h2 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
+                <div className="rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-[#141414] overflow-hidden shadow-sm">
+                  <div className="p-3 border-b border-slate-100 dark:border-white/[0.06] bg-blue-50/50 dark:bg-white/[0.03] flex items-center justify-between">
+                    <h2 className="text-sm font-semibold text-slate-900 dark:text-zinc-100 flex items-center gap-2">
                       <Package className="h-4 w-4 text-blue-600" />
                       Software
                     </h2>
@@ -360,19 +403,19 @@ export default function HomePage() {
                     {loadingData ? (
                       <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
                     ) : (
-                      <p className="text-sm text-slate-500">No software yet.</p>
+                      <p className="text-sm text-slate-500 dark:text-zinc-400">No software yet.</p>
                     )}
                   </div>
                 </div>
               ) : (
-                <CarouselCard title="Software" viewAllHref="/software" icon={<Package className="h-4 w-4 text-blue-600" />}>
+                <CarouselCard title="Software" viewAllHref="/software" icon={<Package className="h-4 w-4 text-blue-600 dark:text-blue-400" />}>
                   {software.map((item) => (
                     <div
                       key={item.id}
-                      className="flex flex-col rounded-2xl overflow-hidden border border-slate-200/80 bg-white shadow-sm hover:border-blue-300 hover:shadow-lg hover:shadow-blue-100/30 transition-all duration-300"
+                      className="flex flex-col rounded-2xl overflow-hidden border border-slate-200/80 dark:border-white/[0.08] bg-white dark:bg-[#141414] shadow-sm hover:border-blue-300 dark:hover:border-blue-500/50 hover:shadow-lg hover:shadow-blue-100/30 dark:hover:shadow-blue-500/10 transition-all duration-300"
                     >
                       {item.image_url ? (
-                        <div className="aspect-16/10 w-full overflow-hidden bg-slate-100">
+                        <div className="aspect-16/10 w-full overflow-hidden bg-slate-100 dark:bg-white/[0.04]">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
                             src={item.image_url}
@@ -386,9 +429,9 @@ export default function HomePage() {
                         </div>
                       )}
                       <div className="p-3 flex flex-col flex-1">
-                        <h3 className="font-semibold text-slate-900 line-clamp-2">{item.title}</h3>
+                        <h3 className="font-semibold text-slate-900 dark:text-zinc-100 line-clamp-2">{item.title}</h3>
                         {item.filename && (
-                          <p className="text-xs text-slate-500 mt-1 truncate">{item.filename}</p>
+                          <p className="text-xs text-slate-500 dark:text-zinc-500 mt-1 truncate">{item.filename}</p>
                         )}
                         <button
                           type="button"
@@ -409,10 +452,10 @@ export default function HomePage() {
               )}
 
               {loadingData ? (
-                <div className="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm">
-                  <div className="p-3 border-b border-slate-100 bg-blue-50/50">
-                    <h2 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
-                      <Newspaper className="h-4 w-4 text-blue-600" />
+                <div className="rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-[#141414] overflow-hidden shadow-sm">
+                  <div className="p-3 border-b border-slate-100 dark:border-white/[0.06] bg-blue-50/50 dark:bg-white/[0.03]">
+                    <h2 className="text-sm font-semibold text-slate-900 dark:text-zinc-100 flex items-center gap-2">
+                      <Newspaper className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                       Latest news
                     </h2>
                   </div>
@@ -421,24 +464,24 @@ export default function HomePage() {
                   </div>
                 </div>
               ) : news.length === 0 ? (
-                <div className="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm">
-                  <div className="p-3 border-b border-slate-100 bg-blue-50/50">
-                    <h2 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
-                      <Newspaper className="h-4 w-4 text-blue-600" />
+                <div className="rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-[#141414] overflow-hidden shadow-sm">
+                  <div className="p-3 border-b border-slate-100 dark:border-white/[0.06] bg-blue-50/50 dark:bg-white/[0.03]">
+                    <h2 className="text-sm font-semibold text-slate-900 dark:text-zinc-100 flex items-center gap-2">
+                      <Newspaper className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                       Latest news
                     </h2>
                   </div>
-                  <p className="py-12 text-center text-sm text-slate-500">No news yet.</p>
+                  <p className="py-12 text-center text-sm text-slate-500 dark:text-zinc-400">No news yet.</p>
                 </div>
               ) : (
-                <CarouselCard title="Latest news" viewAllHref="/news" icon={<Newspaper className="h-4 w-4 text-blue-600" />}>
+                <CarouselCard title="Latest news" viewAllHref="/news" icon={<Newspaper className="h-4 w-4 text-blue-600 dark:text-blue-400" />}>
                       {news.map((article) => (
                         <Link
                           key={article.id}
                           href={`/news/${article.slug}`}
-                          className="flex flex-col rounded-2xl overflow-hidden border border-slate-200/80 bg-white shadow-sm hover:border-blue-300 hover:shadow-lg hover:shadow-blue-100/30 transition-all duration-300 group"
+                          className="flex flex-col rounded-2xl overflow-hidden border border-slate-200/80 dark:border-white/[0.08] bg-white dark:bg-[#141414] shadow-sm hover:border-blue-300 dark:hover:border-blue-500/50 hover:shadow-lg hover:shadow-blue-100/30 dark:hover:shadow-blue-500/10 transition-all duration-300 group"
                         >
-                          <div className="aspect-16/10 w-full overflow-hidden bg-slate-100">
+                          <div className="aspect-16/10 w-full overflow-hidden bg-slate-100 dark:bg-white/[0.04]">
                             {article.image_url ? (
                               /* eslint-disable-next-line @next/next/no-img-element */
                               <img
@@ -448,14 +491,14 @@ export default function HomePage() {
                               />
                             ) : (
                               <div className="h-full w-full flex items-center justify-center">
-                                <Newspaper className="h-10 w-10 text-slate-300" />
+                                <Newspaper className="h-10 w-10 text-slate-300 dark:text-zinc-500" />
                               </div>
                             )}
                           </div>
                           <div className="p-3">
-                            <p className="font-semibold text-slate-900 line-clamp-2 group-hover:text-blue-700">{article.title}</p>
-                            <p className="text-xs text-slate-500 mt-1 flex items-center gap-1">
-                              {article.featured && <span className="text-blue-600 font-medium">Featured</span>}
+                            <p className="font-semibold text-slate-900 dark:text-zinc-100 line-clamp-2 group-hover:text-blue-700 dark:group-hover:text-blue-400">{article.title}</p>
+                            <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1 flex items-center gap-1">
+                              {article.featured && <span className="text-blue-600 dark:text-blue-400 font-medium">Featured</span>}
                               {formatDate(article.published_at)}
                             </p>
                           </div>
@@ -467,19 +510,19 @@ export default function HomePage() {
 
             {/* Quick access */}
             <div className="mt-10">
-              <h2 className="text-sm font-semibold text-slate-900 mb-4">Quick access</h2>
+              <h2 className="text-sm font-semibold text-slate-900 dark:text-zinc-100 mb-4">Quick access</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
                 {navItems
                   .filter((item) => !isLocked || !LOCKED_FEATURE_IDS.includes(item.id))
                   .map((item) => {
                     const Icon = item.icon
                     const content = (
-                      <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3.5 hover:border-blue-200 hover:bg-blue-50/50 transition-all group">
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                      <div className="flex items-center gap-3 rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-[#141414] px-4 py-3.5 hover:border-blue-200 dark:hover:border-blue-500/50 hover:bg-blue-50/50 dark:hover:bg-white/[0.04] transition-all group">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400">
                           <Icon className="h-5 w-5" />
                         </div>
-                        <span className="font-medium text-slate-900 group-hover:text-blue-700">{item.title}</span>
-                        <ChevronRight className="h-4 w-4 ml-auto text-slate-300 group-hover:text-blue-500" />
+                        <span className="font-medium text-slate-900 dark:text-zinc-100 group-hover:text-blue-700 dark:group-hover:text-blue-400">{item.title}</span>
+                        <ChevronRight className="h-4 w-4 ml-auto text-slate-300 dark:text-zinc-500 group-hover:text-blue-500 dark:group-hover:text-blue-400" />
                       </div>
                     )
                     if (item.external) {

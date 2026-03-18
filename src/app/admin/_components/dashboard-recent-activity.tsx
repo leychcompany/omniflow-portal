@@ -19,10 +19,10 @@ interface DashboardRecentActivityProps {
 }
 
 const EVENT_CONFIG: Record<string, { icon: React.ElementType; label: string; color: string }> = {
-  login: { icon: LogIn, label: 'Login', color: 'text-blue-600 bg-blue-50' },
-  logout: { icon: LogOut, label: 'Logout', color: 'text-slate-600 bg-slate-100' },
-  document_download: { icon: FileDown, label: 'Document', color: 'text-blue-600 bg-blue-50' },
-  software_download: { icon: Package, label: 'Software', color: 'text-blue-600 bg-blue-50' },
+  login: { icon: LogIn, label: 'Login', color: 'text-blue-600 bg-blue-50 dark:text-blue-400 dark:bg-blue-500/20' },
+  logout: { icon: LogOut, label: 'Logout', color: 'text-slate-600 bg-slate-100 dark:text-zinc-400 dark:bg-white/[0.06]' },
+  document_download: { icon: FileDown, label: 'Document', color: 'text-blue-600 bg-blue-50 dark:text-blue-400 dark:bg-blue-500/20' },
+  software_download: { icon: Package, label: 'Software', color: 'text-blue-600 bg-blue-50 dark:text-blue-400 dark:bg-blue-500/20' },
 }
 
 function formatTimeAgo(dateStr: string) {
@@ -41,30 +41,30 @@ function formatTimeAgo(dateStr: string) {
 
 export function DashboardRecentActivity({ events }: DashboardRecentActivityProps) {
   return (
-    <Card className="border-slate-200 shadow-sm">
+    <Card className="border-slate-200 dark:border-white/[0.08] bg-white dark:bg-[#141414] shadow-sm">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base font-semibold">Recent activity</CardTitle>
           <Link
             href="/admin/analytics"
-            className="text-xs font-medium text-blue-600 hover:text-blue-700 flex items-center gap-0.5"
+            className="text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 flex items-center gap-0.5"
           >
             View all
             <ChevronRight className="h-3.5 w-3.5" />
           </Link>
         </div>
-        <p className="text-sm text-slate-500">Last logins and downloads</p>
+        <p className="text-sm text-slate-500 dark:text-zinc-400">Last logins and downloads</p>
       </CardHeader>
       <CardContent>
         <ul className="space-y-2 max-h-[280px] overflow-y-auto pr-1">
           {events.length === 0 ? (
-            <li className="text-sm text-slate-500 py-6 text-center">No recent activity</li>
+            <li className="text-sm text-slate-500 dark:text-zinc-400 py-6 text-center">No recent activity</li>
           ) : (
             events.map((evt, i) => {
               const config = EVENT_CONFIG[evt.event_type] ?? {
                 icon: FileDown,
                 label: evt.event_type.replace(/_/g, ' '),
-                color: 'text-slate-600 bg-slate-100',
+                color: 'text-slate-600 bg-slate-100 dark:text-zinc-400 dark:bg-white/[0.06]',
               }
               const Icon = config.icon
               const userLabel = evt.user_name || evt.user_email || 'Unknown'
@@ -75,7 +75,7 @@ export function DashboardRecentActivity({ events }: DashboardRecentActivityProps
                   initial={{ opacity: 0, x: -4 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.2, delay: i * 0.03 }}
-                  className="flex items-center gap-3 py-2 px-2 rounded-lg hover:bg-slate-50/80 transition-colors"
+                  className="flex items-center gap-3 py-2 px-2 rounded-lg hover:bg-slate-50/80 dark:hover:bg-white/[0.04] transition-colors"
                 >
                   <div
                     className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${config.color}`}
@@ -83,14 +83,14 @@ export function DashboardRecentActivity({ events }: DashboardRecentActivityProps
                     <Icon className="h-4 w-4" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-slate-800 truncate">{userLabel}</p>
-                    <p className="text-xs text-slate-500 truncate">
+                    <p className="text-sm font-medium text-slate-800 dark:text-zinc-200 truncate">{userLabel}</p>
+                    <p className="text-xs text-slate-500 dark:text-zinc-400 truncate">
                       {evt.event_type === 'login' || evt.event_type === 'logout'
                         ? config.label
                         : `${config.label}: ${detail}`}
                     </p>
                   </div>
-                  <span className="text-xs text-slate-400 shrink-0">{formatTimeAgo(evt.created_at)}</span>
+                  <span className="text-xs text-slate-400 dark:text-zinc-500 shrink-0">{formatTimeAgo(evt.created_at)}</span>
                 </motion.li>
               )
             })

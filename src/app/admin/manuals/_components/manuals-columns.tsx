@@ -28,15 +28,15 @@ export function getManualsColumns(
         const m = row.original
         return (
           <div className="flex items-start gap-3 min-w-0">
-            <div className="shrink-0 p-2 rounded-lg bg-blue-50 text-blue-600">
-              <FileText className="h-4 w-4" />
+            <div className="shrink-0 p-2.5 rounded-lg bg-blue-50 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400">
+              <FileText className="h-5 w-5" />
             </div>
             <div className="min-w-0">
-              <p className="font-semibold text-slate-900 truncate">{m.title}</p>
+              <p className="font-semibold text-slate-900 dark:text-zinc-100 truncate">{m.title}</p>
               {m.description ? (
-                <p className="text-slate-500 text-xs mt-0.5 line-clamp-1">{m.description}</p>
+                <p className="text-slate-500 dark:text-zinc-400 text-xs mt-0.5 line-clamp-1">{m.description}</p>
               ) : (
-                <p className="text-slate-400 text-xs mt-0.5 italic">No description</p>
+                <p className="text-slate-400 dark:text-zinc-500 text-xs mt-0.5 italic">No description</p>
               )}
             </div>
           </div>
@@ -50,13 +50,13 @@ export function getManualsColumns(
       ),
       cell: ({ row }) => {
         const tags = (row.original.tags ?? []).slice(0, 4)
-        if (tags.length === 0) return <span className="text-slate-400 text-sm">—</span>
+        if (tags.length === 0) return <span className="text-slate-400 dark:text-zinc-500 text-sm">—</span>
         return (
           <div className="flex flex-wrap gap-1">
             {tags.map((tag) => (
               <span
                 key={tag}
-                className="inline-flex px-2 py-0.5 rounded-md text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100"
+                className="inline-flex px-2 py-0.5 rounded-md text-xs font-medium bg-blue-50 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400 border border-blue-100 dark:border-blue-500/30"
               >
                 {tag}
               </span>
@@ -72,11 +72,11 @@ export function getManualsColumns(
         const m = row.original
         return (
           <div className="hidden lg:block min-w-0">
-            <p className="text-slate-600 text-xs font-mono truncate max-w-[160px]" title={m.filename}>
+            <p className="text-slate-600 dark:text-zinc-300 text-xs font-mono truncate max-w-[160px]" title={m.filename}>
               {m.filename ?? '—'}
             </p>
             {m.size && (
-              <p className="text-slate-400 text-xs mt-0.5">{m.size}</p>
+              <p className="text-slate-400 dark:text-zinc-500 text-xs mt-0.5">{m.size}</p>
             )}
           </div>
         )
@@ -90,7 +90,7 @@ export function getManualsColumns(
         </SortableHeader>
       ),
       cell: ({ row }) => (
-        <span className="hidden xl:inline text-slate-500 text-xs">
+        <span className="hidden xl:inline text-slate-500 dark:text-zinc-400 text-xs">
           {row.original.created_at ? formatDate(row.original.created_at) : '—'}
         </span>
       ),
@@ -105,7 +105,7 @@ export function getManualsColumns(
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg"
+              className="h-8 w-8 text-slate-500 dark:text-zinc-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-500/20 rounded-lg"
               asChild
             >
               <a href={`/api/manuals/${manual.id}/view`} target="_blank" rel="noopener noreferrer" title="View PDF">
@@ -115,7 +115,7 @@ export function getManualsColumns(
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg"
+              className="h-8 w-8 text-slate-500 dark:text-zinc-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-500/20 rounded-lg"
               onClick={() => router.push(`/admin/manuals/${manual.id}/edit`)}
               title="Edit"
             >
@@ -123,7 +123,7 @@ export function getManualsColumns(
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg">
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-500 dark:text-zinc-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/20 rounded-lg">
                   <MoreHorizontal className="h-4 w-4" />
                   <span className="sr-only">More</span>
                 </Button>

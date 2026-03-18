@@ -47,7 +47,7 @@ export function DataTable<TData, TValue>({
   })
 
   return (
-    <div className={cn('rounded-2xl border border-slate-200/80 bg-white shadow-lg overflow-hidden', className)}>
+    <div className={cn('rounded-2xl border border-slate-200/80 dark:border-white/[0.08] bg-white dark:bg-[#141414] shadow-lg overflow-hidden', className)}>
       <Table>
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (
@@ -56,8 +56,8 @@ export function DataTable<TData, TValue>({
               className={cn(
                 'border-b',
                 headerVariant === 'indigo'
-                  ? 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-600 hover:to-blue-700 border-blue-500/30'
-                  : 'bg-slate-800 hover:bg-slate-800 border-slate-700'
+                  ? 'bg-gradient-to-r from-blue-600 to-blue-700 dark:from-blue-600 dark:to-blue-700 hover:from-blue-600 hover:to-blue-700 border-blue-500/30'
+                  : 'bg-slate-800 dark:bg-slate-800/80 hover:bg-slate-800 border-slate-700 dark:border-white/[0.08]'
               )}
             >
               {headerGroup.headers.map((header) => (
@@ -83,14 +83,14 @@ export function DataTable<TData, TValue>({
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: rowIndex * 0.03, duration: 0.2 }}
                 className={cn(
-                  'border-b border-slate-100 last:border-0',
+                  'border-b border-slate-100 dark:border-white/[0.04] last:border-0',
                   'transition-all duration-150',
-                  rowIndex % 2 === 0 ? 'bg-white' : 'bg-slate-50/50',
-                  'hover:bg-blue-50/40 hover:shadow-[inset_0_0_0_1px_rgba(59,130,246,0.1)]'
+                  rowIndex % 2 === 0 ? 'bg-white dark:bg-transparent' : 'bg-slate-50/50 dark:bg-white/[0.02]',
+                  'hover:bg-blue-50/40 dark:hover:bg-white/[0.06] hover:shadow-[inset_0_0_0_1px_rgba(59,130,246,0.1)] dark:hover:shadow-[inset_0_0_0_1px_rgba(59,130,246,0.2)]'
                 )}
               >
                 {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id} className="py-4 px-5 text-slate-700">
+                  <TableCell key={cell.id} className="py-4 px-5 text-slate-700 dark:text-zinc-200">
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </TableCell>
                 ))}
@@ -98,7 +98,7 @@ export function DataTable<TData, TValue>({
             ))
           ) : (
             <TableRow>
-              <TableCell colSpan={columns.length} className="h-24 text-center text-slate-500">
+              <TableCell colSpan={columns.length} className="h-24 text-center text-slate-500 dark:text-zinc-400">
                 No results.
               </TableCell>
             </TableRow>
@@ -124,7 +124,7 @@ export function SortableHeader({
       type="button"
       onClick={() => column.toggleSorting(sorted === 'asc')}
       className={cn(
-        'flex items-center gap-1.5 hover:text-blue-200 transition-colors cursor-pointer select-none',
+        'flex items-center gap-1.5 hover:text-blue-200 dark:hover:text-blue-300 transition-colors cursor-pointer select-none',
         className
       )}
     >

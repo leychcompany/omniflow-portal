@@ -17,7 +17,7 @@ export function TablePagination({ page, totalPages, total, limit, onPageChange }
 
   return (
     <div className="flex flex-col sm:flex-row items-center justify-between gap-4 py-4 px-1">
-      <p className="text-sm text-slate-600">
+      <p className="text-sm text-slate-600 dark:text-zinc-400">
         Showing <span className="font-medium">{from}</span>–<span className="font-medium">{to}</span> of{" "}
         <span className="font-medium">{total}</span>
       </p>
@@ -32,7 +32,7 @@ export function TablePagination({ page, totalPages, total, limit, onPageChange }
           <ChevronLeft className="h-4 w-4" />
           Prev
         </Button>
-        <span className="text-sm text-slate-600 px-2">
+        <span className="text-sm text-slate-600 dark:text-zinc-400 px-2">
           Page {page} of {totalPages}
         </span>
         <Button

@@ -157,7 +157,8 @@ export function CommandPalette() {
 
   const itemClass = cn(
     'flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer text-sm',
-    'data-[selected=true]:bg-blue-50 data-[selected=true]:text-blue-700 data-[selected=true]:outline-none'
+    'data-[selected=true]:bg-blue-50 data-[selected=true]:text-blue-700 data-[selected=true]:outline-none',
+    'dark:data-[selected=true]:bg-blue-500/20 dark:data-[selected=true]:text-blue-400'
   )
 
   return (
@@ -166,15 +167,15 @@ export function CommandPalette() {
         type="button"
         onClick={() => setOpen(true)}
         className={cn(
-          'hidden md:flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-slate-500',
-          'border border-slate-200/80 bg-white/50 backdrop-blur-sm',
-          'hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50/30',
+          'hidden md:flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-slate-500 dark:text-zinc-400',
+          'border border-slate-200/80 dark:border-white/[0.12] bg-white/50 dark:bg-white/[0.06] backdrop-blur-sm',
+          'hover:border-blue-300 dark:hover:border-blue-500/50 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50/30 dark:hover:bg-blue-500/10',
           'transition-all duration-200 shadow-sm'
         )}
       >
         <Search className="h-4 w-4" />
         <span>Search...</span>
-        <kbd className="ml-1 px-1.5 py-0.5 text-xs font-mono bg-slate-100 rounded border border-slate-200 text-slate-400">
+        <kbd className="ml-1 px-1.5 py-0.5 text-xs font-mono bg-slate-100 dark:bg-white/[0.08] rounded border border-slate-200 dark:border-white/[0.12] text-slate-400 dark:text-zinc-500">
           {searchShortcut}
         </kbd>
       </button>
@@ -193,31 +194,31 @@ export function CommandPalette() {
         className={cn(
           'fixed left-1/2 top-[20%] -translate-x-1/2 z-[100]',
           'w-full max-w-xl rounded-2xl overflow-hidden',
-          'bg-white/95 backdrop-blur-xl shadow-2xl shadow-slate-900/20',
-          'border border-slate-200/80',
+          'bg-white/95 dark:bg-[#141414]/95 backdrop-blur-xl shadow-2xl shadow-slate-900/20 dark:shadow-black/40',
+          'border border-slate-200/80 dark:border-white/[0.08]',
           'animate-in fade-in-0 zoom-in-95 duration-200'
         )}
       >
-        <div className="flex items-center gap-3 border-b border-slate-200/80 px-4 py-3">
-          <Search className="h-4 w-4 text-slate-400 shrink-0" />
+        <div className="flex items-center gap-3 border-b border-slate-200/80 dark:border-white/[0.06] px-4 py-3">
+          <Search className="h-4 w-4 text-slate-400 dark:text-zinc-500 shrink-0" />
           <Command.Input
             placeholder="Search users, documents, courses..."
             value={searchQuery}
             onValueChange={setSearchQuery}
-            className="flex-1 bg-transparent text-sm outline-none placeholder:text-slate-400"
+            className="flex-1 bg-transparent text-sm outline-none placeholder:text-slate-400 dark:placeholder:text-zinc-500"
           />
-          <kbd className="hidden sm:inline px-2 py-1 text-xs font-mono text-slate-400 bg-slate-100 rounded">ESC</kbd>
+          <kbd className="hidden sm:inline px-2 py-1 text-xs font-mono text-slate-400 dark:text-zinc-500 bg-slate-100 dark:bg-white/[0.08] rounded">ESC</kbd>
         </div>
         <Command.List className="max-h-[360px] overflow-y-auto p-2">
           {showSearchResults ? (
             <>
               {searchLoading ? (
-                <div className="flex items-center justify-center gap-2 py-12 text-slate-500">
+                <div className="flex items-center justify-center gap-2 py-12 text-slate-500 dark:text-zinc-400">
                   <Loader2 className="h-5 w-5 animate-spin" />
                   <span className="text-sm">Searching...</span>
                 </div>
               ) : !hasResults ? (
-                <Command.Empty className="py-8 text-center text-sm text-slate-500">
+                <Command.Empty className="py-8 text-center text-sm text-slate-500 dark:text-zinc-400">
                   No users, documents, or items found.
                 </Command.Empty>
               ) : (
@@ -311,7 +312,7 @@ export function CommandPalette() {
             </>
           ) : (
             <>
-              <Command.Empty className="py-8 text-center text-sm text-slate-500">No results found.</Command.Empty>
+              <Command.Empty className="py-8 text-center text-sm text-slate-500 dark:text-zinc-400">No results found.</Command.Empty>
               <Command.Group heading="Navigate" className="mb-2">
                 {COMMANDS.filter((c) => !c.id.includes('-add')).map((cmd) => {
                   const Icon = cmd.icon
@@ -328,7 +329,7 @@ export function CommandPalette() {
                   )
                 })}
               </Command.Group>
-              <Command.Group heading="Quick actions" className="border-t border-slate-100 pt-2">
+              <Command.Group heading="Quick actions" className="border-t border-slate-100 dark:border-white/[0.06] pt-2">
                 {COMMANDS.filter((c) => c.id.includes('-add')).map((cmd) => {
                   const Icon = cmd.icon
                   return (
@@ -347,7 +348,7 @@ export function CommandPalette() {
             </>
           )}
         </Command.List>
-        <div className="border-t border-slate-100 px-4 py-2 flex items-center gap-2 text-xs text-slate-400">
+        <div className="border-t border-slate-100 dark:border-white/[0.06] px-4 py-2 flex items-center gap-2 text-xs text-slate-400 dark:text-zinc-500">
           <span>↑↓</span> <span>navigate</span>
           <span className="mx-2">•</span>
           <span>↵</span> <span>select</span>

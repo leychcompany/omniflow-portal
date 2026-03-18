@@ -128,9 +128,9 @@ export default function AdminSoftwarePage() {
           </div>
         </div>
       ) : filteredSoftware.length === 0 ? (
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-16 text-center shadow-sm">
-          <Package className="h-12 w-12 text-slate-400 mx-auto mb-4" />
-          <p className="text-sm text-slate-600">
+        <div className="rounded-2xl border border-slate-200/80 dark:border-white/[0.08] bg-white dark:bg-[#141414] p-16 text-center shadow-sm">
+          <Package className="h-12 w-12 text-slate-400 dark:text-zinc-500 mx-auto mb-4" />
+          <p className="text-sm text-slate-600 dark:text-zinc-400">
             {softwareItems.length === 0 ? 'No software. Add a ZIP to get started.' : 'No matches.'}
           </p>
         </div>
@@ -140,13 +140,13 @@ export default function AdminSoftwarePage() {
             <AdminCard key={item.id}>
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-slate-900 truncate">{item.title}</h3>
+                  <h3 className="font-semibold text-slate-900 dark:text-zinc-100 truncate">{item.title}</h3>
                   <p className="text-sm text-slate-500 mt-1 line-clamp-2">{item.description || '—'}</p>
                   <p className="text-xs text-slate-400 mt-2 font-mono truncate">{item.filename}{item.size && ` · ${item.size}`}</p>
                 </div>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 rounded-lg text-slate-400 hover:text-slate-700">
+                    <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 rounded-lg text-slate-400 dark:text-zinc-500 hover:text-slate-700 dark:hover:text-zinc-200">
                       <MoreHorizontal className="h-4 w-4" />
                       <span className="sr-only">Open menu</span>
                     </Button>

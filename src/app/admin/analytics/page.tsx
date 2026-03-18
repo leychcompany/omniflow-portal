@@ -93,7 +93,7 @@ export default function AdminAnalyticsPage() {
           <select
             value={analyticsEventTypeFilter}
             onChange={(e) => handleFilterChange(e.target.value)}
-            className="w-full sm:w-auto h-11 px-4 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 shadow-sm focus:ring-2 focus:ring-blue-500/50 focus:border-blue-400"
+            className="w-full sm:w-auto h-11 px-4 rounded-xl border border-slate-200 dark:border-white/[0.12] bg-white dark:bg-white/[0.04] text-sm text-slate-700 dark:text-zinc-100 shadow-sm focus:ring-2 focus:ring-blue-500/50 focus:border-blue-400 dark:focus:border-blue-500"
           >
             <option value="">All events</option>
             <option value="login">Login</option>
@@ -107,7 +107,7 @@ export default function AdminAnalyticsPage() {
           size="sm"
           onClick={() => fetchAnalytics()}
           disabled={analyticsLoading}
-          className="h-11 rounded-xl border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+          className="h-11 rounded-xl"
         >
           <RefreshCw className={`h-4 w-4 mr-2 ${analyticsLoading ? 'animate-spin' : ''}`} />
           Refresh
@@ -118,54 +118,54 @@ export default function AdminAnalyticsPage() {
       {analyticsLoading ? (
         <TableSkeleton rowCount={8} colCount={4} />
       ) : analyticsError ? (
-        <div className="border border-rose-200 bg-rose-50/80 rounded-2xl p-6 flex items-center gap-4 shadow-sm">
-          <div className="p-2.5 rounded-xl bg-rose-100">
-            <XCircle className="h-6 w-6 text-rose-600" />
+        <div className="border border-rose-200 dark:border-rose-900/50 bg-rose-50/80 dark:bg-rose-950/30 rounded-2xl p-6 flex items-center gap-4 shadow-sm">
+          <div className="p-2.5 rounded-xl bg-rose-100 dark:bg-rose-500/20">
+            <XCircle className="h-6 w-6 text-rose-600 dark:text-rose-400" />
           </div>
-          <span className="text-sm font-medium text-rose-800">{analyticsError}</span>
+          <span className="text-sm font-medium text-rose-800 dark:text-rose-400">{analyticsError}</span>
         </div>
       ) : analyticsEvents.length === 0 ? (
-        <div className="border border-slate-200/80 bg-white rounded-2xl p-16 text-center shadow-sm">
-          <div className="w-16 h-16 rounded-2xl bg-blue-50 flex items-center justify-center mx-auto mb-6">
-            <Activity className="h-8 w-8 text-blue-500" />
+        <div className="border border-slate-200/80 dark:border-white/[0.08] bg-white dark:bg-[#141414] rounded-2xl p-16 text-center shadow-sm">
+          <div className="w-16 h-16 rounded-2xl bg-blue-50 dark:bg-blue-500/20 flex items-center justify-center mx-auto mb-6">
+            <Activity className="h-8 w-8 text-blue-500 dark:text-blue-400" />
           </div>
-          <p className="text-base font-semibold text-slate-700 mb-2">No activity yet</p>
-          <p className="text-sm text-slate-500 max-w-sm mx-auto">
+          <p className="text-base font-semibold text-slate-700 dark:text-zinc-200 mb-2">No activity yet</p>
+          <p className="text-sm text-slate-500 dark:text-zinc-400 max-w-sm mx-auto">
             Document downloads, logins, and other events will appear here.
           </p>
         </div>
       ) : (
-        <div className="border border-slate-200/80 bg-white rounded-2xl overflow-hidden shadow-sm">
+        <div className="border border-slate-200/80 dark:border-white/[0.08] bg-white dark:bg-[#141414] rounded-2xl overflow-hidden shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-slate-200 bg-slate-50/50">
-                  <th className="text-left py-3 px-4 font-medium text-slate-600">User</th>
-                  <th className="text-left py-3 px-4 font-medium text-slate-600">Event</th>
-                  <th className="text-left py-3 px-4 font-medium text-slate-600">Resource</th>
-                  <th className="text-left py-3 px-4 font-medium text-slate-600">When</th>
+                <tr className="border-b border-slate-200 dark:border-white/[0.06] bg-slate-50/50 dark:bg-white/[0.03]">
+                  <th className="text-left py-3 px-4 font-medium text-slate-600 dark:text-zinc-400">User</th>
+                  <th className="text-left py-3 px-4 font-medium text-slate-600 dark:text-zinc-400">Event</th>
+                  <th className="text-left py-3 px-4 font-medium text-slate-600 dark:text-zinc-400">Resource</th>
+                  <th className="text-left py-3 px-4 font-medium text-slate-600 dark:text-zinc-400">When</th>
                 </tr>
               </thead>
               <tbody>
                 {analyticsEvents.map((evt) => (
-                  <tr key={evt.id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50/50">
+                  <tr key={evt.id} className="border-b border-slate-100 dark:border-white/[0.04] last:border-0 hover:bg-slate-50/50 dark:hover:bg-white/[0.04]">
                     <td className="py-4 px-4">
-                      <div className="font-medium text-slate-900">
+                      <div className="font-medium text-slate-900 dark:text-zinc-100">
                         {evt.user_name || evt.user_email || evt.user_id}
                       </div>
                       {evt.user_name && evt.user_email && (
-                        <div className="text-xs text-slate-500">{evt.user_email}</div>
+                        <div className="text-xs text-slate-500 dark:text-zinc-400">{evt.user_email}</div>
                       )}
                     </td>
                     <td className="py-4 px-4">
                       <Badge
                         variant="secondary"
-                        className="text-xs border-blue-200 bg-blue-50/60 text-blue-800 font-medium"
+                        className="text-xs border-blue-200 dark:border-blue-500/40 bg-blue-50/60 dark:bg-blue-500/20 text-blue-800 dark:text-blue-400 font-medium"
                       >
                         {evt.event_type.replaceAll('_', ' ')}
                       </Badge>
                     </td>
-                    <td className="py-4 px-4 text-slate-700">
+                    <td className="py-4 px-4 text-slate-700 dark:text-zinc-300">
                       {evt.event_type === 'login' || evt.event_type === 'logout' ? (
                         <span className="text-xs" title={JSON.stringify(evt.metadata)}>
                           {(evt.metadata as { ip?: string })?.ip || '—'}
@@ -174,7 +174,7 @@ export default function AdminAnalyticsPage() {
                         evt.resource_label
                       )}
                     </td>
-                    <td className="py-4 px-4 text-slate-500 text-xs">{formatDate(evt.created_at)}</td>
+                    <td className="py-4 px-4 text-slate-500 dark:text-zinc-400 text-xs">{formatDate(evt.created_at)}</td>
                   </tr>
                 ))}
               </tbody>

@@ -110,11 +110,11 @@ export function UserDetailModal({ userId, open, onOpenChange, adminCount = 0, on
       <DialogContent className="max-w-md">
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-slate-500" />
+            <Loader2 className="h-8 w-8 animate-spin text-slate-500 dark:text-zinc-400" />
           </div>
         ) : error || !user ? (
           <div className="py-4">
-            <div className="flex items-center gap-3 text-red-700 mb-4">
+            <div className="flex items-center gap-3 text-red-700 dark:text-red-400 mb-4">
               <XCircle className="h-5 w-5" />
               <span>{error || 'User not found'}</span>
             </div>
@@ -123,8 +123,8 @@ export function UserDetailModal({ userId, open, onOpenChange, adminCount = 0, on
           <>
             <DialogHeader>
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
-                  <User className="h-6 w-6 text-blue-600" />
+                <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-500/20 flex items-center justify-center shrink-0">
+                  <User className="h-6 w-6 text-blue-600 dark:text-blue-400" />
                 </div>
                 <div className="min-w-0 flex-1">
                   <DialogTitle className="text-lg truncate">{displayName}</DialogTitle>
@@ -140,7 +140,7 @@ export function UserDetailModal({ userId, open, onOpenChange, adminCount = 0, on
                   {user.role}
                 </Badge>
                 {user.locked && (
-                  <Badge variant="outline" className="text-xs border-amber-200 text-amber-700">
+                  <Badge variant="outline" className="text-xs border-amber-200 dark:border-amber-500/40 text-amber-700 dark:text-amber-400">
                     <Lock className="h-3 w-3 mr-1" />
                     Locked
                   </Badge>
@@ -148,27 +148,27 @@ export function UserDetailModal({ userId, open, onOpenChange, adminCount = 0, on
               </div>
             </DialogHeader>
             {(user.company || user.title) && (
-              <div className="grid grid-cols-2 gap-3 text-sm py-2 border-t border-slate-100">
+              <div className="grid grid-cols-2 gap-3 text-sm py-2 border-t border-slate-100 dark:border-white/[0.08]">
                 {user.company && (
                   <div>
-                    <p className="text-slate-500 font-medium">Company</p>
-                    <p className="text-slate-900 truncate">{user.company}</p>
+                    <p className="text-slate-500 dark:text-zinc-400 font-medium">Company</p>
+                    <p className="text-slate-900 dark:text-zinc-100 truncate">{user.company}</p>
                   </div>
                 )}
                 {user.title && (
                   <div>
-                    <p className="text-slate-500 font-medium">Title</p>
-                    <p className="text-slate-900 truncate">{user.title}</p>
+                    <p className="text-slate-500 dark:text-zinc-400 font-medium">Title</p>
+                    <p className="text-slate-900 dark:text-zinc-100 truncate">{user.title}</p>
                   </div>
                 )}
               </div>
             )}
             {user.created_at && (
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-slate-500 dark:text-zinc-400">
                 Joined {new Date(user.created_at).toLocaleDateString()}
               </p>
             )}
-            <DialogFooter className="border-t border-slate-100 pt-4 mt-2">
+            <DialogFooter className="border-t border-slate-100 dark:border-white/[0.08] pt-4 mt-2">
               {user.role !== 'admin' && (
                 <Button variant="outline" size="sm" onClick={toggleLock} disabled={actionLoading} className="gap-1.5">
                   {user.locked ? <Unlock className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
@@ -196,7 +196,7 @@ export function UserDetailModal({ userId, open, onOpenChange, adminCount = 0, on
                 size="sm"
                 onClick={goToDelete}
                 disabled={user.role === 'admin' && adminCount <= 1}
-                className="gap-1.5 text-red-600 hover:text-red-700 hover:bg-red-50"
+                className="gap-1.5 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-500/10"
               >
                 <Trash2 className="h-4 w-4" />
                 Delete

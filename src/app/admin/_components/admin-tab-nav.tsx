@@ -17,8 +17,8 @@ const TAB_CONFIG: { id: AdminTabId; label: string; icon: React.ComponentType<{ c
 
 function getTabButtonClass(activeTab: AdminTabId | null, id: AdminTabId) {
   const base = 'px-6 transition-all duration-200'
-  if (activeTab !== id) return `${base} bg-transparent hover:bg-slate-50`
-  return `${base} bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-md hover:from-blue-700 hover:to-blue-800`
+  if (activeTab !== id) return `${base} bg-transparent hover:bg-slate-50 dark:hover:bg-white/[0.06]`
+  return `${base} bg-gradient-to-r from-blue-600 to-blue-700 dark:from-blue-600 dark:to-blue-700 text-white shadow-md hover:from-blue-700 hover:to-blue-800`
 }
 
 export function AdminTabNav({ counts }: { counts?: Partial<Record<AdminTabId, number>> }) {
@@ -28,7 +28,7 @@ export function AdminTabNav({ counts }: { counts?: Partial<Record<AdminTabId, nu
 
   return (
     <div className="mb-8 hidden md:block">
-      <div className="flex flex-wrap gap-2 bg-white p-1.5 rounded-xl shadow-lg border border-slate-200 w-fit">
+      <div className="flex flex-wrap gap-2 bg-white dark:bg-[#141414] p-1.5 rounded-xl shadow-lg border border-slate-200 dark:border-white/[0.08] w-fit">
         {TAB_CONFIG.map(({ id, label, icon: Icon }) => (
           <Button
             key={id}
@@ -53,17 +53,17 @@ export function AdminMobileTabNav({ counts }: { counts?: Partial<Record<AdminTab
   const activeTab = (ADMIN_TABS.includes(segment as AdminTabId) ? segment : null) as AdminTabId | null
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 md:hidden bg-white border-t border-slate-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-40 pb-[env(safe-area-inset-bottom)]">
+    <nav className="fixed bottom-0 left-0 right-0 md:hidden bg-white dark:bg-[#0f0f0f] border-t border-slate-200 dark:border-white/[0.06] shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] dark:shadow-[0_-4px_20px_rgba(0,0,0,0.3)] z-40 pb-[env(safe-area-inset-bottom)]">
       <div className="grid grid-cols-6 h-14">
         {TAB_CONFIG.map(({ id, label, icon: Icon }) => {
           const isActive = activeTab === id
-          const activeColor = 'text-blue-600'
+          const activeColor = 'text-blue-600 dark:text-blue-400'
           return (
             <Link
               key={id}
               href={`/admin/${id}`}
               className={`flex flex-col items-center justify-center gap-0.5 py-2 px-1 transition-colors touch-manipulation ${
-                isActive ? activeColor : 'text-slate-400'
+                isActive ? activeColor : 'text-slate-400 dark:text-zinc-500'
               }`}
             >
               <Icon className="h-5 w-5 shrink-0" />

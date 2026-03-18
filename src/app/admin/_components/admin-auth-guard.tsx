@@ -1,9 +1,10 @@
 'use client'
 
 import { useEffect, useState, type ReactNode } from 'react'
+import { usePathname } from 'next/navigation'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
-import { Loader2 } from 'lucide-react'
+import { AdminDashboardSkeleton } from './admin-dashboard-skeleton'
 
 interface AdminAuthGuardProps {
   children: ReactNode
@@ -31,6 +32,8 @@ async function fetchProfileWithAuth(signal?: AbortSignal): Promise<Response> {
 
 export function AdminAuthGuard({ children }: AdminAuthGuardProps) {
   const [ready, setReady] = useState(false)
+  const pathname = usePathname()
+  const isDashboard = pathname === '/admin' || pathname === '/admin/'
 
   useEffect(() => {
     let cancelled = false
@@ -84,8 +87,24 @@ export function AdminAuthGuard({ children }: AdminAuthGuardProps) {
 
   if (!ready) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50/80">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+      <div className="min-h-screen bg-slate-50/80 dark:bg-[#0a0a0a]">
+        <div className="h-14 border-b border-slate-200/60 dark:border-white/[0.06] px-4 flex items-center gap-4 bg-slate-50/80 dark:bg-[#0a0a0a]/95">
+          <div className="h-8 w-32 bg-slate-200/80 dark:bg-white/[0.06] rounded-lg animate-pulse" />
+          <div className="h-8 w-24 bg-slate-200/80 dark:bg-white/[0.06] rounded-lg animate-pulse" />
+        </div>
+        <div className="p-4 sm:p-6 lg:p-8 min-h-screen pb-20 md:pb-0">
+          {isDashboard ? <AdminDashboardSkeleton /> : (
+            <div className="space-y-6 max-w-4xl mx-auto">
+              <div className="h-24 bg-slate-200/60 dark:bg-white/[0.04] rounded-xl animate-pulse" />
+              <div className="h-12 w-96 bg-slate-200/60 dark:bg-white/[0.04] rounded-xl animate-pulse" />
+              <div className="space-y-3">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <div key={i} className="h-16 bg-slate-200/60 dark:bg-white/[0.04] rounded-xl animate-pulse" />
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     )
   }

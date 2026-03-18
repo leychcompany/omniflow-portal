@@ -116,7 +116,7 @@ export default function AdminManualsPage() {
           />
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={fetchManuals} disabled={loading} className="h-11 rounded-xl border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-900">
+          <Button variant="outline" size="sm" onClick={fetchManuals} disabled={loading} className="h-11 rounded-xl">
             <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
@@ -130,21 +130,21 @@ export default function AdminManualsPage() {
       {loading ? (
         <TableSkeleton rowCount={6} colCount={4} />
       ) : error ? (
-        <div className="border border-rose-200 bg-rose-50/80 rounded-2xl p-6 flex items-center gap-4 shadow-sm">
-          <div className="p-2.5 rounded-xl bg-rose-100">
-            <XCircle className="h-6 w-6 text-rose-600" />
+        <div className="border border-rose-200 dark:border-rose-900/50 bg-rose-50/80 dark:bg-rose-950/30 rounded-2xl p-6 flex items-center gap-4 shadow-sm">
+          <div className="p-2.5 rounded-xl bg-rose-100 dark:bg-rose-500/20">
+            <XCircle className="h-6 w-6 text-rose-600 dark:text-rose-400" />
           </div>
-          <span className="text-sm font-medium text-rose-800">{error}</span>
+          <span className="text-sm font-medium text-rose-800 dark:text-rose-400">{error}</span>
         </div>
       ) : manuals.length === 0 ? (
-        <div className="border border-slate-200/80 bg-white rounded-2xl p-16 text-center shadow-sm">
-          <div className="w-16 h-16 rounded-2xl bg-blue-50 flex items-center justify-center mx-auto mb-6">
-            <FileText className="h-8 w-8 text-blue-500" />
+        <div className="border border-slate-200/80 dark:border-white/[0.08] bg-white dark:bg-[#141414] rounded-2xl p-16 text-center shadow-sm">
+          <div className="w-16 h-16 rounded-2xl bg-blue-50 dark:bg-blue-500/20 flex items-center justify-center mx-auto mb-6">
+            <FileText className="h-8 w-8 text-blue-500 dark:text-blue-400" />
           </div>
-          <p className="text-base font-semibold text-slate-700 mb-2">
+          <p className="text-base font-semibold text-slate-700 dark:text-zinc-200 mb-2">
             {total === 0 ? 'No documents yet' : 'No matches found'}
           </p>
-          <p className="text-sm text-slate-500 mb-6 max-w-sm mx-auto">
+          <p className="text-sm text-slate-500 dark:text-zinc-400 mb-6 max-w-sm mx-auto">
             {total === 0 ? 'Upload your first PDF document to get started.' : 'Try a different search term.'}
           </p>
           {total === 0 && (

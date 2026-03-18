@@ -7,7 +7,7 @@ Planning document for implementing all UX enhancements on the home dashboard.
 ## 1. Dark Mode
 
 **Status:** [ ] Not started  
-**Priority:** High  
+**Priority:** High
 **Effort:** Medium
 
 ### Description
@@ -31,32 +31,6 @@ Toggle between light and dark theme across the portal.
 - None
 
 ---
-
-## 2. Draggable Widgets
-
-**Status:** [ ] Not started  
-**Priority:** Medium  
-**Effort:** High
-
-### Description
-Allow users to reorder dashboard blocks (stats row, Software carousel, News carousel, Quick access).
-
-### Technical Notes
-- Use `@dnd-kit/core` + `@dnd-kit/sortable` (already in package.json)
-- Persist layout in localStorage per user
-- Fallback to default order if no saved layout
-
-### Tasks
-- [ ] Identify all draggable sections
-- [ ] Wrap sections in DnD context
-- [ ] Implement drag handles (subtle, non-intrusive)
-- [ ] Save order to localStorage
-- [ ] Load saved order on mount
-- [ ] Add “Reset to default” in settings
-- [ ] (Optional) Save to backend for cross-device sync
-
-### Dependencies
-- None
 
 ---
 

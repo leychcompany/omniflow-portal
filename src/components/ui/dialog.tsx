@@ -70,7 +70,7 @@ export function Dialog({ open, onOpenChange, children }: DialogProps) {
 export function DialogContent({ children, className = "" }: DialogContentProps) {
   return (
     <div
-      className={`bg-white rounded-xl shadow-2xl p-6 w-full max-w-md mx-4 ml-0 mlr-0 max-h-[90vh] overflow-y-auto ${className}`}
+      className={`bg-white dark:bg-[#141414] rounded-xl shadow-2xl p-6 w-full max-w-md mx-4 ml-0 mlr-0 max-h-[90vh] overflow-y-auto border border-slate-200/50 dark:border-white/[0.08] ${className}`}
       onClick={(e) => e.stopPropagation()}
     >
       {children}
@@ -84,7 +84,7 @@ export function DialogHeader({ children }: DialogHeaderProps) {
 
 export function DialogTitle({ children, className = "" }: DialogTitleProps) {
   return (
-    <h2 className={`text-2xl font-bold text-slate-900 ${className}`}>
+    <h2 className={`text-2xl font-bold text-slate-900 dark:text-zinc-100 ${className}`}>
       {children}
     </h2>
   )
@@ -92,7 +92,7 @@ export function DialogTitle({ children, className = "" }: DialogTitleProps) {
 
 export function DialogDescription({ children, className = "" }: DialogDescriptionProps) {
   return (
-    <p className={`text-sm text-slate-600 mt-2 ${className}`}>
+    <p className={`text-sm text-slate-600 dark:text-zinc-400 mt-2 ${className}`}>
       {children}
     </p>
   )

@@ -50,8 +50,8 @@ export function AdminCard({ children, className, onClick }: AdminCardProps) {
       variants={item}
       onClick={onClick}
       className={cn(
-        'group rounded-xl border border-slate-200 bg-white p-5 shadow-sm',
-        'hover:shadow-lg hover:border-blue-200 hover:-translate-y-0.5',
+        'group rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-[#141414] p-5 shadow-sm',
+        'hover:shadow-lg hover:border-blue-200 dark:hover:border-blue-500/50 hover:-translate-y-0.5',
         'transition-shadow transition-transform duration-200',
         onClick && 'cursor-pointer',
         className

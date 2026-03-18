@@ -206,7 +206,7 @@ export default function AdminUsersPage() {
             placeholder="Search..."
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
-            className="pl-10 h-10 bg-white border-zinc-200"
+            className="pl-10 h-10"
           />
         </div>
         <div className="flex gap-2">
@@ -214,7 +214,7 @@ export default function AdminUsersPage() {
             <RefreshCw className={`h-4 w-4 mr-2 ${usersLoading ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
-          <Button size="sm" onClick={() => router.push('/admin/users/add')} className="h-10 bg-zinc-900 hover:bg-zinc-800">
+          <Button size="sm" onClick={() => router.push('/admin/users/add')} className="h-10 bg-zinc-900 dark:bg-blue-600 hover:bg-zinc-800 dark:hover:bg-blue-700">
             <Plus className="h-4 w-4 mr-2" />
             Add User
           </Button>
@@ -224,16 +224,16 @@ export default function AdminUsersPage() {
       {usersLoading ? (
         <TabsSkeleton count={2} />
       ) : (
-      <div className="flex gap-1 p-1 bg-zinc-100 rounded-lg w-fit">
+      <div className="flex gap-1 p-1 bg-zinc-100 dark:bg-white/[0.06] rounded-lg w-fit">
         <button
           onClick={() => setSubTab('users')}
-          className={`px-4 py-2 rounded-md text-sm font-medium ${subTab === 'users' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-600 hover:text-zinc-900'}`}
+          className={`px-4 py-2 rounded-md text-sm font-medium ${subTab === 'users' ? 'bg-white dark:bg-white/[0.12] text-zinc-900 dark:text-zinc-100 shadow-sm' : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100'}`}
         >
           Users ({usersTotal})
         </button>
         <button
           onClick={() => setSubTab('invites')}
-          className={`px-4 py-2 rounded-md text-sm font-medium ${subTab === 'invites' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-600 hover:text-zinc-900'}`}
+          className={`px-4 py-2 rounded-md text-sm font-medium ${subTab === 'invites' ? 'bg-white dark:bg-white/[0.12] text-zinc-900 dark:text-zinc-100 shadow-sm' : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100'}`}
         >
           Invites ({invites.length})
         </button>
@@ -243,38 +243,38 @@ export default function AdminUsersPage() {
       {subTab === 'users' && (
         <>
           {usersLoading ? (
-            <TableSkeleton rowCount={6} colCount={4} className="border-zinc-200" />
+            <TableSkeleton rowCount={6} colCount={4} />
           ) : usersError ? (
-            <div className="border border-red-200 bg-red-50 rounded-lg p-6 flex items-center gap-3">
+            <div className="border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/30 rounded-lg p-6 flex items-center gap-3">
               <XCircle className="h-5 w-5 text-red-500" />
-              <span className="text-sm text-red-700">{usersError}</span>
+              <span className="text-sm text-red-700 dark:text-red-400">{usersError}</span>
             </div>
           ) : users.length === 0 ? (
-            <div className="border border-zinc-200 bg-white rounded-lg p-12 text-center">
-              <p className="text-sm text-zinc-500">No users found</p>
+            <div className="border border-zinc-200 dark:border-white/[0.08] bg-white dark:bg-[#141414] rounded-lg p-12 text-center">
+              <p className="text-sm text-zinc-500 dark:text-zinc-400">No users found</p>
             </div>
           ) : (
-            <div className="border border-zinc-200 bg-white rounded-lg overflow-hidden">
+            <div className="border border-zinc-200 dark:border-white/[0.08] bg-white dark:bg-[#141414] rounded-lg overflow-hidden">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-zinc-200 bg-zinc-50/50">
-                    <th className="text-left py-3 px-4 font-medium text-zinc-600">User</th>
-                    <th className="text-left py-3 px-4 font-medium text-zinc-600 hidden sm:table-cell">Role</th>
-                    <th className="text-left py-3 px-4 font-medium text-zinc-600 hidden md:table-cell">Status</th>
-                    <th className="text-right py-3 px-4 font-medium text-zinc-600 w-24">Actions</th>
+                  <tr className="border-b border-zinc-200 dark:border-white/[0.06] bg-zinc-50/50 dark:bg-white/[0.03]">
+                    <th className="text-left py-3 px-4 font-medium text-zinc-600 dark:text-zinc-400">User</th>
+                    <th className="text-left py-3 px-4 font-medium text-zinc-600 dark:text-zinc-400 hidden sm:table-cell">Role</th>
+                    <th className="text-left py-3 px-4 font-medium text-zinc-600 dark:text-zinc-400 hidden md:table-cell">Status</th>
+                    <th className="text-right py-3 px-4 font-medium text-zinc-600 dark:text-zinc-400 w-24">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {users.map((u) => (
-                    <tr key={u.id} className="border-b border-zinc-100 last:border-0 hover:bg-zinc-50/50">
+                    <tr key={u.id} className="border-b border-zinc-100 dark:border-white/[0.04] last:border-0 hover:bg-zinc-50/50 dark:hover:bg-white/[0.04]">
                       <td className="py-4 px-4">
                         <button
                           type="button"
                           onClick={() => setUserModalId(u.id)}
-                          className="block w-full text-left hover:bg-zinc-50 -mx-2 -my-1 px-2 py-1 rounded-md transition-colors"
+                          className="block w-full text-left hover:bg-zinc-50 dark:hover:bg-white/[0.04] -mx-2 -my-1 px-2 py-1 rounded-md transition-colors"
                         >
-                          <p className="font-medium text-zinc-900">{u.name}</p>
-                          <p className="text-zinc-500 text-xs">{u.email}</p>
+                          <p className="font-medium text-zinc-900 dark:text-zinc-100">{u.name}</p>
+                          <p className="text-zinc-500 dark:text-zinc-400 text-xs">{u.email}</p>
                         </button>
                       </td>
                       <td className="py-4 px-4 hidden sm:table-cell">
@@ -286,7 +286,7 @@ export default function AdminUsersPage() {
                       <td className="py-4 px-4 hidden md:table-cell">
                         <Badge className={`text-xs ${getStatusColor(u.status)}`}>{u.status}</Badge>
                         {u.locked && (
-                          <Badge variant="outline" className="ml-1 text-xs border-amber-200 text-amber-700">
+                          <Badge variant="outline" className="ml-1 text-xs border-amber-200 dark:border-amber-500/40 text-amber-700 dark:text-amber-400">
                             Locked
                           </Badge>
                         )}
@@ -297,7 +297,7 @@ export default function AdminUsersPage() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8 text-zinc-500 hover:text-zinc-900"
+                              className="h-8 w-8 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
                               onClick={() => toggleLock(u.id)}
                               title={u.locked ? 'Unlock' : 'Lock'}
                             >
@@ -337,34 +337,34 @@ export default function AdminUsersPage() {
       {subTab === 'invites' && (
         <>
           {invitesLoading ? (
-            <div className="border border-zinc-200 bg-white rounded-lg p-12 text-center">
-              <Loader2 className="h-8 w-8 animate-spin text-zinc-400 mx-auto" />
+            <div className="border border-zinc-200 dark:border-white/[0.08] bg-white dark:bg-[#141414] rounded-lg p-12 text-center">
+              <Loader2 className="h-8 w-8 animate-spin text-zinc-400 dark:text-zinc-500 mx-auto" />
             </div>
           ) : invitesError ? (
-            <div className="border border-red-200 bg-red-50 rounded-lg p-6 flex items-center gap-3">
+            <div className="border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/30 rounded-lg p-6 flex items-center gap-3">
               <XCircle className="h-5 w-5 text-red-500" />
-              <span className="text-sm text-red-700">{invitesError}</span>
+              <span className="text-sm text-red-700 dark:text-red-400">{invitesError}</span>
             </div>
           ) : filteredInvites.length === 0 ? (
-            <div className="border border-zinc-200 bg-white rounded-lg p-12 text-center">
-              <Mail className="h-12 w-12 text-zinc-300 mx-auto mb-4" />
-              <p className="text-sm text-zinc-500">No pending invites</p>
+            <div className="border border-zinc-200 dark:border-white/[0.08] bg-white dark:bg-[#141414] rounded-lg p-12 text-center">
+              <Mail className="h-12 w-12 text-zinc-300 dark:text-zinc-600 mx-auto mb-4" />
+              <p className="text-sm text-zinc-500 dark:text-zinc-400">No pending invites</p>
             </div>
           ) : (
-            <div className="border border-zinc-200 bg-white rounded-lg overflow-hidden">
+            <div className="border border-zinc-200 dark:border-white/[0.08] bg-white dark:bg-[#141414] rounded-lg overflow-hidden">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-zinc-200 bg-zinc-50/50">
-                    <th className="text-left py-3 px-4 font-medium text-zinc-600">Email</th>
-                    <th className="text-left py-3 px-4 font-medium text-zinc-600 hidden sm:table-cell">Expires</th>
-                    <th className="text-right py-3 px-4 font-medium text-zinc-600 w-28">Actions</th>
+                  <tr className="border-b border-zinc-200 dark:border-white/[0.06] bg-zinc-50/50 dark:bg-white/[0.03]">
+                    <th className="text-left py-3 px-4 font-medium text-zinc-600 dark:text-zinc-400">Email</th>
+                    <th className="text-left py-3 px-4 font-medium text-zinc-600 dark:text-zinc-400 hidden sm:table-cell">Expires</th>
+                    <th className="text-right py-3 px-4 font-medium text-zinc-600 dark:text-zinc-400 w-28">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredInvites.map((inv) => (
-                    <tr key={inv.id} className="border-b border-zinc-100 last:border-0 hover:bg-zinc-50/50">
-                      <td className="py-4 px-4 font-medium text-zinc-900">{inv.email}</td>
-                      <td className="py-4 px-4 text-zinc-500 hidden sm:table-cell">
+                    <tr key={inv.id} className="border-b border-zinc-100 dark:border-white/[0.04] last:border-0 hover:bg-zinc-50/50 dark:hover:bg-white/[0.04]">
+                      <td className="py-4 px-4 font-medium text-zinc-900 dark:text-zinc-100">{inv.email}</td>
+                      <td className="py-4 px-4 text-zinc-500 dark:text-zinc-400 hidden sm:table-cell">
                         {inv.expires_at ? formatDate(inv.expires_at) : '—'}
                       </td>
                       <td className="py-4 px-4 text-right">
@@ -372,7 +372,7 @@ export default function AdminUsersPage() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 text-zinc-500 hover:text-zinc-900"
+                            className="h-8 w-8 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
                             onClick={() => resendInvite(inv)}
                             disabled={!!resendingId || !!deletingId}
                             title="Resend"
