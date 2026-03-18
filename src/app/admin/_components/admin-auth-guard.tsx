@@ -2,9 +2,9 @@
 
 import { useEffect, useState, type ReactNode } from 'react'
 import { usePathname } from 'next/navigation'
-import type { Session } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
 import { AdminDashboardSkeleton } from './admin-dashboard-skeleton'
+import { useAdminBootstrap } from './admin-bootstrap-context'
 
 interface AdminAuthGuardProps {
   children: ReactNode
@@ -13,27 +13,21 @@ interface AdminAuthGuardProps {
 const AUTH_TOTAL_TIMEOUT_MS = 20000
 const PROFILE_TIMEOUT_MS = 15000
 
-/** Fetch profile - try cookies first, then Bearer if 401 (getSession can lag behind cookies) */
-async function fetchProfileWithAuth(signal?: AbortSignal): Promise<Response> {
-  const res = await fetch('/api/profile', { credentials: 'include', signal })
-  if (res.status === 401) {
-    const { data: { session } } = await supabase.auth.getSession()
-    const token = (session as Session | null)?.access_token
-    if (token) {
-      return fetch('/api/profile', {
-        credentials: 'include',
-        headers: { Authorization: `Bearer ${token}` },
-        signal,
-      })
-    }
+/** Headers with Bearer if session exists - avoids 401 retry */
+async function authHeaders(): Promise<HeadersInit> {
+  const { data: { session } } = await supabase.auth.getSession()
+  const headers: HeadersInit = { 'Content-Type': 'application/json' }
+  if (session?.access_token) {
+    (headers as Record<string, string>)['Authorization'] = `Bearer ${session.access_token}`
   }
-  return res
+  return headers
 }
 
 export function AdminAuthGuard({ children }: AdminAuthGuardProps) {
   const [ready, setReady] = useState(false)
   const pathname = usePathname()
   const isDashboard = pathname === '/admin' || pathname === '/admin/'
+  const { setDashboard } = useAdminBootstrap() ?? {}
 
   useEffect(() => {
     let cancelled = false
@@ -42,8 +36,16 @@ export function AdminAuthGuard({ children }: AdminAuthGuardProps) {
       try {
         const controller = new AbortController()
         const timeoutId = setTimeout(() => controller.abort(), PROFILE_TIMEOUT_MS)
+        const headers = await authHeaders()
+
         try {
-          const res = await fetchProfileWithAuth(controller.signal)
+          const url = isDashboard ? '/api/admin/bootstrap' : '/api/profile'
+          const res = await fetch(url, {
+            credentials: 'include',
+            headers,
+            signal: controller.signal,
+          })
+
           if (cancelled) return
           if (!res.ok) {
             if (res.status === 401) {
@@ -53,23 +55,28 @@ export function AdminAuthGuard({ children }: AdminAuthGuardProps) {
             }
             return
           }
-          const profile = await res.json()
-          if (cancelled) return
-          if (profile?.role?.toLowerCase() !== 'admin') {
-            window.location.href = '/home'
-            return
+
+          const json = await res.json()
+
+          if (isDashboard && json.profile && json.dashboard) {
+            if (json.profile?.role?.toLowerCase() !== 'admin' || json.profile?.locked === true) {
+              window.location.href = '/home'
+              return
+            }
+            setDashboard?.(json.dashboard)
+          } else if (!isDashboard) {
+            if (json?.role?.toLowerCase() !== 'admin' || json?.locked === true) {
+              window.location.href = '/home'
+              return
+            }
           }
-          if (profile?.locked === true) {
-            window.location.href = '/home'
-            return
-          }
+
           setReady(true)
         } finally {
           clearTimeout(timeoutId)
         }
       } catch {
-        if (cancelled) return
-        window.location.href = '/home'
+        if (!cancelled) window.location.href = '/home'
       }
     }
 
@@ -83,29 +90,23 @@ export function AdminAuthGuard({ children }: AdminAuthGuardProps) {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [isDashboard, setDashboard])
 
   if (!ready) {
     return (
-      <div className="min-h-screen bg-slate-50/80 dark:bg-[#0a0a0a]">
-        <div className="h-14 border-b border-slate-200/60 dark:border-white/[0.06] px-4 flex items-center gap-4 bg-slate-50/80 dark:bg-[#0a0a0a]/95">
-          <div className="h-8 w-32 bg-slate-200/80 dark:bg-white/[0.06] rounded-lg animate-pulse" />
-          <div className="h-8 w-24 bg-slate-200/80 dark:bg-white/[0.06] rounded-lg animate-pulse" />
-        </div>
-        <div className="p-4 sm:p-6 lg:p-8 min-h-screen pb-20 md:pb-0">
-          {isDashboard ? <AdminDashboardSkeleton /> : (
-            <div className="space-y-6 max-w-4xl mx-auto">
-              <div className="h-24 bg-slate-200/60 dark:bg-white/[0.04] rounded-xl animate-pulse" />
-              <div className="h-12 w-96 bg-slate-200/60 dark:bg-white/[0.04] rounded-xl animate-pulse" />
-              <div className="space-y-3">
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <div key={i} className="h-16 bg-slate-200/60 dark:bg-white/[0.04] rounded-xl animate-pulse" />
-                ))}
-              </div>
+      <main className="p-4 sm:p-6 lg:p-8 min-h-screen pb-20 md:pb-0">
+        {isDashboard ? <AdminDashboardSkeleton /> : (
+          <div className="space-y-6 max-w-4xl mx-auto">
+            <div className="h-24 bg-slate-200/60 dark:bg-white/5 rounded-xl animate-pulse" />
+            <div className="h-12 w-96 bg-slate-200/60 dark:bg-white/5 rounded-xl animate-pulse" />
+            <div className="space-y-3">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className="h-16 bg-slate-200/60 dark:bg-white/5 rounded-xl animate-pulse" />
+              ))}
             </div>
-          )}
-        </div>
-      </div>
+          </div>
+        )}
+      </main>
     )
   }
 

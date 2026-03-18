@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useTheme } from 'next-themes'
 import { Button } from '@/components/ui/button'
 import { AdminAuthGuard } from './_components/admin-auth-guard'
+import { AdminBootstrapProvider } from './_components/admin-bootstrap-context'
 import {
   LayoutDashboard,
   Users,
@@ -52,16 +53,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   return (
-    <AdminAuthGuard>
+    <AdminBootstrapProvider>
     <div className="min-h-screen bg-slate-50/80 dark:bg-[#0a0a0a]">
       <div className="fixed inset-0 -z-10 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(99,102,241,0.08),transparent)] dark:bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(59,130,246,0.06),transparent)]" />
 
-      {/* Header with nav + search */}
+      {/* Header + nav - shown immediately, not blocked by auth */}
       <header className="sticky top-0 z-30 flex flex-col gap-3 md:flex-row md:items-center md:justify-between px-3 sm:px-4 lg:px-6 py-2.5 bg-white dark:bg-[#0f0f0f] border-b border-slate-200/60 dark:border-white/[0.06]">
         <nav className="hidden md:flex items-center gap-0.5 flex-1 min-w-0">
           <Link
             href="/home"
-            className="flex items-center justify-center h-9 w-9 rounded-lg text-slate-500 dark:text-zinc-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50/50 dark:hover:bg-white/[0.06] transition-colors shrink-0 mr-2 border-r border-slate-200 dark:border-white/[0.06] pr-2"
+            className="flex items-center justify-center h-9 w-9 rounded-lg text-slate-500 dark:text-zinc-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50/50 dark:hover:bg-white/[0.06] transition-colors shrink-0 mr-2 border-r border-slate-200 dark:border-white/[0.06]"
             title="Back to Portal"
           >
             <Home className="h-4 w-4" />
@@ -107,7 +108,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
       </header>
 
-      <main className="p-4 sm:p-6 lg:p-8 min-h-screen pb-20 md:pb-0">{children}</main>
+      <AdminAuthGuard>
+        <main className="p-4 sm:p-6 lg:p-8 min-h-screen pb-20 md:pb-0">{children}</main>
+      </AdminAuthGuard>
 
       {/* Mobile bottom nav */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-[#0f0f0f]/95 backdrop-blur border-t border-slate-200 dark:border-white/[0.06] z-40 pb-[env(safe-area-inset-bottom)] shadow-[0_-4px_20px_rgba(0,0,0,0.08)] dark:shadow-[0_-4px_20px_rgba(0,0,0,0.3)]">
@@ -131,6 +134,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
       </nav>
     </div>
-    </AdminAuthGuard>
+    </AdminBootstrapProvider>
   )
 }

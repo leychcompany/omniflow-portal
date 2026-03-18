@@ -1,6 +1,5 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import {
@@ -13,120 +12,21 @@ import {
   Home,
   ChevronRight,
 } from 'lucide-react'
-import { fetchWithAdminAuth } from '@/lib/admin-fetch'
-import { AdminDashboardSkeleton } from './_components/admin-dashboard-skeleton'
+import { useAdminBootstrap } from './_components/admin-bootstrap-context'
 import { DashboardStatCard } from './_components/dashboard-stat-card'
 import { DashboardActivityChart } from './_components/dashboard-activity-chart'
 import { DashboardRecentActivity } from './_components/dashboard-recent-activity'
 import { DashboardTopTags } from './_components/dashboard-top-tags'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
-interface RecentEvent {
-  id: string
-  event_type: string
-  user_email: string | null
-  user_name: string | null
-  resource_label: string | null
-  created_at: string
-}
-
-interface DashboardData {
-  counts: {
-    users: number
-    admins: number
-    manuals: number
-    courses: number
-    news: number
-    software: number
-    invites: number
-  }
-  activityByDay: { date: string; label: string; logins: number; downloads: number }[]
-  recentActivity?: RecentEvent[]
-  totals7d?: { logins: number; downloads: number }
-  topTags?: { name: string; count: number }[]
-}
-
-const FIRST_ATTEMPT_TIMEOUT_MS = 55000
-const RETRY_TIMEOUT_MS = 30000
-const MAX_AUTO_RETRIES = 2
-
 export default function AdminDashboardPage() {
-  const [data, setData] = useState<DashboardData | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [retryKey, setRetryKey] = useState(0)
+  const { dashboard } = useAdminBootstrap() ?? {}
 
-  useEffect(() => {
-    let cancelled = false
-
-    async function fetchDashboard(attempt = 0) {
-      const controller = new AbortController()
-      const timeoutMs = attempt === 0 ? FIRST_ATTEMPT_TIMEOUT_MS : RETRY_TIMEOUT_MS
-      const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
-
-      try {
-        const res = await fetchWithAdminAuth('/api/admin/dashboard', {
-          signal: controller.signal,
-        })
-        clearTimeout(timeoutId)
-        if (cancelled) return
-
-        const json = await res.json()
-        if (!res.ok) {
-          if (res.status === 401 || res.status === 403) {
-            window.location.href = '/login'
-            return
-          }
-          throw new Error(json.error || 'Failed to load')
-        }
-        setData(json)
-      } catch (e) {
-        clearTimeout(timeoutId)
-        if (cancelled) return
-        if ((e as Error).name === 'AbortError' && attempt < MAX_AUTO_RETRIES) {
-          await fetchDashboard(attempt + 1)
-          return
-        }
-        if ((e as Error).name === 'AbortError') {
-          setError('Request timed out. Please try again.')
-        } else {
-          setError(e instanceof Error ? e.message : 'Failed to load dashboard')
-        }
-      } finally {
-        if (!cancelled) setLoading(false)
-      }
-    }
-    fetchDashboard()
-    return () => {
-      cancelled = true
-    }
-  }, [retryKey])
-
-  if (loading) {
-    return <AdminDashboardSkeleton />
+  if (!dashboard) {
+    return null
   }
 
-  if (error || !data) {
-    return (
-      <div className="rounded-xl border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/30 px-6 py-8 text-center space-y-4">
-        <p className="text-red-700 dark:text-red-400 font-medium">{error || 'Failed to load dashboard'}</p>
-        <button
-          type="button"
-          onClick={() => {
-            setError(null)
-            setData(null)
-            setLoading(true)
-            setRetryKey((k) => k + 1)
-          }}
-          className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 underline"
-        >
-          Retry
-        </button>
-      </div>
-    )
-  }
-
-  const { counts, activityByDay, recentActivity = [], totals7d = { logins: 0, downloads: 0 }, topTags = [] } = data
+  const { counts, activityByDay, recentActivity = [], totals7d = { logins: 0, downloads: 0 }, topTags = [] } = dashboard
 
   return (
     <div className="space-y-8">
