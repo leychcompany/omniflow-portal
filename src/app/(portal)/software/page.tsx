@@ -11,7 +11,7 @@ import {
   FileArchive,
   Shield,
 } from 'lucide-react'
-import { PortalPageSkeleton } from '@/components/portal/portal-page-skeleton'
+import { SoftwareSkeleton } from '@/components/portal/skeletons'
 
 interface SoftwareItem {
   id: string
@@ -43,9 +43,7 @@ export default function SoftwarePage() {
     window.open(`/api/software/${item.id}/download`, '_blank', 'noopener,noreferrer')
   }
 
-  if (loading) {
-    return <PortalPageSkeleton />
-  }
+  if (loading) return <SoftwareSkeleton />
 
   if (error) {
     return (

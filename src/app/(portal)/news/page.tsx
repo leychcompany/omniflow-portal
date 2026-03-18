@@ -11,7 +11,7 @@ import {
   Calendar, 
   TrendingUp,
 } from 'lucide-react'
-import { PortalPageSkeleton } from '@/components/portal/portal-page-skeleton'
+import { NewsSkeleton } from '@/components/portal/skeletons'
 
 const normalizeSlug = (value: string) =>
   value
@@ -64,9 +64,7 @@ export default function NewsPage() {
     })
   }
 
-  if (loading) {
-    return <PortalPageSkeleton />
-  }
+  if (loading) return <NewsSkeleton />
 
   if (error) {
     return (

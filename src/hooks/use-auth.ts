@@ -5,6 +5,17 @@ import { useAuthStore } from "@/store/auth-store";
 import type { User } from "@/types";
 import { useCallback, useEffect } from "react";
 
+const PUBLIC_PATHS = ["/", "/login", "/register", "/forgot-password", "/auth", "/set-password", "/logout"];
+const isProtectedPath = (pathname: string) =>
+  !PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));
+
+function redirectToLoginIfProtected() {
+  if (typeof window === "undefined") return;
+  if (isProtectedPath(window.location.pathname)) {
+    window.location.replace("/login");
+  }
+}
+
 export function useAuth() {
   const { user, setUser, setMustChangePassword } = useAuthStore();
 
@@ -45,6 +56,7 @@ export function useAuth() {
         );
         setUser(null);
         useAuthStore.getState().signOut();
+        redirectToLoginIfProtected();
         return;
       }
       const data = (await res.json()) as User;
@@ -54,6 +66,7 @@ export function useAuth() {
       console.error("Error fetching user profile:", error);
       setUser(null);
       useAuthStore.getState().signOut();
+      redirectToLoginIfProtected();
     }
   }, [markInvitesAsUsed, setUser]);
 
@@ -68,12 +81,14 @@ export function useAuth() {
             fetchUserProfile();
           } else {
             setUser(null);
+            redirectToLoginIfProtected();
           }
         })
         .catch((error) => {
           if (finished) return;
           console.error("useAuth: Error getting session:", error);
           setUser(null);
+          redirectToLoginIfProtected();
         });
     };
 
@@ -94,6 +109,7 @@ export function useAuth() {
         await fetchUserProfile();
       } else {
         setUser(null);
+        redirectToLoginIfProtected();
       }
     });
 

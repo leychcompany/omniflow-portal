@@ -19,6 +19,7 @@ import {
   Download,
 } from 'lucide-react'
 import { CarouselCard } from './_components/carousel-card'
+import { HomeSkeleton } from '@/components/portal/skeletons'
 
 const LOCKED_FEATURE_IDS = ['ai-assistant', 'view-documents', 'software']
 
@@ -134,6 +135,8 @@ export default function HomePage() {
 
   const stats = getDashboardStats(documentsCount, trainingCount, softwareCount, newsCount, tagsCount, user?.locked === true)
   const isLocked = user?.locked === true
+
+  if (loadingData) return <HomeSkeleton />
 
   return (
     <div className="w-full">

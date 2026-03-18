@@ -16,7 +16,7 @@ import {
   X,
   Shield
 } from 'lucide-react'
-import { PortalPageSkeleton } from '@/components/portal/portal-page-skeleton'
+import { DocumentsSkeleton } from '@/components/portal/skeletons'
 
 interface Manual {
   id: string
@@ -97,9 +97,7 @@ export default function DocumentsPage() {
     window.open(`/api/manuals/${doc.id}/download`, '_blank', 'noopener,noreferrer')
   }
 
-  if (loading) {
-    return <PortalPageSkeleton />
-  }
+  if (loading) return <DocumentsSkeleton />
 
   if (error) {
     return (

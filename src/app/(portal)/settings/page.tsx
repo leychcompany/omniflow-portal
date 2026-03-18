@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { useAuthStore } from '@/store/auth-store'
 import { Settings, Loader2, CheckCircle, XCircle } from 'lucide-react'
-import { PortalPageSkeleton } from '@/components/portal/portal-page-skeleton'
+import { SettingsSkeleton } from '@/components/portal/skeletons'
 
 export default function SettingsPage() {
   const router = useRouter()
@@ -72,9 +72,7 @@ export default function SettingsPage() {
     }
   }
 
-  if (loading) {
-    return <PortalPageSkeleton />
-  }
+  if (loading) return <SettingsSkeleton />
 
   return (
     <div className="max-w-2xl mx-auto w-full">
@@ -185,7 +183,6 @@ export default function SettingsPage() {
             </form>
           </CardContent>
         </Card>
-      </div>
     </div>
   )
 }

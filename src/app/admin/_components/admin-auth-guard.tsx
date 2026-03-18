@@ -55,7 +55,7 @@ export function AdminAuthGuard({ children }: AdminAuthGuardProps) {
           }
           const profile = await res.json()
           if (cancelled) return
-          if (profile?.role !== 'admin') {
+          if (profile?.role?.toLowerCase() !== 'admin') {
             window.location.href = '/home'
             return
           }

@@ -12,7 +12,7 @@ import {
   Calendar,
   Video,
 } from 'lucide-react'
-import { PortalPageSkeleton } from '@/components/portal/portal-page-skeleton'
+import { TrainingSkeleton } from '@/components/portal/skeletons'
 
 interface Course {
   id: string
@@ -43,9 +43,7 @@ export default function TrainingPage() {
   const featuredCourse = courses.find((c) => c.featured) ?? courses[0]
   const otherCourses = featuredCourse ? courses.filter((c) => c.id !== featuredCourse.id) : courses
 
-  if (loading) {
-    return <PortalPageSkeleton />
-  }
+  if (loading) return <TrainingSkeleton />
 
   if (error) {
     return (

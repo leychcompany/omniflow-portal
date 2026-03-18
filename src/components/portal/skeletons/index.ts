@@ -1,0 +1,7 @@
+export { HomeSkeleton } from './home-skeleton'
+export { DocumentsSkeleton } from './documents-skeleton'
+export { SoftwareSkeleton } from './software-skeleton'
+export { NewsSkeleton } from './news-skeleton'
+export { TrainingSkeleton } from './training-skeleton'
+export { TrainingRequestSkeleton } from './training-request-skeleton'
+export { SettingsSkeleton } from './settings-skeleton'

@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Send, Loader2 } from 'lucide-react'
-import { PortalPageSkeleton } from '@/components/portal/portal-page-skeleton'
+import { TrainingRequestSkeleton } from '@/components/portal/skeletons'
 
 type Status = 'idle' | 'submitting' | 'success' | 'error'
 
@@ -17,7 +17,7 @@ interface Course {
 
 export default function TrainingRequestPage() {
   return (
-    <Suspense fallback={<PortalPageSkeleton />}>
+    <Suspense fallback={<TrainingRequestSkeleton />}>
       <TrainingRequestInner />
     </Suspense>
   )

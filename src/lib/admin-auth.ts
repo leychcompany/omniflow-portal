@@ -72,7 +72,7 @@ export async function verifyAdmin(req: NextRequest): Promise<
     .eq("id", userId)
     .single();
 
-  if (userError || !userData || userData.role !== "admin" || userData.locked === true) {
+  if (userError || !userData || userData.role?.toLowerCase() !== "admin" || userData.locked === true) {
     return {
       ok: false,
       response: NextResponse.json(

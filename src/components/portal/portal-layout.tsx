@@ -46,9 +46,11 @@ const navItems = [
 function NavLink({
   item,
   isLocked,
+  onPrefetch,
 }: {
   item: (typeof navItems)[0]
   isLocked: boolean
+  onPrefetch: (href: string) => void
 }) {
   const pathname = usePathname()
   const isDisabled = isLocked && LOCKED_FEATURE_IDS.includes(item.id)
@@ -93,11 +95,19 @@ function NavLink({
   }
 
   return (
-    <Link href={item.href} className={className}>
+    <Link
+      href={item.href}
+      className={className}
+      prefetch
+      onMouseEnter={() => onPrefetch(item.href)}
+      onFocus={() => onPrefetch(item.href)}
+    >
       {content}
     </Link>
   )
 }
+
+const PORTAL_ROUTES = ['/home', '/ai-assistant', '/training', '/support', '/documents', '/software', '/news', '/training/request', '/settings']
 
 export function PortalLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter()
@@ -106,6 +116,25 @@ export function PortalLayout({ children }: { children: React.ReactNode }) {
   const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
   useEffect(() => setMounted(true), [])
+
+  const prefetchRoute = (href: string) => {
+    try {
+      router.prefetch(href)
+    } catch {
+      // ignore
+    }
+  }
+
+  useEffect(() => {
+    const prefetchAll = () => {
+      PORTAL_ROUTES.forEach((route) => prefetchRoute(route))
+    }
+    if (typeof requestIdleCallback !== 'undefined') {
+      requestIdleCallback(prefetchAll, { timeout: 2000 })
+    } else {
+      setTimeout(prefetchAll, 100)
+    }
+  }, [router])
 
   return (
     <div className="min-h-screen flex bg-slate-100 dark:bg-[#0a0a0a]">
@@ -117,6 +146,9 @@ export function PortalLayout({ children }: { children: React.ReactNode }) {
         <nav className="flex-1 min-h-0 p-3 space-y-0.5 overflow-y-auto">
           <Link
             href="/home"
+            prefetch
+            onMouseEnter={() => prefetchRoute('/home')}
+            onFocus={() => prefetchRoute('/home')}
             className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium bg-blue-50 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400"
           >
             <LayoutDashboard className="h-5 w-5 shrink-0" />
@@ -124,11 +156,11 @@ export function PortalLayout({ children }: { children: React.ReactNode }) {
             <ChevronRight className="h-4 w-4 ml-auto text-blue-500" />
           </Link>
           {navItems.map((item) => (
-            <NavLink key={item.id} item={item} isLocked={isLocked} />
+            <NavLink key={item.id} item={item} isLocked={isLocked} onPrefetch={prefetchRoute} />
           ))}
         </nav>
         <div className="p-3 border-t border-slate-100 dark:border-white/[0.06] shrink-0 space-y-2">
-          {user?.role === 'admin' && (
+          {user?.role?.toLowerCase() === 'admin' && (
             <Link
               href="/admin"
               className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium text-slate-600 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-white/[0.04] transition-colors"
@@ -175,7 +207,7 @@ export function PortalLayout({ children }: { children: React.ReactNode }) {
                 <Settings className="h-4 w-4 mr-2" />
                 Settings
               </DropdownMenuItem>
-              {user?.role === 'admin' && (
+              {user?.role?.toLowerCase() === 'admin' && (
                 <DropdownMenuItem onClick={() => router.push('/admin')}>
                   <Crown className="h-4 w-4 mr-2 text-blue-600" />
                   Admin Panel
@@ -225,7 +257,7 @@ export function PortalLayout({ children }: { children: React.ReactNode }) {
                   <Settings className="h-4 w-4 mr-2" />
                   Settings
                 </DropdownMenuItem>
-                {user?.role === 'admin' && (
+                {user?.role?.toLowerCase() === 'admin' && (
                   <DropdownMenuItem onClick={() => router.push('/admin')}>
                     <Crown className="h-4 w-4 mr-2 text-blue-600" />
                     Admin Panel
