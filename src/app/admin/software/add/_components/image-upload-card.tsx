@@ -65,18 +65,18 @@ export function ImageUploadCard({ value, onChange, disabled }: ImageUploadCardPr
 
   return (
     <div className="space-y-2">
-      <label className="text-sm font-medium text-slate-700 block">
+      <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300 block">
         Preview Image (optional)
       </label>
       <div
         className={cn(
           "rounded-xl border-2 border-dashed p-4 transition-all",
-          value ? "border-slate-200" : "border-slate-200 hover:border-blue-300"
+          value ? "border-zinc-200 dark:border-white/[0.12]" : "border-zinc-200 dark:border-white/[0.12] hover:border-blue-300 dark:hover:border-blue-500"
         )}
       >
         {value ? (
           <div className="flex gap-4 items-start">
-            <div className="w-24 h-24 rounded-lg overflow-hidden bg-slate-100 shrink-0">
+            <div className="w-24 h-24 rounded-lg overflow-hidden bg-zinc-100 dark:bg-white/[0.06] shrink-0">
               <img
                 src={value}
                 alt="Preview"
@@ -96,7 +96,7 @@ export function ImageUploadCard({ value, onChange, disabled }: ImageUploadCardPr
                   />
                   <span
                     className={cn(
-                      "inline-flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-700 font-medium",
+                      "inline-flex items-center gap-1.5 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium",
                       (disabled || uploading) && "opacity-50 cursor-not-allowed"
                     )}
                   >
@@ -112,7 +112,7 @@ export function ImageUploadCard({ value, onChange, disabled }: ImageUploadCardPr
                   type="button"
                   onClick={() => onChange("")}
                   disabled={disabled}
-                  className="text-sm text-slate-500 hover:text-red-600 font-medium"
+                  className="text-sm text-zinc-500 dark:text-zinc-400 hover:text-red-600 font-medium"
                 >
                   Remove
                 </button>
@@ -120,7 +120,7 @@ export function ImageUploadCard({ value, onChange, disabled }: ImageUploadCardPr
               <button
                 type="button"
                 onClick={() => setShowUrlInput(!showUrlInput)}
-                className="text-xs text-slate-500 hover:text-slate-700 flex items-center gap-1"
+                className="text-xs text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300 flex items-center gap-1"
               >
                 <Link2 className="h-3 w-3" />
                 {showUrlInput ? "Hide URL" : "Paste URL instead"}
@@ -143,24 +143,24 @@ export function ImageUploadCard({ value, onChange, disabled }: ImageUploadCardPr
                   "flex flex-col items-center gap-2 py-4 rounded-lg transition-colors",
                   (disabled || uploading)
                     ? "opacity-50 cursor-not-allowed"
-                    : "hover:bg-slate-50"
+                    : "hover:bg-zinc-50 dark:hover:bg-white/[0.06]"
                 )}
               >
                 {uploading ? (
-                  <Loader2 className="h-10 w-10 text-blue-600 animate-spin" />
+                  <Loader2 className="h-10 w-10 text-blue-600 dark:text-blue-400 animate-spin" />
                 ) : (
-                  <Image className="h-10 w-10 text-slate-400" />
+                  <Image className="h-10 w-10 text-zinc-400 dark:text-zinc-500" />
                 )}
-                <span className="text-sm text-slate-600">
+                <span className="text-sm text-zinc-600 dark:text-zinc-400">
                   {uploading ? "Uploading image..." : "Click to upload image"}
                 </span>
-                <span className="text-xs text-slate-400">JPEG, PNG, GIF, WebP · max 5 MB</span>
+                <span className="text-xs text-zinc-400 dark:text-zinc-500">JPEG, PNG, GIF, WebP · max 5 MB</span>
               </div>
             </label>
             <button
               type="button"
               onClick={() => setShowUrlInput(!showUrlInput)}
-              className="text-xs text-slate-500 hover:text-blue-600 flex items-center gap-1"
+              className="text-xs text-zinc-500 dark:text-zinc-400 hover:text-blue-600 dark:hover:text-blue-400 flex items-center gap-1"
             >
               <Link2 className="h-3 w-3" />
               {showUrlInput ? "Hide" : "Or paste image URL"}
@@ -170,7 +170,7 @@ export function ImageUploadCard({ value, onChange, disabled }: ImageUploadCardPr
         )}
 
         {showUrlInput && (
-          <div className="mt-3 pt-3 border-t border-slate-200">
+          <div className="mt-3 pt-3 border-t border-zinc-200 dark:border-white/[0.08]">
             <Input
               placeholder="https://..."
               value={value}
@@ -182,7 +182,7 @@ export function ImageUploadCard({ value, onChange, disabled }: ImageUploadCardPr
         )}
 
         {error && (
-          <div className="mt-3 flex items-center gap-2 text-sm text-red-600">
+          <div className="mt-3 flex items-center gap-2 text-sm text-red-600 dark:text-red-400">
             <XCircle className="h-4 w-4 shrink-0" />
             <span>{error}</span>
           </div>

@@ -19,6 +19,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { AddSoftwareModal } from '@/components/admin/add-software-modal'
 import { Plus, Search, Package, XCircle, RefreshCw, Download, MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
 import { type SoftwareItem } from '../_components/admin-types'
 
@@ -30,6 +31,7 @@ export default function AdminSoftwarePage() {
   const [softwareError, setSoftwareError] = useState('')
   const [deleteTarget, setDeleteTarget] = useState<SoftwareItem | null>(null)
   const [deleteLoading, setDeleteLoading] = useState(false)
+  const [addModalOpen, setAddModalOpen] = useState(false)
 
   const fetchSoftware = useCallback(async () => {
     setSoftwareLoading(true)
@@ -110,7 +112,7 @@ export default function AdminSoftwarePage() {
             <RefreshCw className={`h-4 w-4 ${softwareLoading ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
-          <Button onClick={() => router.push('/admin/software/add')} className="gap-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-500/25">
+          <Button onClick={() => setAddModalOpen(true)} className="gap-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-500/25">
             <Plus className="h-4 w-4" />
             Add Software
           </Button>
@@ -183,6 +185,7 @@ export default function AdminSoftwarePage() {
         onConfirm={handleDeleteSoftware}
         isLoading={deleteLoading}
       />
+      <AddSoftwareModal open={addModalOpen} onOpenChange={setAddModalOpen} onSuccess={fetchSoftware} />
     </div>
   )
 }

@@ -19,6 +19,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { AddCourseModal } from '@/components/admin/add-course-modal'
 import { Plus, Search, GraduationCap, XCircle, RefreshCw, MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
 import { type Course } from '../_components/admin-types'
 
@@ -30,6 +31,7 @@ export default function AdminTrainingPage() {
   const [coursesError, setCoursesError] = useState('')
   const [deleteTarget, setDeleteTarget] = useState<Course | null>(null)
   const [deleteLoading, setDeleteLoading] = useState(false)
+  const [addModalOpen, setAddModalOpen] = useState(false)
 
   const fetchCourses = useCallback(async () => {
     setCoursesLoading(true)
@@ -109,7 +111,7 @@ export default function AdminTrainingPage() {
             <RefreshCw className={`h-4 w-4 ${coursesLoading ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
-          <Button onClick={() => router.push('/admin/training/add')} className="gap-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-500/25">
+          <Button onClick={() => setAddModalOpen(true)} className="gap-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-500/25">
             <Plus className="h-4 w-4" />
             Add Course
           </Button>
@@ -181,6 +183,7 @@ export default function AdminTrainingPage() {
         onConfirm={handleDeleteCourse}
         isLoading={deleteLoading}
       />
+      <AddCourseModal open={addModalOpen} onOpenChange={setAddModalOpen} onSuccess={fetchCourses} />
     </div>
   )
 }

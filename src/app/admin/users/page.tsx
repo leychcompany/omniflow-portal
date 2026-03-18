@@ -13,6 +13,7 @@ import { TableSkeleton } from '@/components/ui/table-skeleton'
 import { AdminPageDashboard } from '@/components/admin/admin-page-dashboard'
 import { TablePagination } from '@/components/admin/table-pagination'
 import { UserDetailModal } from '@/components/admin/user-detail-modal'
+import { AddUserModal } from '@/components/admin/add-user-modal'
 import { supabase } from '@/lib/supabase'
 import { fetchWithAdminAuth } from '@/lib/admin-fetch'
 import {
@@ -52,6 +53,7 @@ export default function AdminUsersPage() {
   const [resendingId, setResendingId] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [userModalId, setUserModalId] = useState<string | null>(null)
+  const [addUserModalOpen, setAddUserModalOpen] = useState(false)
 
   const adminCount = users.filter((u) => u.role === 'admin').length
 
@@ -214,7 +216,7 @@ export default function AdminUsersPage() {
             <RefreshCw className={`h-4 w-4 mr-2 ${usersLoading ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
-          <Button size="sm" onClick={() => router.push('/admin/users/add')} className="h-10 bg-zinc-900 dark:bg-blue-600 hover:bg-zinc-800 dark:hover:bg-blue-700">
+          <Button size="sm" onClick={() => setAddUserModalOpen(true)} className="h-10 bg-zinc-900 dark:bg-blue-600 hover:bg-zinc-800 dark:hover:bg-blue-700">
             <Plus className="h-4 w-4 mr-2" />
             Add User
           </Button>
@@ -414,6 +416,11 @@ export default function AdminUsersPage() {
         onOpenChange={(o) => !o && setUserModalId(null)}
         adminCount={adminCount}
         onUpdate={fetchUsers}
+      />
+      <AddUserModal
+        open={addUserModalOpen}
+        onOpenChange={setAddUserModalOpen}
+        onSuccess={() => { fetchUsers(); fetchInvites() }}
       />
     </div>
   )

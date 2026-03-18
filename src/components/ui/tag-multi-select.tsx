@@ -95,7 +95,7 @@ export function TagMultiSelect({
   return (
     <div ref={containerRef} className={`relative ${className}`}>
       <div
-        className={`flex min-h-11 flex-wrap gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 focus-within:ring-2 focus-within:ring-indigo-500 focus-within:border-indigo-400 ${disabled ? 'cursor-not-allowed bg-slate-50 opacity-60' : ''}`}
+        className={`flex min-h-11 flex-wrap gap-2 rounded-lg border border-zinc-200 dark:border-white/[0.12] bg-white dark:bg-white/[0.04] px-3 py-2 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 ${disabled ? 'cursor-not-allowed bg-zinc-50 dark:bg-white/[0.02] opacity-60' : ''}`}
         onClick={() => !disabled && setIsOpen(true)}
       >
         {displayTags.map((tag) => (
@@ -113,7 +113,7 @@ export function TagMultiSelect({
                   removeTag(tag)
                 }}
                 title={`Remove ${tag}`}
-                className="ml-1 rounded-full p-0.5 hover:bg-slate-300 hover:text-slate-900 transition-colors"
+                className="ml-1 rounded-full p-0.5 hover:bg-zinc-300 dark:hover:bg-white/[0.12] hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
               >
                 <X className="h-3.5 w-3.5" />
               </button>
@@ -128,29 +128,29 @@ export function TagMultiSelect({
           onFocus={() => setIsOpen(true)}
           placeholder={value.length === 0 ? placeholder : ''}
           disabled={disabled}
-          className="min-w-[120px] flex-1 border-0 bg-transparent p-0 text-sm outline-none placeholder:text-slate-400"
+          className="min-w-[120px] flex-1 border-0 bg-transparent p-0 text-sm text-zinc-900 dark:text-zinc-100 outline-none placeholder:text-zinc-400 dark:placeholder:text-zinc-500"
         />
       </div>
 
       {isOpen && !disabled && (
-        <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-48 overflow-auto rounded-lg border border-slate-200 bg-white py-1 shadow-lg">
+        <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-48 overflow-auto rounded-lg border border-zinc-200 dark:border-white/[0.12] bg-white dark:bg-[#141414] py-1 shadow-lg">
           {inputValue.trim() && !allTags.includes(inputValue.trim()) && (
             <button
               type="button"
-              className="flex w-full items-center px-3 py-2 text-left text-sm hover:bg-slate-100"
+              className="flex w-full items-center px-3 py-2 text-left text-sm hover:bg-zinc-100 dark:hover:bg-white/[0.06]"
               onClick={() => addTag(inputValue.trim())}
             >
-              <span className="text-slate-600">Add &quot;{inputValue.trim()}&quot;</span>
+              <span className="text-zinc-600 dark:text-zinc-400">Add &quot;{inputValue.trim()}&quot;</span>
             </button>
           )}
           {unselectedTags.map((tag) => (
             <div
               key={tag}
-              className="flex items-center justify-between gap-2 px-3 py-2 hover:bg-slate-100 group"
+              className="flex items-center justify-between gap-2 px-3 py-2 hover:bg-zinc-100 dark:hover:bg-white/[0.06] group"
             >
               <button
                 type="button"
-                className="flex-1 text-left text-sm"
+                className="flex-1 text-left text-sm text-zinc-900 dark:text-zinc-100"
                 onClick={() => addTag(tag)}
               >
                 {tag}
@@ -161,7 +161,7 @@ export function TagMultiSelect({
                   onClick={(e) => handleDeleteFromPool(tag, e)}
                   disabled={deletingTag !== null}
                   title={`Permanently delete "${tag}" from the tag list`}
-                  className="rounded p-1 text-slate-400 hover:bg-red-100 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50"
+                  className="rounded p-1 text-zinc-400 dark:text-zinc-500 hover:bg-red-100 dark:hover:bg-red-950/50 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50"
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>
@@ -169,7 +169,7 @@ export function TagMultiSelect({
             </div>
           ))}
           {unselectedTags.length === 0 && !inputValue.trim() && (
-            <div className="px-3 py-2 text-sm text-slate-500">No more tags to add</div>
+            <div className="px-3 py-2 text-sm text-zinc-500 dark:text-zinc-400">No more tags to add</div>
           )}
         </div>
       )}

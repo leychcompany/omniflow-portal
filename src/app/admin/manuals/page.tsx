@@ -14,6 +14,7 @@ import { TablePagination } from '@/components/admin/table-pagination'
 import { fetchWithAdminAuth } from '@/lib/admin-fetch'
 import { AdminPageDashboard } from '@/components/admin/admin-page-dashboard'
 import { getManualsColumns } from './_components/manuals-columns'
+import { AddManualModal } from '@/components/admin/add-manual-modal'
 import { Plus, Search, FileText, XCircle, RefreshCw } from 'lucide-react'
 import { type Manual } from '../_components/admin-types'
 
@@ -32,6 +33,7 @@ export default function AdminManualsPage() {
   const [error, setError] = useState('')
   const [deleteTarget, setDeleteTarget] = useState<Manual | null>(null)
   const [deleteLoading, setDeleteLoading] = useState(false)
+  const [addModalOpen, setAddModalOpen] = useState(false)
 
   const fetchManuals = useCallback(async () => {
     setLoading(true)
@@ -120,7 +122,7 @@ export default function AdminManualsPage() {
             <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
-          <Button size="sm" onClick={() => router.push('/admin/manuals/add')} className="h-11 rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-500/25">
+          <Button size="sm" onClick={() => setAddModalOpen(true)} className="h-11 rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-500/25">
             <Plus className="h-4 w-4 mr-2" />
             Add Document
           </Button>
@@ -148,7 +150,7 @@ export default function AdminManualsPage() {
             {total === 0 ? 'Upload your first PDF document to get started.' : 'Try a different search term.'}
           </p>
           {total === 0 && (
-            <Button size="sm" onClick={() => router.push('/admin/manuals/add')} className="rounded-xl bg-blue-600 hover:bg-blue-700 shadow-md shadow-blue-500/25">
+            <Button size="sm" onClick={() => setAddModalOpen(true)} className="rounded-xl bg-blue-600 hover:bg-blue-700 shadow-md shadow-blue-500/25">
               <Plus className="h-4 w-4 mr-2" />
               Add your first document
             </Button>
@@ -177,6 +179,7 @@ export default function AdminManualsPage() {
         onConfirm={handleDelete}
         isLoading={deleteLoading}
       />
+      <AddManualModal open={addModalOpen} onOpenChange={setAddModalOpen} onSuccess={fetchManuals} />
     </div>
   )
 }

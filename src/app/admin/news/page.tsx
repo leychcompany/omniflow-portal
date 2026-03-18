@@ -19,6 +19,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { AddNewsModal } from '@/components/admin/add-news-modal'
 import { Plus, Search, Newspaper, XCircle, RefreshCw, MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
 import { type NewsArticle, formatDate } from '../_components/admin-types'
 
@@ -30,6 +31,7 @@ export default function AdminNewsPage() {
   const [newsError, setNewsError] = useState('')
   const [deleteTarget, setDeleteTarget] = useState<NewsArticle | null>(null)
   const [deleteLoading, setDeleteLoading] = useState(false)
+  const [addModalOpen, setAddModalOpen] = useState(false)
 
   const fetchNews = useCallback(async () => {
     setNewsLoading(true)
@@ -109,7 +111,7 @@ export default function AdminNewsPage() {
             <RefreshCw className={`h-4 w-4 ${newsLoading ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
-          <Button onClick={() => router.push('/admin/news/add')} className="gap-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-500/25">
+          <Button onClick={() => setAddModalOpen(true)} className="gap-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-500/25">
             <Plus className="h-4 w-4" />
             Add Article
           </Button>
@@ -181,6 +183,7 @@ export default function AdminNewsPage() {
         onConfirm={handleDeleteNews}
         isLoading={deleteLoading}
       />
+      <AddNewsModal open={addModalOpen} onOpenChange={setAddModalOpen} onSuccess={fetchNews} />
     </div>
   )
 }
