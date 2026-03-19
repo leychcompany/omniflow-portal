@@ -5,13 +5,9 @@ import Link from 'next/link'
 import { useAuthStore } from '@/store/auth-store'
 import { supabase } from '@/lib/supabase'
 import {
-  Bot,
   GraduationCap,
   FileText,
-  Headphones,
-  BookOpen,
   Shield,
-  ChevronRight,
   Package,
   Newspaper,
   Tag,
@@ -20,8 +16,6 @@ import {
 } from 'lucide-react'
 import { CarouselCard } from './_components/carousel-card'
 import { HomeSkeleton } from '@/components/portal/skeletons'
-
-const LOCKED_FEATURE_IDS = ['ai-assistant', 'view-documents', 'software']
 
 const getDashboardStats = (
   documentsCount: number,
@@ -41,26 +35,6 @@ const getDashboardStats = (
   return isLocked ? all.filter((s) => !s.locked) : all
 }
 
-const navItems = [
-  { id: 'ai-assistant', title: 'AI Assistant', icon: Bot, href: '/ai-assistant' },
-  { id: 'training', title: 'Training', icon: GraduationCap, href: '/training' },
-  { id: 'submit-rfq', title: 'Submit RFQ', icon: FileText, href: 'https://form.typeform.com/to/daiU0VJA', external: true },
-  { id: 'support', title: 'Support', icon: Headphones, href: '/support' },
-  { id: 'view-documents', title: 'Documents', icon: BookOpen, href: '/documents' },
-  { id: 'software', title: 'Software', icon: Package, href: '/software' },
-  { id: 'news', title: 'News', icon: Newspaper, href: '/news' },
-]
-
-interface NewsArticle {
-  id: string
-  title: string
-  slug: string
-  excerpt: string | null
-  image_url: string | null
-  featured: boolean
-  published_at: string
-}
-
 interface SoftwareItem {
   id: string
   title: string
@@ -70,12 +44,13 @@ interface SoftwareItem {
   image_url?: string | null
 }
 
-function formatDate(dateStr: string) {
-  return new Date(dateStr).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  })
+interface DocumentItem {
+  id: string
+  title: string
+  tags: string[]
+  filename: string
+  size?: string | null
+  description?: string | null
 }
 
 export default function HomePage() {
@@ -85,33 +60,27 @@ export default function HomePage() {
   const [softwareCount, setSoftwareCount] = useState(0)
   const [newsCount, setNewsCount] = useState(0)
   const [tagsCount, setTagsCount] = useState(0)
-  const [news, setNews] = useState<NewsArticle[]>([])
   const [software, setSoftware] = useState<SoftwareItem[]>([])
+  const [documents, setDocuments] = useState<DocumentItem[]>([])
   const [loadingData, setLoadingData] = useState(true)
   const hashHandledRef = useRef(false)
 
   useEffect(() => {
     Promise.all([
-      fetch('/api/manuals?limit=1').then((r) => (r.ok ? r.json() : { total: 0 })).then((d) => d?.total ?? 0),
+      fetch('/api/manuals?limit=12').then((r) => (r.ok ? r.json() : { items: [], total: 0 })).then((d) => ({ items: d?.items ?? [], total: d?.total ?? 0 })),
       fetch('/api/courses').then((r) => (r.ok ? r.json() : [])).then((d) => (Array.isArray(d) ? d : [])),
       fetch('/api/software').then((r) => (r.ok ? r.json() : [])).then((d) => (Array.isArray(d) ? d : [])),
       fetch('/api/news').then((r) => (r.ok ? r.json() : [])).then((d) => (Array.isArray(d) ? d : [])),
       fetch('/api/tags').then((r) => (r.ok ? r.json() : [])).then((d) => (Array.isArray(d) ? d : [])),
     ])
-      .then(([manualsTotal, coursesData, softwareData, newsData, tagsData]) => {
-        setDocumentsCount(manualsTotal)
+      .then(([manualsData, coursesData, softwareData, newsData, tagsData]) => {
+        setDocumentsCount(manualsData.total)
+        setDocuments(Array.isArray(manualsData.items) ? manualsData.items : [])
         setTrainingCount(coursesData.length)
         setSoftwareCount(softwareData.length)
         setNewsCount(newsData.length)
         setTagsCount(tagsData.length)
         setSoftware(Array.isArray(softwareData) ? softwareData : [])
-        // Latest news: featured first (if any), then by published_at desc
-        const sortedNews = [...(Array.isArray(newsData) ? newsData : [])].sort((a, b) => {
-          if (a.featured && !b.featured) return -1
-          if (!a.featured && b.featured) return 1
-          return new Date(b.published_at).getTime() - new Date(a.published_at).getTime()
-        })
-        setNews(sortedNews)
       })
       .catch(() => {})
       .finally(() => setLoadingData(false))
@@ -182,8 +151,8 @@ export default function HomePage() {
               })}
             </div>
 
-            {/* Software (left) + Latest news (right) */}
-            <div className="mt-10 grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Software */}
+            <div className="mt-10">
               {loadingData || software.length === 0 ? (
                 <div className="rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-[#141414] overflow-hidden shadow-sm">
                   <div className="p-3 border-b border-slate-100 dark:border-white/[0.06] bg-blue-50/50 dark:bg-white/[0.03] flex items-center justify-between">
@@ -201,30 +170,19 @@ export default function HomePage() {
                   </div>
                 </div>
               ) : (
-                <CarouselCard title="Software" viewAllHref="/software" icon={<Package className="h-4 w-4 text-blue-600 dark:text-blue-400" />}>
+                <CarouselCard title="Software" viewAllHref="/software" icon={<Package className="h-4 w-4 text-blue-600 dark:text-blue-400" />} slidesPerView={3}>
                   {software.map((item) => (
                     <div
                       key={item.id}
-                      className="flex flex-col rounded-2xl overflow-hidden border border-slate-200/80 dark:border-white/[0.08] bg-white dark:bg-[#141414] shadow-sm hover:border-blue-300 dark:hover:border-blue-500/50 hover:shadow-lg hover:shadow-blue-100/30 dark:hover:shadow-blue-500/10 transition-all duration-300"
+                      className="flex items-center gap-3 rounded-2xl border border-slate-200/80 dark:border-white/[0.08] bg-white dark:bg-[#141414] shadow-sm hover:border-blue-300 dark:hover:border-blue-500/50 hover:shadow-lg hover:shadow-blue-100/30 dark:hover:shadow-blue-500/10 transition-all duration-300 p-4"
                     >
-                      {item.image_url ? (
-                        <div className="aspect-16/10 w-full overflow-hidden bg-slate-100 dark:bg-white/[0.04]">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={item.image_url}
-                            alt={item.title}
-                            className="h-full w-full object-cover"
-                          />
-                        </div>
-                      ) : (
-                        <div className="aspect-16/10 w-full bg-linear-to-br from-blue-500 to-blue-600 flex items-center justify-center">
-                          <Package className="h-10 w-10 text-white/80" />
-                        </div>
-                      )}
-                      <div className="p-3 flex flex-col flex-1">
+                      <div className="shrink-0 w-11 h-11 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
+                        <Package className="h-5 w-5 text-white" />
+                      </div>
+                      <div className="flex-1 min-w-0">
                         <h3 className="font-semibold text-slate-900 dark:text-zinc-100 line-clamp-2">{item.title}</h3>
                         {item.filename && (
-                          <p className="text-xs text-slate-500 dark:text-zinc-500 mt-1 truncate">{item.filename}</p>
+                          <p className="text-xs text-slate-500 dark:text-zinc-500 mt-0.5 truncate">{item.filename}</p>
                         )}
                         <button
                           type="button"
@@ -233,9 +191,9 @@ export default function HomePage() {
                             window.open(`/api/software/${item.id}/download`, '_blank', 'noopener,noreferrer')
                           }}
                           disabled={isLocked}
-                          className="mt-3 inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                          className="mt-2 inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                         >
-                          <Download className="h-4 w-4" />
+                          <Download className="h-3.5 w-3.5" />
                           {isLocked ? 'Unlock to download' : 'Download'}
                         </button>
                       </div>
@@ -243,104 +201,58 @@ export default function HomePage() {
                   ))}
                 </CarouselCard>
               )}
+            </div>
 
-              {loadingData ? (
+            {/* Documents */}
+            <div className="mt-10">
+              {loadingData || documents.length === 0 ? (
                 <div className="rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-[#141414] overflow-hidden shadow-sm">
-                  <div className="p-3 border-b border-slate-100 dark:border-white/[0.06] bg-blue-50/50 dark:bg-white/[0.03]">
+                  <div className="p-3 border-b border-slate-100 dark:border-white/[0.06] bg-blue-50/50 dark:bg-white/[0.03] flex items-center justify-between">
                     <h2 className="text-sm font-semibold text-slate-900 dark:text-zinc-100 flex items-center gap-2">
-                      <Newspaper className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                      Latest news
+                      <FileText className="h-4 w-4 text-blue-600" />
+                      Documents
                     </h2>
                   </div>
                   <div className="flex justify-center py-12">
-                    <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+                    {loadingData ? (
+                      <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+                    ) : (
+                      <p className="text-sm text-slate-500 dark:text-zinc-400">No documents yet.</p>
+                    )}
                   </div>
-                </div>
-              ) : news.length === 0 ? (
-                <div className="rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-[#141414] overflow-hidden shadow-sm">
-                  <div className="p-3 border-b border-slate-100 dark:border-white/[0.06] bg-blue-50/50 dark:bg-white/[0.03]">
-                    <h2 className="text-sm font-semibold text-slate-900 dark:text-zinc-100 flex items-center gap-2">
-                      <Newspaper className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                      Latest news
-                    </h2>
-                  </div>
-                  <p className="py-12 text-center text-sm text-slate-500 dark:text-zinc-400">No news yet.</p>
                 </div>
               ) : (
-                <CarouselCard title="Latest news" viewAllHref="/news" icon={<Newspaper className="h-4 w-4 text-blue-600 dark:text-blue-400" />}>
-                      {news.map((article) => (
-                        <Link
-                          key={article.id}
-                          href={`/news/${article.slug}`}
-                          className="flex flex-col rounded-2xl overflow-hidden border border-slate-200/80 dark:border-white/[0.08] bg-white dark:bg-[#141414] shadow-sm hover:border-blue-300 dark:hover:border-blue-500/50 hover:shadow-lg hover:shadow-blue-100/30 dark:hover:shadow-blue-500/10 transition-all duration-300 group"
+                <CarouselCard title="Documents" viewAllHref="/documents" icon={<FileText className="h-4 w-4 text-blue-600 dark:text-blue-400" />} slidesPerView={3}>
+                  {documents.map((doc) => (
+                    <div
+                      key={doc.id}
+                      className="flex items-center gap-3 rounded-2xl border border-slate-200/80 dark:border-white/[0.08] bg-white dark:bg-[#141414] shadow-sm hover:border-blue-300 dark:hover:border-blue-500/50 hover:shadow-lg hover:shadow-blue-100/30 dark:hover:shadow-blue-500/10 transition-all duration-300 p-4"
+                    >
+                      <div className="shrink-0 w-11 h-11 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
+                        <FileText className="h-5 w-5 text-white" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-slate-900 dark:text-zinc-100 line-clamp-2">{doc.title}</h3>
+                        {doc.filename && (
+                          <p className="text-xs text-slate-500 dark:text-zinc-500 mt-0.5 truncate">{doc.filename}</p>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (isLocked) return
+                            window.open(`/api/manuals/${doc.id}/download`, '_blank', 'noopener,noreferrer')
+                          }}
+                          disabled={isLocked}
+                          className="mt-2 inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                         >
-                          <div className="aspect-16/10 w-full overflow-hidden bg-slate-100 dark:bg-white/[0.04]">
-                            {article.image_url ? (
-                              /* eslint-disable-next-line @next/next/no-img-element */
-                              <img
-                                src={article.image_url}
-                                alt=""
-                                className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
-                              />
-                            ) : (
-                              <div className="h-full w-full flex items-center justify-center">
-                                <Newspaper className="h-10 w-10 text-slate-300 dark:text-zinc-500" />
-                              </div>
-                            )}
-                          </div>
-                          <div className="p-3">
-                            <p className="font-semibold text-slate-900 dark:text-zinc-100 line-clamp-2 group-hover:text-blue-700 dark:group-hover:text-blue-400">{article.title}</p>
-                            <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1 flex items-center gap-1">
-                              {article.featured && <span className="text-blue-600 dark:text-blue-400 font-medium">Featured</span>}
-                              {formatDate(article.published_at)}
-                            </p>
-                          </div>
-                        </Link>
-                      ))}
+                          <Download className="h-3.5 w-3.5" />
+                          {isLocked ? 'Unlock to download' : 'Download'}
+                        </button>
+                      </div>
+                    </div>
+                  ))}
                 </CarouselCard>
               )}
-            </div>
-
-            {/* Quick access */}
-            <div className="mt-10">
-              <h2 className="text-sm font-semibold text-slate-900 dark:text-zinc-100 mb-4">Quick access</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
-                {navItems
-                  .filter((item) => !isLocked || !LOCKED_FEATURE_IDS.includes(item.id))
-                  .map((item) => {
-                    const Icon = item.icon
-                    const content = (
-                      <div className="flex items-center gap-3 rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-[#141414] px-4 py-3.5 hover:border-blue-200 dark:hover:border-blue-500/50 hover:bg-blue-50/50 dark:hover:bg-white/[0.04] transition-all group">
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400">
-                          <Icon className="h-5 w-5" />
-                        </div>
-                        <span className="font-medium text-slate-900 dark:text-zinc-100 group-hover:text-blue-700 dark:group-hover:text-blue-400">{item.title}</span>
-                        <ChevronRight className="h-4 w-4 ml-auto text-slate-300 dark:text-zinc-500 group-hover:text-blue-500 dark:group-hover:text-blue-400" />
-                      </div>
-                    )
-                    if (item.external) {
-                      return (
-                        <a
-                          key={item.id}
-                          href={item.href}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={(e) => {
-                            e.preventDefault()
-                            window.open(item.href, '_blank', 'noopener,noreferrer')
-                          }}
-                        >
-                          {content}
-                        </a>
-                      )
-                    }
-                    return (
-                      <Link key={item.id} href={item.href}>
-                        {content}
-                      </Link>
-                    )
-                  })}
-              </div>
             </div>
     </div>
   )

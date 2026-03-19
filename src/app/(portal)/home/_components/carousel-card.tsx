@@ -11,6 +11,7 @@ interface CarouselCardProps {
   icon: React.ReactNode
   children: React.ReactNode
   gap?: number
+  slidesPerView?: 1 | 2 | 3
   className?: string
 }
 
@@ -22,6 +23,7 @@ export function CarouselCard({
   icon,
   children,
   gap = 16,
+  slidesPerView = 1,
   className,
 }: CarouselCardProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -168,7 +170,12 @@ export function CarouselCard({
             <div
               key={i}
               data-carousel-card
-              className="shrink-0 w-[85%] min-w-[220px] sm:w-[calc(50%-8px)]"
+              className={cn(
+                'shrink-0',
+                slidesPerView === 3 && 'w-[85%] min-w-[180px] sm:w-[calc((100%-32px)/3)]',
+                slidesPerView === 2 && 'w-[85%] min-w-[220px] sm:w-[calc(50%-8px)]',
+                slidesPerView === 1 && 'w-[85%] min-w-[220px]'
+              )}
               style={{ scrollSnapAlign: 'start' }}
             >
               {child}

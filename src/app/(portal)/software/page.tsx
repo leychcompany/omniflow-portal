@@ -87,46 +87,34 @@ export default function SoftwarePage() {
             <p className="text-slate-600 dark:text-zinc-400">Download software packages (ZIP format)</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {items.map((item) => (
-              <Card key={item.id} className="border-0 shadow-sm hover:shadow-lg transition-all flex flex-col overflow-hidden">
-                <CardContent className="p-0 flex flex-col flex-1 min-h-0">
-                  <div className="aspect-video bg-slate-100 dark:bg-white/[0.04] flex items-center justify-center overflow-hidden">
-                    {item.image_url ? (
-                      <img src={item.image_url} alt={item.title} className="w-full h-full object-cover" />
-                    ) : (
-                      <Package className="h-12 w-12 text-slate-300 dark:text-zinc-500" />
-                    )}
+              <Card key={item.id} className="border-0 shadow-sm hover:shadow-md transition-all overflow-hidden">
+                <CardContent className="p-5 flex flex-row gap-4">
+                  <div className="shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
+                    <Package className="h-6 w-6 text-white" />
                   </div>
-                  <div className="p-6 flex flex-col flex-1 min-h-0">
-                    <div className="flex-1">
-                      <h3 className="text-lg font-semibold text-slate-900 dark:text-zinc-100 w-full mb-2 truncate" title={item.title}>
-                        {item.title}
-                      </h3>
-                      <p className="text-slate-600 dark:text-zinc-400 mb-3 line-clamp-2">{item.description || '—'}</p>
-                      <div className="flex items-center gap-4 text-sm text-slate-500 dark:text-zinc-400">
-                        <div className="flex items-center gap-1">
-                          <FileArchive className="h-4 w-4 shrink-0" />
-                          {item.filename}
-                        </div>
-                        {item.size && (
-                          <div className="flex items-center gap-1">
-                            {item.size}
-                          </div>
-                        )}
-                      </div>
+                  <div className="flex-1 min-w-0 flex flex-col">
+                    <h3 className="text-base font-semibold text-slate-900 dark:text-zinc-100 truncate" title={item.title}>
+                      {item.title}
+                    </h3>
+                    <p className="text-sm text-slate-600 dark:text-zinc-400 line-clamp-2 mt-0.5">{item.description || '—'}</p>
+                    <div className="flex items-center gap-3 mt-2 text-xs text-slate-500 dark:text-zinc-400 truncate">
+                      <span className="flex items-center gap-1 min-w-0">
+                        <FileArchive className="h-3.5 w-3.5 shrink-0" />
+                        <span className="truncate">{item.filename}</span>
+                      </span>
+                      {item.size && <span className="shrink-0">{item.size}</span>}
                     </div>
-                    <div className="mt-4 pt-4 border-t border-slate-100 dark:border-white/[0.06]">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDownload(item)}
-                        className="w-full transition-all duration-200"
-                      >
-                        <Download className="h-4 w-4 mr-2" />
-                        Download
-                      </Button>
-                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDownload(item)}
+                      className="w-full mt-4 transition-all duration-200"
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Download
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
