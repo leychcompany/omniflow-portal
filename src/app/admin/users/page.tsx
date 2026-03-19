@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -42,7 +42,6 @@ import {
 import { type User, type Invite, getStatusColor, formatDate } from '../_components/admin-types'
 
 const LIMIT = 20
-const SEARCH_DEBOUNCE_MS = 300
 const SORT_OPTIONS = [
   { value: 'created_at', label: 'Created', defaultOrder: 'desc' },
   { value: 'email', label: 'Email', defaultOrder: 'asc' },
@@ -76,13 +75,14 @@ export default function AdminUsersPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [userModalId, setUserModalId] = useState<string | null>(null)
   const [addUserModalOpen, setAddUserModalOpen] = useState(false)
+  const hasUsersDataRef = useRef(false)
 
   const adminCount = users.filter((u) => u.role === 'admin').length
   const selectableUsers = users.filter((u) => u.role !== 'admin')
   const selectedLockedCount = selectableUsers.filter((u) => selectedIds.has(u.id) && u.locked).length
 
   const fetchUsers = useCallback(async () => {
-    setUsersLoading(true)
+    if (!hasUsersDataRef.current) setUsersLoading(true)
     setUsersError('')
     try {
       const params = new URLSearchParams({ page: String(page), limit: String(LIMIT) })
@@ -108,6 +108,7 @@ export default function AdminUsersPage() {
       )
       setUsersTotal(result.total ?? 0)
       setUsersTotalPages(result.totalPages ?? 1)
+      hasUsersDataRef.current = true
     } catch (e) {
       setUsersError(e instanceof Error ? e.message : 'Failed to load')
     } finally {
@@ -131,19 +132,13 @@ export default function AdminUsersPage() {
   }, [])
 
   useEffect(() => {
-    const t = setTimeout(() => {
-      setSearchTerm(searchInput)
-      setPage(1)
-    }, SEARCH_DEBOUNCE_MS)
-    return () => clearTimeout(t)
+    setSearchTerm(searchInput)
+    setPage(1)
   }, [searchInput])
 
   useEffect(() => {
-    const t = setTimeout(() => {
-      setEmailDomain(emailDomainInput.trim())
-      setPage(1)
-    }, SEARCH_DEBOUNCE_MS)
-    return () => clearTimeout(t)
+    setEmailDomain(emailDomainInput.trim())
+    setPage(1)
   }, [emailDomainInput])
 
   useEffect(() => {
@@ -281,14 +276,22 @@ export default function AdminUsersPage() {
       ) : (
       <div className="flex flex-col gap-4">
         <div className="flex flex-col sm:flex-row gap-4">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+          <div className="flex-1 relative flex">
             <Input
               placeholder="Search..."
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
-              className="pl-10 h-10"
+              onKeyDown={(e) => e.key === 'Enter' && (setSearchTerm(searchInput), setPage(1))}
+              className="pl-10 h-10 pr-10 flex-1"
             />
+            <button
+              type="button"
+              onClick={() => { setSearchTerm(searchInput); setPage(1) }}
+              className="absolute left-0 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/5 rounded-l-md transition-colors cursor-pointer"
+              aria-label="Search"
+            >
+              <Search className="h-4 w-4" />
+            </button>
           </div>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={fetchUsers} disabled={usersLoading} className="h-10">
