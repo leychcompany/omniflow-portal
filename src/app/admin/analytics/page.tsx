@@ -8,7 +8,14 @@ import { SearchBarSkeleton } from '@/components/ui/search-bar-skeleton'
 import { TableSkeleton } from '@/components/ui/table-skeleton'
 import { fetchWithAdminAuth } from '@/lib/admin-fetch'
 import { AdminPageDashboard } from '@/components/admin/admin-page-dashboard'
-import { BarChart3, Loader2, XCircle, RefreshCw, Activity } from 'lucide-react'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { BarChart3, Loader2, XCircle, RefreshCw, Activity, ChevronDown } from 'lucide-react'
 import { formatDate } from '../_components/admin-types'
 
 interface AnalyticsEvent {
@@ -92,17 +99,33 @@ export default function AdminAnalyticsPage() {
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="flex-1">
           <label className="sr-only">Event type</label>
-          <select
-            value={analyticsEventTypeFilter}
-            onChange={(e) => handleFilterChange(e.target.value)}
-            className="w-full sm:w-auto h-11 px-4 rounded-xl border border-slate-200 dark:border-white/[0.12] bg-white dark:bg-white/[0.04] text-sm text-slate-700 dark:text-zinc-100 shadow-sm focus:ring-2 focus:ring-blue-500/50 focus:border-blue-400 dark:focus:border-blue-500"
-          >
-            <option value="">All events</option>
-            <option value="login">Login</option>
-            <option value="logout">Logout</option>
-            <option value="document_download">Document download</option>
-            <option value="software_download">Software download</option>
-          </select>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                className="w-full sm:w-auto h-11 px-4 rounded-xl border border-slate-200 dark:border-white/[0.12] bg-white dark:bg-[#141414] text-sm text-slate-700 dark:text-zinc-100 shadow-sm hover:bg-zinc-50 dark:hover:bg-white/[0.06] justify-between"
+              >
+                <span>
+                  {analyticsEventTypeFilter
+                    ? EVENT_LABELS[analyticsEventTypeFilter] ?? analyticsEventTypeFilter
+                    : 'All events'}
+                </span>
+                <ChevronDown className="h-4 w-4 opacity-60" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="min-w-[180px]">
+              <DropdownMenuRadioGroup
+                value={analyticsEventTypeFilter}
+                onValueChange={handleFilterChange}
+              >
+                <DropdownMenuRadioItem value="">All events</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="login">Login</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="logout">Logout</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="document_download">Document download</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="software_download">Software download</DropdownMenuRadioItem>
+              </DropdownMenuRadioGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
         <Button
           variant="outline"

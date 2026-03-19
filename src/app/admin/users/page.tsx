@@ -29,11 +29,27 @@ import {
   Unlock,
   Shield,
   Users,
+  ArrowUpDown,
+  ChevronDown,
 } from 'lucide-react'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { type User, type Invite, getStatusColor, formatDate } from '../_components/admin-types'
 
 const LIMIT = 20
 const SEARCH_DEBOUNCE_MS = 300
+const SORT_OPTIONS = [
+  { value: 'created_at', label: 'Created', defaultOrder: 'desc' },
+  { value: 'email', label: 'Email', defaultOrder: 'asc' },
+  { value: 'name', label: 'Name', defaultOrder: 'asc' },
+  { value: 'locked', label: 'Locked status', defaultOrder: 'desc' },
+  { value: 'role', label: 'Role', defaultOrder: 'asc' },
+] as const
 
 export default function AdminUsersPage() {
   const router = useRouter()
@@ -41,6 +57,12 @@ export default function AdminUsersPage() {
   const [subTab, setSubTab] = useState<'users' | 'invites'>('users')
   const [searchInput, setSearchInput] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
+  const [emailDomainInput, setEmailDomainInput] = useState('')
+  const [emailDomain, setEmailDomain] = useState('')
+  const [sortBy, setSortBy] = useState('created_at')
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [bulkUnlockLoading, setBulkUnlockLoading] = useState(false)
   const [page, setPage] = useState(1)
   const [users, setUsers] = useState<User[]>([])
   const [usersTotal, setUsersTotal] = useState(0)
@@ -56,6 +78,8 @@ export default function AdminUsersPage() {
   const [addUserModalOpen, setAddUserModalOpen] = useState(false)
 
   const adminCount = users.filter((u) => u.role === 'admin').length
+  const selectableUsers = users.filter((u) => u.role !== 'admin')
+  const selectedLockedCount = selectableUsers.filter((u) => selectedIds.has(u.id) && u.locked).length
 
   const fetchUsers = useCallback(async () => {
     setUsersLoading(true)
@@ -63,6 +87,9 @@ export default function AdminUsersPage() {
     try {
       const params = new URLSearchParams({ page: String(page), limit: String(LIMIT) })
       if (searchTerm) params.set('q', searchTerm)
+      if (emailDomain) params.set('email_domain', emailDomain)
+      params.set('sort_by', sortBy)
+      params.set('sort', sortOrder)
       const res = await fetchWithAdminAuth(`/api/users?${params}`)
       const result = await res.json()
       if (!res.ok) throw new Error(result.error || 'Failed to load')
@@ -86,7 +113,7 @@ export default function AdminUsersPage() {
     } finally {
       setUsersLoading(false)
     }
-  }, [page, searchTerm])
+  }, [page, searchTerm, emailDomain, sortBy, sortOrder])
 
   const fetchInvites = useCallback(async () => {
     setInvitesLoading(true)
@@ -110,6 +137,18 @@ export default function AdminUsersPage() {
     }, SEARCH_DEBOUNCE_MS)
     return () => clearTimeout(t)
   }, [searchInput])
+
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setEmailDomain(emailDomainInput.trim())
+      setPage(1)
+    }, SEARCH_DEBOUNCE_MS)
+    return () => clearTimeout(t)
+  }, [emailDomainInput])
+
+  useEffect(() => {
+    setPage(1)
+  }, [sortBy, sortOrder])
 
   useEffect(() => {
     fetchUsers()
@@ -143,6 +182,45 @@ export default function AdminUsersPage() {
     })
     if (!res.ok) throw new Error('Failed')
     await fetchUsers()
+  }
+
+  const bulkUnlock = async () => {
+    if (selectedLockedCount === 0) return
+    setBulkUnlockLoading(true)
+    try {
+      const idsToUnlock = selectableUsers.filter((u) => selectedIds.has(u.id) && u.locked).map((u) => u.id)
+      const res = await fetchWithAdminAuth('/api/users/bulk-unlock', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userIds: idsToUnlock }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed')
+      setSelectedIds(new Set())
+      toast.success(data.message ?? `Unlocked ${idsToUnlock.length} user(s)`)
+      await fetchUsers()
+    } catch {
+      toast.error('Failed to unlock users')
+    } finally {
+      setBulkUnlockLoading(false)
+    }
+  }
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === selectableUsers.length) {
+      setSelectedIds(new Set())
+    } else {
+      setSelectedIds(new Set(selectableUsers.map((u) => u.id)))
+    }
+  }
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
   }
 
   const resendInvite = async (invite: Invite) => {
@@ -201,26 +279,91 @@ export default function AdminUsersPage() {
       {usersLoading ? (
         <SearchBarSkeleton />
       ) : (
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
-          <Input
-            placeholder="Search..."
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            className="pl-10 h-10"
-          />
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+            <Input
+              placeholder="Search..."
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              className="pl-10 h-10"
+            />
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={fetchUsers} disabled={usersLoading} className="h-10">
+              <RefreshCw className={`h-4 w-4 mr-2 ${usersLoading ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
+            <Button size="sm" onClick={() => setAddUserModalOpen(true)} className="h-10 bg-zinc-900 dark:bg-blue-600 hover:bg-zinc-800 dark:hover:bg-blue-700">
+              <Plus className="h-4 w-4 mr-2" />
+              Add User
+            </Button>
+          </div>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={fetchUsers} disabled={usersLoading} className="h-10">
-            <RefreshCw className={`h-4 w-4 mr-2 ${usersLoading ? 'animate-spin' : ''}`} />
-            Refresh
-          </Button>
-          <Button size="sm" onClick={() => setAddUserModalOpen(true)} className="h-10 bg-zinc-900 dark:bg-blue-600 hover:bg-zinc-800 dark:hover:bg-blue-700">
-            <Plus className="h-4 w-4 mr-2" />
-            Add User
-          </Button>
-        </div>
+        {subTab === 'users' && (
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-zinc-600 dark:text-zinc-400">Email domain:</span>
+              <Input
+                placeholder="e.g. exxonmobil.com"
+                value={emailDomainInput}
+                onChange={(e) => setEmailDomainInput(e.target.value)}
+                className="w-48 h-9"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <ArrowUpDown className="h-4 w-4 text-zinc-400" />
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-9 rounded-md border border-zinc-200 dark:border-white/20 bg-white dark:bg-[#141414] px-3 text-sm text-zinc-900 dark:text-zinc-100 hover:bg-zinc-50 dark:hover:bg-white/[0.06] min-w-[140px] justify-between"
+                  >
+                    <span>
+                      {SORT_OPTIONS.find((o) => o.value === sortBy)?.label ?? sortBy} ({sortOrder})
+                    </span>
+                    <ChevronDown className="h-4 w-4 opacity-60" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="min-w-[160px]">
+                  <DropdownMenuRadioGroup
+                    value={`${sortBy}:${sortOrder}`}
+                    onValueChange={(val) => {
+                      const [col, ord] = val.split(':')
+                      setSortBy(col)
+                      setSortOrder((ord as 'asc' | 'desc') ?? 'desc')
+                      setPage(1)
+                    }}
+                  >
+                    {SORT_OPTIONS.map((opt) => (
+                      <DropdownMenuRadioItem key={opt.value} value={`${opt.value}:${opt.defaultOrder}`}>
+                        {opt.label} ({opt.defaultOrder})
+                      </DropdownMenuRadioItem>
+                    ))}
+                  </DropdownMenuRadioGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+            {selectedLockedCount > 0 && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={bulkUnlock}
+                disabled={bulkUnlockLoading}
+                className="h-9"
+              >
+                {bulkUnlockLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : (
+                  <Unlock className="h-4 w-4 mr-2" />
+                )}
+                Unlock {selectedLockedCount} selected
+              </Button>
+            )}
+          </div>
+        )}
       </div>
       )}
       {usersLoading ? (
@@ -245,7 +388,7 @@ export default function AdminUsersPage() {
       {subTab === 'users' && (
         <>
           {usersLoading ? (
-            <TableSkeleton rowCount={6} colCount={4} />
+            <TableSkeleton rowCount={6} colCount={5} />
           ) : usersError ? (
             <div className="border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/30 rounded-lg p-6 flex items-center gap-3">
               <XCircle className="h-5 w-5 text-red-500" />
@@ -260,6 +403,14 @@ export default function AdminUsersPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-zinc-200 dark:border-white/[0.06] bg-zinc-50/50 dark:bg-white/[0.03]">
+                    <th className="w-12 py-3 px-2 pr-0">
+                      <input
+                        type="checkbox"
+                        checked={selectableUsers.length > 0 && selectableUsers.every((u) => selectedIds.has(u.id))}
+                        onChange={toggleSelectAll}
+                        className="rounded border-zinc-300 dark:border-white/30 text-blue-600 focus:ring-blue-500"
+                      />
+                    </th>
                     <th className="text-left py-3 px-4 font-medium text-zinc-600 dark:text-zinc-400">User</th>
                     <th className="text-left py-3 px-4 font-medium text-zinc-600 dark:text-zinc-400 hidden sm:table-cell">Role</th>
                     <th className="text-left py-3 px-4 font-medium text-zinc-600 dark:text-zinc-400 hidden md:table-cell">Status</th>
@@ -269,6 +420,17 @@ export default function AdminUsersPage() {
                 <tbody>
                   {users.map((u) => (
                     <tr key={u.id} className="border-b border-zinc-100 dark:border-white/[0.04] last:border-0 hover:bg-zinc-50/50 dark:hover:bg-white/[0.04]">
+                      <td className="w-10 py-4 px-2 pr-0 align-top">
+                        {u.role !== 'admin' && (
+                          <input
+                            type="checkbox"
+                            checked={selectedIds.has(u.id)}
+                            onChange={() => toggleSelect(u.id)}
+                            onClick={(e) => e.stopPropagation()}
+                            className="rounded border-zinc-300 dark:border-white/30 text-blue-600 focus:ring-blue-500"
+                          />
+                        )}
+                      </td>
                       <td className="py-4 px-4">
                         <button
                           type="button"

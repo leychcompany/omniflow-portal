@@ -14,16 +14,28 @@ export async function GET(req: NextRequest) {
     const page = Math.max(1, parseInt(searchParams.get("page") ?? "1", 10));
     const limit = Math.min(MAX_LIMIT, Math.max(1, parseInt(searchParams.get("limit") ?? String(DEFAULT_LIMIT), 10)));
     const q = (searchParams.get("q") ?? "").trim();
+    const emailDomain = (searchParams.get("email_domain") ?? "").trim();
+    const sortBy = searchParams.get("sort_by") ?? "created_at";
+    const sortOrder = searchParams.get("sort") === "asc" ? "asc" : "desc";
+
+    const validSortColumns = ["created_at", "email", "name", "locked", "role"];
+    const orderBy = validSortColumns.includes(sortBy) ? sortBy : "created_at";
 
     let query = supabaseAdmin
       .from("users")
       .select("*", { count: "exact" })
-      .order("created_at", { ascending: false });
+      .order(orderBy, { ascending: sortOrder === "asc" });
 
     if (q) {
       const safe = q.replace(/,/g, " ");
       const term = `%${safe}%`;
       query = query.or(`email.ilike.${term},name.ilike.${term},first_name.ilike.${term},last_name.ilike.${term}`);
+    }
+
+    if (emailDomain) {
+      const domain = emailDomain.startsWith("@") ? emailDomain : `@${emailDomain}`;
+      const pattern = `%${domain}`;
+      query = query.ilike("email", pattern);
     }
 
     const from = (page - 1) * limit;
