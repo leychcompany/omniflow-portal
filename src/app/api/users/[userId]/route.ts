@@ -61,6 +61,12 @@ export async function PATCH(
       );
     }
 
+    const { data: targetUser } = await supabaseAdmin
+      .from("users")
+      .select("email, name")
+      .eq("id", userId)
+      .single();
+
     const { error } = await supabaseAdmin
       .from("users")
       .update({ locked })
@@ -69,6 +75,19 @@ export async function PATCH(
     if (error) {
       throw error;
     }
+
+    await supabaseAdmin.from("activity_events").insert({
+      event_type: locked ? "user_lock" : "user_unlock",
+      user_id: adminCheck.userId,
+      resource_type: "user",
+      resource_id: userId,
+      metadata: {
+        target_user_id: userId,
+        target_user_email: targetUser?.email ?? null,
+        target_user_name: targetUser?.name ?? null,
+        performed_at: new Date().toISOString(),
+      },
+    });
 
     return NextResponse.json({
       success: true,

@@ -29,6 +29,8 @@ const EVENT_LABELS: Record<string, string> = {
   logout: 'Logout',
   document_download: 'Document',
   software_download: 'Software',
+  user_unlock: 'User unlocked',
+  user_lock: 'User locked',
 }
 
 export default function AdminAnalyticsPage() {

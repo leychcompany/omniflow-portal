@@ -64,9 +64,13 @@ export async function GET(req: NextRequest) {
         (row.resource_type === "manual" || row.resource_type === "software") &&
         metadata.title
           ? String(metadata.title)
-          : row.resource_type && row.resource_id
-            ? `${row.resource_type}:${row.resource_id}`
-            : "-";
+          : row.resource_type === "user" && metadata.target_user_email
+            ? String(metadata.target_user_email)
+            : row.resource_type === "user" && metadata.target_user_name
+              ? String(metadata.target_user_name)
+              : row.resource_type && row.resource_id
+                ? `${row.resource_type}:${row.resource_id}`
+                : "-";
 
       return {
         id: row.id,
