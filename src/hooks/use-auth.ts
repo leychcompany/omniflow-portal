@@ -50,16 +50,20 @@ export function useAuth() {
         cache: "no-store",
       });
       if (!res.ok) {
-        console.error(
-          "Error fetching user profile:",
-          await res.json().catch(() => ({})),
-        );
+        const errBody = await res.text();
+        console.error("Error fetching user profile:", errBody || res.statusText);
         setUser(null);
         useAuthStore.getState().signOut();
         redirectToLoginIfProtected();
         return;
       }
-      const data = (await res.json()) as User;
+      const text = await res.text();
+      let data: User | null = null;
+      try {
+        if (text) data = JSON.parse(text) as User;
+      } catch {
+        console.error("Profile response invalid JSON");
+      }
       setUser(data);
       await markInvitesAsUsed();
     } catch (error) {

@@ -26,6 +26,17 @@ function SetPasswordContent() {
   const { setMustChangePassword } = useAuthStore()
   const sessionAppliedRef = useRef(false)
 
+  // Safety: force stop loading if stuck (e.g. updateUser or profile fetch hangs)
+  useEffect(() => {
+    if (!loading) return
+    const t = setTimeout(() => {
+      console.error('[set-password] Safety timeout fired (15s) - updateUser or getUser likely hung')
+      setLoading(false)
+      setMessage({ type: 'error', text: 'Request timed out. Please try again.' })
+    }, 15000)
+    return () => clearTimeout(t)
+  }, [loading])
+
   useEffect(() => {
     // Check both hash (from direct Supabase redirect) and query params
     const hashParams = new URLSearchParams(window.location.hash.substring(1));
@@ -184,68 +195,61 @@ function SetPasswordContent() {
     setLoading(true)
 
     try {
-      // Update password
-      const { error: passwordError } = await supabase.auth.updateUser({ password })
-
-      if (passwordError) throw passwordError
-
-      // Get current user
-      const { data: { user: authUser } } = await supabase.auth.getUser()
-      
-      if (!authUser) {
-        throw new Error('User not found')
+      // Use API route (server-side) - avoids browser->Supabase direct calls that may hang
+      const res = await fetch('/api/auth/update-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ password }),
+      })
+      const text = await res.text()
+      let data: { error?: string; user?: { id: string; email?: string } } = {}
+      try {
+        if (text) data = JSON.parse(text)
+      } catch {
+        throw new Error('Invalid response from server. Please try again.')
       }
 
-      // Only update name for invite type (new users)
-      if (linkType === 'invite' && name.trim()) {
-        const { error: profileError } = await supabase
-          .from('users')
-          .update({ 
-            name: name.trim(),
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', authUser.id)
+      if (!res.ok) {
+        throw new Error(data?.error || 'Failed to update password.')
+      }
 
-        if (profileError) {
-          console.error('Error updating profile:', profileError)
-          // Don't fail the whole operation if profile update fails
-          setMessage({ type: 'success', text: 'Password updated successfully! Redirecting to home...' })
-        } else {
-          setMessage({ type: 'success', text: 'Password and profile updated successfully! Redirecting to home...' })
-        }
-      } else {
-        // For recovery, just update password
-        setMessage({ type: 'success', text: 'Password updated successfully! Redirecting to home...' })
+      const authUser = data?.user
+      if (!authUser) {
+        throw new Error('Invalid response. Please try again.')
       }
 
       setMustChangePassword(false)
-      
-      // Refresh user data
-      const { data: userData } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', authUser.id)
-        .single()
+      setMessage({ type: 'success', text: 'Password updated successfully! Redirecting to home...' })
 
-      if (userData) {
-        useAuthStore.getState().setUser(userData as any)
+      // Profile update and fetch in background (do not block redirect)
+      if (linkType === 'invite' && name.trim()) {
+        supabase.from('users').update({
+          name: name.trim(),
+          updated_at: new Date().toISOString(),
+        }).eq('id', authUser.id).then(() => {}).catch((e) => console.error('Profile update:', e))
       }
+      supabase.from('users').select('*').eq('id', authUser.id).single()
+        .then(({ data: userData }) => { if (userData) useAuthStore.getState().setUser(userData as any) })
+        .catch((e) => console.error('Profile fetch:', e))
 
-      setTimeout(() => {
-        router.push('/home')
-      }, 2000)
+      setTimeout(() => router.push('/home'), 1500)
     } catch (error: any) {
-      console.error('Error setting password:', error)
-      setMessage({ type: 'error', text: error.message || 'Failed to set password.' })
+      console.error('[set-password] Error:', error?.message || error)
+      const msg = error?.message || 'Failed to set password.'
+      setMessage({
+        type: 'error',
+        text: /JSON|unexpected end/i.test(msg) ? 'Invalid server response. Please try again.' : msg,
+      })
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-[#0a0a0a] dark:via-[#0f0f0f] dark:to-[#0a0a0a]">
       {/* Background Pattern */}
-      <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmM2Y0ZjYiIGZpbGwtb3BhY2l0eT0iMC40Ij48Y2lyY2xlIGN4PSIzMCIgY3k9IjMwIiByPSIyIi8+PC9nPjwvZz48L3N2Zz4=')] opacity-40"></div>
+      <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmM2Y0ZjYiIGZpbGwtb3BhY2l0eT0iMC40Ij48Y2lyY2xlIGN4PSIzMCIgY3k9IjMwIiByPSIyIi8+PC9nPjwvZz48L3N2Zz4=')] dark:bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNiI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMiIvPjwvZz48L3N2Zz4=')] opacity-40"></div>
       
       <div className="relative min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 py-12">
         <div className="w-full max-w-md">
@@ -254,17 +258,17 @@ function SetPasswordContent() {
             <Logo width={180} height={63} className="mx-auto" />
           </div>
 
-          <Card className="shadow-2xl border-0 bg-white/95 backdrop-blur-sm">
+          <Card className="shadow-2xl border-0 bg-white/95 dark:bg-[#141414]/95 backdrop-blur-sm dark:border-white/10">
             <CardHeader className="space-y-2 text-center pb-8">
               <div className="flex items-center justify-center space-x-2 mb-4">
-                <div className="p-3 bg-purple-100 rounded-xl">
-                  <Shield className="h-6 w-6 text-purple-600" />
+                <div className="p-3 bg-purple-100 dark:bg-purple-500/20 rounded-xl">
+                  <Shield className="h-6 w-6 text-purple-600 dark:text-purple-400" />
                 </div>
-                <CardTitle className="text-2xl font-bold text-slate-900">
+                <CardTitle className="text-2xl font-bold text-slate-900 dark:text-zinc-100">
                   {linkType === 'recovery' ? 'Reset Your Password' : 'Set Your Password'}
                 </CardTitle>
               </div>
-              <CardDescription className="text-slate-600">
+              <CardDescription className="text-slate-600 dark:text-zinc-400">
                 {linkType === 'recovery' 
                   ? 'Enter a new secure password for your account'
                   : 'Create a secure password for your account'}
@@ -273,16 +277,16 @@ function SetPasswordContent() {
             
             <CardContent className="space-y-6">
               {userEmail && (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <div className="text-sm font-medium text-blue-900">Account</div>
-                  <div className="text-sm text-blue-700">{userEmail}</div>
+                <div className="bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/50 rounded-lg p-4">
+                  <div className="text-sm font-medium text-blue-900 dark:text-blue-400">Account</div>
+                  <div className="text-sm text-blue-700 dark:text-blue-300">{userEmail}</div>
                 </div>
               )}
               
               <form onSubmit={handleSetPassword} className="space-y-6">
                 {linkType === 'invite' && (
                   <div className="space-y-2">
-                    <label htmlFor="name" className="text-sm font-medium text-slate-700 flex items-center space-x-2">
+                    <label htmlFor="name" className="text-sm font-medium text-slate-700 dark:text-zinc-300 flex items-center space-x-2">
                       <User className="h-4 w-4" />
                       <span>Full Name</span>
                     </label>
@@ -299,7 +303,7 @@ function SetPasswordContent() {
                 )}
 
                 <div className="space-y-2">
-                  <label htmlFor="password" className="text-sm font-medium text-slate-700 flex items-center space-x-2">
+                  <label htmlFor="password" className="text-sm font-medium text-slate-700 dark:text-zinc-300 flex items-center space-x-2">
                     <Key className="h-4 w-4" />
                     <span>New Password</span>
                   </label>
@@ -315,7 +319,7 @@ function SetPasswordContent() {
                     />
                     <button
                       type="button"
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-zinc-500 hover:text-slate-600 dark:hover:text-zinc-300 transition-colors"
                       onClick={() => setShowPassword(!showPassword)}
                     >
                       {showPassword ? (
@@ -328,7 +332,7 @@ function SetPasswordContent() {
                 </div>
 
                 <div className="space-y-2">
-                  <label htmlFor="confirm-password" className="text-sm font-medium text-slate-700 flex items-center space-x-2">
+                  <label htmlFor="confirm-password" className="text-sm font-medium text-slate-700 dark:text-zinc-300 flex items-center space-x-2">
                     <Lock className="h-4 w-4" />
                     <span>Confirm New Password</span>
                   </label>
@@ -344,7 +348,7 @@ function SetPasswordContent() {
                     />
                     <button
                       type="button"
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-zinc-500 hover:text-slate-600 dark:hover:text-zinc-300 transition-colors"
                       onClick={() => setShowPassword(!showPassword)}
                     >
                       {showPassword ? (
@@ -357,9 +361,9 @@ function SetPasswordContent() {
                 </div>
 
                 {/* Password Requirements */}
-                <div className="bg-slate-50 rounded-lg p-4 space-y-2">
-                  <h4 className="text-sm font-medium text-slate-900">Password Requirements:</h4>
-                  <div className="space-y-1 text-sm text-slate-600">
+                <div className="bg-slate-50 dark:bg-white/5 rounded-lg p-4 space-y-2">
+                  <h4 className="text-sm font-medium text-slate-900 dark:text-zinc-100">Password Requirements:</h4>
+                  <div className="space-y-1 text-sm text-slate-600 dark:text-zinc-400">
                     <div className={`flex items-center space-x-2 ${password.length >= 6 ? 'text-green-600' : 'text-slate-500'}`}>
                       <div className={`w-2 h-2 rounded-full ${password.length >= 6 ? 'bg-green-500' : 'bg-slate-300'}`}></div>
                       <span>At least 6 characters</span>
