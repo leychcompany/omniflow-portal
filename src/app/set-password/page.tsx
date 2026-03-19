@@ -200,7 +200,11 @@ function SetPasswordContent() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ password }),
+        body: JSON.stringify({
+          password,
+          notifyInviteAccepted: linkType === 'invite',
+          name: linkType === 'invite' ? name.trim() || undefined : undefined,
+        }),
       })
       const text = await res.text()
       let data: { error?: string; user?: { id: string; email?: string } } = {}

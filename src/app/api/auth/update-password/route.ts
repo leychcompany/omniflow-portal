@@ -10,6 +10,8 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json().catch(() => ({}));
     const password = typeof body?.password === "string" ? body.password.trim() : "";
+    const notifyInviteAccepted = body?.notifyInviteAccepted === true;
+    const userName = typeof body?.name === "string" ? body.name.trim() : undefined;
 
     if (!password || password.length < 6) {
       return NextResponse.json(
@@ -52,6 +54,14 @@ export async function POST(req: NextRequest) {
         { error: updateError.message },
         { status: 400 }
       );
+    }
+
+    if (notifyInviteAccepted && user.email) {
+      const { notifyHelpdesk } = await import("@/lib/notify-helpdesk");
+      notifyHelpdesk("invite_accepted", {
+        email: user.email,
+        name: userName,
+      }).catch((e) => console.error("Helpdesk notify failed:", e));
     }
 
     return NextResponse.json({ ok: true, user: { id: user.id, email: user.email } });
