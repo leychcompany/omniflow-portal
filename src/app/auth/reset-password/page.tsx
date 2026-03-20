@@ -514,7 +514,7 @@ function ResetPasswordHandler() {
                 </Link>
                 <Link
                   href="/login"
-                  className="inline-flex items-center justify-center gap-2 text-sm text-slate-600 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200 font-medium transition-colors
+                  className="inline-flex items-center justify-center gap-2 text-sm text-slate-600 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200 font-medium transition-colors"
                 >
                   <ArrowLeft className="h-4 w-4" />
                   Back to Sign In

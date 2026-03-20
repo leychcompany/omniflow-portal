@@ -228,14 +228,18 @@ function SetPasswordContent() {
 
       // Profile update and fetch in background (do not block redirect)
       if (linkType === 'invite' && name.trim()) {
-        supabase.from('users').update({
+        void supabase.from('users').update({
           name: name.trim(),
           updated_at: new Date().toISOString(),
-        }).eq('id', authUser.id).then(() => {}).catch((e) => console.error('Profile update:', e))
+        }).eq('id', authUser.id).then(
+          () => {},
+          (e) => console.error('Profile update:', e)
+        )
       }
-      supabase.from('users').select('*').eq('id', authUser.id).single()
-        .then(({ data: userData }) => { if (userData) useAuthStore.getState().setUser(userData as any) })
-        .catch((e) => console.error('Profile fetch:', e))
+      void supabase.from('users').select('*').eq('id', authUser.id).single().then(
+        ({ data: userData }) => { if (userData) useAuthStore.getState().setUser(userData as any) },
+        (e) => console.error('Profile fetch:', e)
+      )
 
       setTimeout(() => router.push('/home'), 1500)
     } catch (error: any) {
