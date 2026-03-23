@@ -6,13 +6,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { Logo } from '@/components/Logo'
 import { useAuthStore } from '@/store/auth-store'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
+import { PortalUserMenu } from '@/components/portal/portal-user-menu'
 import {
   Bot,
   GraduationCap,
@@ -20,12 +14,10 @@ import {
   Headphones,
   BookOpen,
   Crown,
-  LogOut,
   ChevronRight,
   Package,
   Newspaper,
   LayoutDashboard,
-  Settings,
   Moon,
   Sun,
 } from 'lucide-react'
@@ -192,43 +184,25 @@ export function PortalLayout({ children }: { children: React.ReactNode }) {
               <span>{theme === 'dark' ? 'Light mode' : 'Dark mode'}</span>
             </button>
           )}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/[0.04] transition-colors text-left">
-                <Avatar className="h-9 w-9 shrink-0">
-                  <AvatarImage src={undefined} alt={user?.email || 'User'} />
-                  <AvatarFallback className="bg-blue-600 dark:bg-blue-500 text-white text-sm font-semibold">
-                    {user?.email?.charAt(0).toUpperCase() || 'U'}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-slate-900 dark:text-zinc-100 truncate">
-                    {user?.name || user?.email?.split('@')[0] || 'User'}
-                  </p>
-                  <p className="text-xs text-slate-500 dark:text-zinc-500 truncate">{user?.email || ''}</p>
-                </div>
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" side="right" className="min-w-48 rounded-xl">
-              <DropdownMenuItem onClick={() => router.push('/settings')}>
-                <Settings className="h-4 w-4 mr-2" />
-                Settings
-              </DropdownMenuItem>
-              {user?.role?.toLowerCase() === 'admin' && (
-                <DropdownMenuItem onClick={() => router.push('/admin')}>
-                  <Crown className="h-4 w-4 mr-2 text-blue-600" />
-                  Admin Panel
-                </DropdownMenuItem>
-              )}
-              <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link href="/logout" prefetch={false}>
-                  <LogOut className="h-4 w-4 mr-2" />
-                  Logout
-                </Link>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <PortalUserMenu user={user ?? null} variant="sidebar">
+            <button
+              type="button"
+              className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-slate-100 dark:hover:bg-white/[0.04]"
+            >
+              <Avatar className="h-9 w-9 shrink-0">
+                <AvatarImage src={undefined} alt={user?.email || 'User'} />
+                <AvatarFallback className="bg-blue-600 text-sm font-semibold text-white dark:bg-blue-500">
+                  {user?.email?.charAt(0).toUpperCase() || 'U'}
+                </AvatarFallback>
+              </Avatar>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium text-slate-900 dark:text-zinc-100">
+                  {user?.name || user?.email?.split('@')[0] || 'User'}
+                </p>
+                <p className="truncate text-xs text-slate-500 dark:text-zinc-500">{user?.email || ''}</p>
+              </div>
+            </button>
+          </PortalUserMenu>
         </div>
       </aside>
 
@@ -248,37 +222,19 @@ export function PortalLayout({ children }: { children: React.ReactNode }) {
                 {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
               </button>
             )}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-2 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-white/[0.04]">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={undefined} alt={user?.email || 'User'} />
-                    <AvatarFallback className="bg-blue-600 dark:bg-blue-500 text-white text-sm font-semibold">
-                      {user?.email?.charAt(0).toUpperCase() || 'U'}
-                    </AvatarFallback>
-                  </Avatar>
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="min-w-48 rounded-xl">
-                <DropdownMenuItem onClick={() => router.push('/settings')}>
-                  <Settings className="h-4 w-4 mr-2" />
-                  Settings
-                </DropdownMenuItem>
-                {user?.role?.toLowerCase() === 'admin' && (
-                  <DropdownMenuItem onClick={() => router.push('/admin')}>
-                    <Crown className="h-4 w-4 mr-2 text-blue-600" />
-                    Admin Panel
-                  </DropdownMenuItem>
-                )}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link href="/logout" prefetch={false}>
-                    <LogOut className="h-4 w-4 mr-2" />
-                    Logout
-                  </Link>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <PortalUserMenu user={user ?? null} variant="mobile-header">
+              <button
+                type="button"
+                className="flex items-center gap-2 rounded-full p-2 hover:bg-slate-100 dark:hover:bg-white/[0.04]"
+              >
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src={undefined} alt={user?.email || 'User'} />
+                  <AvatarFallback className="bg-blue-600 text-sm font-semibold text-white dark:bg-blue-500">
+                    {user?.email?.charAt(0).toUpperCase() || 'U'}
+                  </AvatarFallback>
+                </Avatar>
+              </button>
+            </PortalUserMenu>
           </div>
         </header>
 
