@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect, useCallback, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -12,19 +12,15 @@ import { SearchBarSkeleton } from '@/components/ui/search-bar-skeleton'
 import { fetchWithAdminAuth } from '@/lib/admin-fetch'
 import { AdminCardGrid, AdminCard } from '@/components/admin/admin-card-grid'
 import { AdminPageDashboard } from '@/components/admin/admin-page-dashboard'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
 import { AddCourseModal } from '@/components/admin/add-course-modal'
-import { Plus, Search, GraduationCap, XCircle, RefreshCw, MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
+import { EditCourseModal } from '@/components/admin/edit-course-modal'
+import { TrainingCourseActions } from '@/components/admin/training-course-actions'
+import { Plus, Search, GraduationCap, XCircle, RefreshCw } from 'lucide-react'
 import { type Course } from '../_components/admin-types'
 
-export default function AdminTrainingPage() {
+function AdminTrainingPageInner() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [searchTerm, setSearchTerm] = useState('')
   const [courses, setCourses] = useState<Course[]>([])
   const [coursesLoading, setCoursesLoading] = useState(true)
@@ -32,6 +28,7 @@ export default function AdminTrainingPage() {
   const [deleteTarget, setDeleteTarget] = useState<Course | null>(null)
   const [deleteLoading, setDeleteLoading] = useState(false)
   const [addModalOpen, setAddModalOpen] = useState(false)
+  const [editCourseId, setEditCourseId] = useState<string | null>(null)
 
   const fetchCourses = useCallback(async () => {
     setCoursesLoading(true)
@@ -49,6 +46,14 @@ export default function AdminTrainingPage() {
   }, [])
 
   useEffect(() => { fetchCourses() }, [fetchCourses])
+
+  useEffect(() => {
+    const fromQuery = searchParams.get('edit')
+    if (fromQuery) {
+      setEditCourseId(fromQuery)
+      router.replace('/admin/training', { scroll: false })
+    }
+  }, [searchParams, router])
 
   const handleDeleteCourse = async () => {
     if (!deleteTarget) return
@@ -150,25 +155,11 @@ export default function AdminTrainingPage() {
                   <p className="text-sm text-slate-500 dark:text-zinc-400 mt-1 line-clamp-2">{course.description || '—'}</p>
                   <p className="text-xs text-slate-400 dark:text-zinc-500 mt-2">{course.duration} · {course.instructor || '—'}</p>
                 </div>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 rounded-lg text-slate-400 dark:text-zinc-500 hover:text-slate-700 dark:hover:text-zinc-200">
-                      <MoreHorizontal className="h-4 w-4" />
-                      <span className="sr-only">Open menu</span>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="min-w-36">
-                    <DropdownMenuItem onSelect={() => router.push(`/admin/training/${course.id}/edit`)}>
-                      <Pencil className="h-4 w-4 mr-2" />
-                      Edit
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem variant="destructive" onSelect={() => setDeleteTarget(course)}>
-                      <Trash2 className="h-4 w-4 mr-2" />
-                      Delete
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <TrainingCourseActions
+                  courseTitle={course.title}
+                  onEdit={() => setEditCourseId(course.id)}
+                  onDelete={() => setDeleteTarget(course)}
+                />
               </div>
             </AdminCard>
           ))}
@@ -184,6 +175,30 @@ export default function AdminTrainingPage() {
         isLoading={deleteLoading}
       />
       <AddCourseModal open={addModalOpen} onOpenChange={setAddModalOpen} onSuccess={fetchCourses} />
+      <EditCourseModal
+        open={!!editCourseId}
+        courseId={editCourseId}
+        onOpenChange={(open) => !open && setEditCourseId(null)}
+        onSuccess={fetchCourses}
+      />
     </div>
+  )
+}
+
+function AdminTrainingFallback() {
+  return (
+    <div className="space-y-6 pb-20 md:pb-0">
+      <DashboardSkeleton statCount={2} />
+      <SearchBarSkeleton />
+      <CardSkeleton count={6} />
+    </div>
+  )
+}
+
+export default function AdminTrainingPage() {
+  return (
+    <Suspense fallback={<AdminTrainingFallback />}>
+      <AdminTrainingPageInner />
+    </Suspense>
   )
 }

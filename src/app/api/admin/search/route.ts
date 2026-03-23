@@ -77,7 +77,7 @@ export async function GET(req: NextRequest) {
       id: c.id,
       label: c.title,
       sublabel: null,
-      href: `/admin/training/${c.id}/edit`,
+      href: `/admin/training?edit=${encodeURIComponent(String(c.id))}`,
     }));
 
     const news = (newsRes.data ?? []).map((n: Record<string, unknown>) => ({
