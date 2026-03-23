@@ -1,10 +1,16 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import type { CookieOptions } from "@supabase/ssr";
 
 /**
  * Updates the current user's password. Runs server-side to avoid
  * browser->Supabase connectivity issues (proxy, firewall, etc).
+ *
+ * Important: session cookies from `updateUser` must be applied to the SAME
+ * NextResponse we return. Previously we built a throwaway response for setAll
+ * then returned a new JSON body — Set-Cookie never reached the browser, so
+ * server-side checks (admin guard, /api/profile) saw a stale session.
  */
 export async function POST(req: NextRequest) {
   try {
@@ -20,7 +26,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const response = NextResponse.json({ ok: true });
+    const pendingCookies = new Map<string, { value: string; options?: CookieOptions }>();
+
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -29,16 +36,19 @@ export async function POST(req: NextRequest) {
           getAll() {
             return req.cookies.getAll();
           },
-          setAll(cookiesToSet: { name: string; value: string; options?: Record<string, unknown> }[]) {
+          setAll(cookiesToSet: { name: string; value: string; options?: CookieOptions }[]) {
             cookiesToSet.forEach(({ name, value, options }) => {
-              response.cookies.set(name, value, options ?? {});
+              pendingCookies.set(name, { value, options });
             });
           },
         },
       }
     );
 
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
 
     if (userError || !user) {
       return NextResponse.json(
@@ -64,7 +74,16 @@ export async function POST(req: NextRequest) {
       }).catch((e) => console.error("Helpdesk notify failed:", e));
     }
 
-    return NextResponse.json({ ok: true, user: { id: user.id, email: user.email } });
+    const out = NextResponse.json({
+      ok: true,
+      user: { id: user.id, email: user.email ?? undefined },
+    });
+
+    pendingCookies.forEach(({ value, options }, name) => {
+      out.cookies.set(name, value, options);
+    });
+
+    return out;
   } catch {
     return NextResponse.json(
       { error: "Server error. Please try again." },

@@ -224,23 +224,40 @@ function SetPasswordContent() {
       }
 
       setMustChangePassword(false)
-      setMessage({ type: 'success', text: 'Password updated successfully! Redirecting to home...' })
 
-      // Profile update and fetch in background (do not block redirect)
+      // Name update from client (best-effort; RLS may vary)
       if (linkType === 'invite' && name.trim()) {
-        void supabase.from('users').update({
-          name: name.trim(),
-          updated_at: new Date().toISOString(),
-        }).eq('id', authUser.id).then(
-          () => {},
-          (e) => console.error('Profile update:', e)
-        )
+        void supabase
+          .from('users')
+          .update({
+            name: name.trim(),
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', authUser.id)
+          .then(
+            () => {},
+            (e) => console.error('Profile update:', e)
+          )
       }
-      void supabase.from('users').select('*').eq('id', authUser.id).single().then(
-        ({ data: userData }) => { if (userData) useAuthStore.getState().setUser(userData as any) },
-        (e) => console.error('Profile fetch:', e)
-      )
 
+      // Authoritative role/locked from server (admin uses cookies + JWT; avoids stale zustand + client RLS)
+      try {
+        const profileRes = await fetch(`/api/profile?t=${Date.now()}`, {
+          credentials: 'include',
+          cache: 'no-store',
+        })
+        if (profileRes.ok) {
+          const userData = await profileRes.json()
+          useAuthStore.getState().setUser(userData)
+        }
+        if (typeof document !== 'undefined') {
+          document.dispatchEvent(new Event('auth:refreshProfile'))
+        }
+      } catch (e) {
+        console.error('Profile sync after password:', e)
+      }
+
+      setMessage({ type: 'success', text: 'Password updated successfully! Redirecting to home...' })
       setTimeout(() => router.push('/home'), 1500)
     } catch (error: any) {
       console.error('[set-password] Error:', error?.message || error)
