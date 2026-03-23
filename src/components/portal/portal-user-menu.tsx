@@ -1,6 +1,14 @@
 'use client'
 
-import { useState, useRef, useEffect, cloneElement, isValidElement, type ReactElement } from 'react'
+import {
+  useState,
+  useRef,
+  useEffect,
+  cloneElement,
+  isValidElement,
+  type ReactElement,
+  type ButtonHTMLAttributes,
+} from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Crown, LogOut, Settings } from 'lucide-react'
@@ -12,8 +20,8 @@ type PortalUserMenuVariant = 'sidebar' | 'mobile-header'
 interface PortalUserMenuProps {
   user: User | null
   variant: PortalUserMenuVariant
-  /** Must be a single element (e.g. `<button>`) that receives merged `onClick` / `aria-*`. */
-  children: ReactElement<{ onClick?: (e: React.MouseEvent) => void }>
+  /** Must be a single `<button>` (merged `onClick` and menu `aria-*`). */
+  children: ReactElement<ButtonHTMLAttributes<HTMLButtonElement>>
 }
 
 /**
@@ -44,13 +52,13 @@ export function PortalUserMenu({ user, variant, children }: PortalUserMenuProps)
 
   const trigger = isValidElement(children)
     ? cloneElement(children, {
-        onClick: (e: React.MouseEvent) => {
+        onClick: (e: React.MouseEvent<HTMLButtonElement>) => {
           children.props.onClick?.(e)
           setOpen((v) => !v)
         },
         'aria-expanded': open,
-        'aria-haspopup': 'menu' as const,
-      })
+        'aria-haspopup': 'menu',
+      } satisfies Partial<ButtonHTMLAttributes<HTMLButtonElement>>)
     : children
 
   const itemClass =
