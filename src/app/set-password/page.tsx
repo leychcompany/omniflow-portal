@@ -416,7 +416,7 @@ function SetPasswordContent() {
               </form>
 
               <div className="text-center">
-                <p className="text-sm text-slate-500">
+                <p className="text-sm text-slate-500 dark:text-zinc-500">
                   Your password is encrypted and secure
                 </p>
               </div>
@@ -431,10 +431,10 @@ function SetPasswordContent() {
 export default function SetPasswordPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-[#0a0a0a] dark:via-[#0f0f0f] dark:to-[#0a0a0a]">
         <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-slate-600" />
-          <p className="text-slate-600">Loading...</p>
+          <Loader2 className="mx-auto mb-4 h-8 w-8 animate-spin text-slate-600 dark:text-zinc-400" />
+          <p className="text-slate-600 dark:text-zinc-400">Loading...</p>
         </div>
       </div>
     }>

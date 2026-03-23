@@ -66,11 +66,11 @@ export default function Home() {
 
   if (!isInitialized) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-[#0a0a0a]">
         <div className="text-center">
           <Logo width={180} height={64} className="mx-auto mb-4" />
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+          <div className="mx-auto h-8 w-8 animate-spin rounded-full border-b-2 border-primary-600 dark:border-blue-400" />
+          <p className="mt-4 text-gray-600 dark:text-zinc-400">Loading...</p>
         </div>
       </div>
     )

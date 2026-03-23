@@ -175,26 +175,26 @@ function RegisterForm() {
   }
 
   const features = [
-    { icon: Shield, title: 'Secure Access', description: 'Enterprise-grade security for your corporate data', color: 'text-blue-600', bgColor: 'bg-blue-50' },
-    { icon: Zap, title: 'AI Assistant', description: 'Get instant help with technical questions', color: 'text-purple-600', bgColor: 'bg-purple-50' },
-    { icon: BookOpen, title: 'Resources', description: 'Access documents, training, and documentation', color: 'text-green-600', bgColor: 'bg-green-50' },
-    { icon: Users, title: 'Support', description: 'Direct access to our expert support team', color: 'text-orange-600', bgColor: 'bg-orange-50' },
+    { icon: Shield, title: 'Secure Access', description: 'Enterprise-grade security for your corporate data', color: 'text-blue-600 dark:text-blue-400', bgColor: 'bg-blue-50 dark:bg-blue-500/15' },
+    { icon: Zap, title: 'AI Assistant', description: 'Get instant help with technical questions', color: 'text-purple-600 dark:text-purple-400', bgColor: 'bg-purple-50 dark:bg-purple-500/15' },
+    { icon: BookOpen, title: 'Resources', description: 'Access documents, training, and documentation', color: 'text-green-600 dark:text-green-400', bgColor: 'bg-green-50 dark:bg-green-500/15' },
+    { icon: Users, title: 'Support', description: 'Direct access to our expert support team', color: 'text-orange-600 dark:text-orange-400', bgColor: 'bg-orange-50 dark:bg-orange-500/15' },
   ]
 
   if (success) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmM2Y0ZjYiIGZpbGwtb3BhY2l0eT0iMC40Ij48Y2lyY2xlIGN4PSIzMCIgY3k9IjMwIiByPSIyIi8+PC9nPjwvZz48L3N2Zz4=')] opacity-40"></div>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-[#0a0a0a] dark:via-[#0f0f0f] dark:to-[#0a0a0a]">
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmM2Y0ZjYiIGZpbGwtb3BhY2l0eT0iMC40Ij48Y2lyY2xlIGN4PSIzMCIgY3k9IjMwIiByPSIyIi8+PC9nPjwvZz48L3N2Zz4=')] opacity-40 dark:bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNiI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMiIvPjwvZz48L3N2Zz4=')]"></div>
         <div className="relative min-h-screen flex items-center justify-center px-4">
-          <Card className="max-w-md w-full shadow-2xl border-0 bg-white/95 backdrop-blur-sm">
+          <Card className="w-full max-w-md border-0 border-transparent bg-white/95 shadow-2xl backdrop-blur-sm dark:border dark:border-white/10 dark:bg-[#141414]/95">
             <CardHeader className="space-y-2 text-center pb-6">
-              <div className="mx-auto p-4 bg-emerald-100 rounded-full w-fit mb-2">
-                <UserPlus className="h-12 w-12 text-emerald-600" />
+              <div className="mx-auto mb-2 w-fit rounded-full bg-emerald-100 p-4 dark:bg-emerald-500/20">
+                <UserPlus className="h-12 w-12 text-emerald-600 dark:text-emerald-400" />
               </div>
-              <CardTitle className="text-2xl font-bold text-slate-900">
+              <CardTitle className="text-2xl font-bold text-slate-900 dark:text-zinc-100">
                 Account Created
               </CardTitle>
-              <CardDescription className="text-slate-600">
+              <CardDescription className="text-slate-600 dark:text-zinc-400">
                 Your account is pending admin approval. You can log in and access limited features (Training, Support, News) until an administrator unlocks your account. Full access to AI Assistant, Documents, and Software will be available after approval.
               </CardDescription>
             </CardHeader>
@@ -217,25 +217,25 @@ function RegisterForm() {
 
   if (step === 'verify') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmM2Y0ZjYiIGZpbGwtb3BhY2l0eT0iMC40Ij48Y2lyY2xlIGN4PSIzMCIgY3k9IjMwIiByPSIyIi8+PC9nPjwvZz48L3N2Zz4=')] opacity-40"></div>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-[#0a0a0a] dark:via-[#0f0f0f] dark:to-[#0a0a0a]">
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmM2Y0ZjYiIGZpbGwtb3BhY2l0eT0iMC40Ij48Y2lyY2xlIGN4PSIzMCIgY3k9IjMwIiByPSIyIi8+PC9nPjwvZz48L3N2Zz4=')] opacity-40 dark:bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNiI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMiIvPjwvZz48L3N2Zz4=')]"></div>
         <div className="relative min-h-screen flex items-center justify-center px-4">
-          <Card className="max-w-md w-full shadow-2xl border-0 bg-white/95 backdrop-blur-sm">
+          <Card className="w-full max-w-md border-0 border-transparent bg-white/95 shadow-2xl backdrop-blur-sm dark:border dark:border-white/10 dark:bg-[#141414]/95">
             <CardHeader className="space-y-2 text-center pb-6">
-              <div className="mx-auto p-4 bg-blue-100 rounded-full w-fit mb-2">
-                <Mail className="h-12 w-12 text-blue-600" />
+              <div className="mx-auto mb-2 w-fit rounded-full bg-blue-100 p-4 dark:bg-blue-500/20">
+                <Mail className="h-12 w-12 text-blue-600 dark:text-blue-400" />
               </div>
-              <CardTitle className="text-2xl font-bold text-slate-900">
+              <CardTitle className="text-2xl font-bold text-slate-900 dark:text-zinc-100">
                 Verify your email
               </CardTitle>
-              <CardDescription className="text-slate-600">
+              <CardDescription className="text-slate-600 dark:text-zinc-400">
                 We&apos;ve sent a 6-digit code to <strong>{email}</strong>. Enter it below to complete your registration.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <form onSubmit={handleVerifyOtp} className="space-y-4">
                 <div className="space-y-2">
-                  <label htmlFor="otp" className="text-sm font-medium text-slate-700 flex items-center space-x-2">
+                  <label htmlFor="otp" className="flex items-center space-x-2 text-sm font-medium text-slate-700 dark:text-zinc-300">
                     <Hash className="h-4 w-4" />
                     <span>Verification code</span>
                   </label>
@@ -248,19 +248,19 @@ function RegisterForm() {
                     placeholder="000000"
                     value={otpCode}
                     onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
-                    className="h-12 text-center text-lg tracking-[0.5em] font-mono border-slate-200 focus:border-slate-400 focus:ring-slate-400"
+                    className="h-12 border-slate-200 text-center font-mono text-lg tracking-[0.5em] focus:border-slate-400 focus:ring-slate-400 dark:border-white/[0.12]"
                     autoComplete="one-time-code"
                   />
                 </div>
                 {error && (
-                  <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm flex items-center space-x-2">
-                    <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                  <div className="flex items-center space-x-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-300">
+                    <div className="h-2 w-2 rounded-full bg-red-500" />
                     <span>{error}</span>
                   </div>
                 )}
                 {resendSuccess && !error && (
-                  <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-lg text-sm flex items-center space-x-2">
-                    <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                  <div className="flex items-center space-x-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700 dark:border-emerald-900/50 dark:bg-emerald-950/40 dark:text-emerald-300">
+                    <div className="h-2 w-2 rounded-full bg-emerald-500" />
                     <span>Code resent. Check your email.</span>
                   </div>
                 )}
@@ -284,7 +284,7 @@ function RegisterForm() {
                   type="button"
                   onClick={handleResendCode}
                   disabled={resendLoading || resendCooldown > 0}
-                  className="text-sm text-slate-600 hover:text-slate-800 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="text-sm font-medium text-slate-600 transition-colors hover:text-slate-800 disabled:cursor-not-allowed disabled:opacity-50 dark:text-zinc-400 dark:hover:text-zinc-200"
                 >
                   {resendLoading
                     ? 'Sending...'
@@ -301,8 +301,8 @@ function RegisterForm() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
-      <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmM2Y0ZjYiIGZpbGwtb3BhY2l0eT0iMC40Ij48Y2lyY2xlIGN4PSIzMCIgY3k9IjMwIiByPSIyIi8+PC9nPjwvZz48L3N2Zz4=')] opacity-40"></div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-[#0a0a0a] dark:via-[#0f0f0f] dark:to-[#0a0a0a]">
+      <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmM2Y0ZjYiIGZpbGwtb3BhY2l0eT0iMC40Ij48Y2lyY2xlIGN4PSIzMCIgY3k9IjMwIiByPSIyIi8+PC9nPjwvZz48L3N2Zz4=')] opacity-40 dark:bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNiI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMiIvPjwvZz48L3N2Zz4=')]"></div>
 
       <div className="relative min-h-screen flex">
         <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 relative overflow-hidden">
@@ -343,12 +343,12 @@ function RegisterForm() {
               <Logo width={180} height={63} className="mx-auto" />
             </div>
 
-            <Card className="shadow-2xl border-0 bg-white/95 backdrop-blur-sm">
-              <CardHeader className="space-y-2 text-center pb-6">
-                <CardTitle className="text-2xl font-bold text-slate-900">
+            <Card className="border-0 border-transparent bg-white/95 shadow-2xl backdrop-blur-sm dark:border dark:border-white/10 dark:bg-[#141414]/95">
+              <CardHeader className="space-y-2 pb-6 text-center">
+                <CardTitle className="text-2xl font-bold text-slate-900 dark:text-zinc-100">
                   Create Account
                 </CardTitle>
-                <CardDescription className="text-slate-600">
+                <CardDescription className="text-slate-600 dark:text-zinc-400">
                   Enter your business details to register
                 </CardDescription>
               </CardHeader>
@@ -357,7 +357,7 @@ function RegisterForm() {
                 <form onSubmit={handleRegister} className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <label htmlFor="firstName" className="text-sm font-medium text-slate-700">First Name</label>
+                      <label htmlFor="firstName" className="text-sm font-medium text-slate-700 dark:text-zinc-300">First Name</label>
                       <Input
                         id="firstName"
                         type="text"
@@ -365,11 +365,11 @@ function RegisterForm() {
                         value={firstName}
                         onChange={(e) => setFirstName(e.target.value)}
                         required
-                        className="h-11 border-slate-200 focus:border-slate-400 focus:ring-slate-400"
+                        className="h-11 border-slate-200 focus:border-slate-400 focus:ring-slate-400 dark:border-white/[0.12]"
                       />
                     </div>
                     <div className="space-y-2">
-                      <label htmlFor="lastName" className="text-sm font-medium text-slate-700">Last Name</label>
+                      <label htmlFor="lastName" className="text-sm font-medium text-slate-700 dark:text-zinc-300">Last Name</label>
                       <Input
                         id="lastName"
                         type="text"
@@ -377,13 +377,13 @@ function RegisterForm() {
                         value={lastName}
                         onChange={(e) => setLastName(e.target.value)}
                         required
-                        className="h-11 border-slate-200 focus:border-slate-400 focus:ring-slate-400"
+                        className="h-11 border-slate-200 focus:border-slate-400 focus:ring-slate-400 dark:border-white/[0.12]"
                       />
                     </div>
                   </div>
 
                   <div className="space-y-2">
-                    <label htmlFor="company" className="text-sm font-medium text-slate-700">Company</label>
+                    <label htmlFor="company" className="text-sm font-medium text-slate-700 dark:text-zinc-300">Company</label>
                     <Input
                       id="company"
                       type="text"
@@ -391,12 +391,12 @@ function RegisterForm() {
                       value={company}
                       onChange={(e) => setCompany(e.target.value)}
                       required
-                      className="h-11 border-slate-200 focus:border-slate-400 focus:ring-slate-400"
+                      className="h-11 border-slate-200 focus:border-slate-400 focus:ring-slate-400 dark:border-white/[0.12]"
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <label htmlFor="title" className="text-sm font-medium text-slate-700">Title</label>
+                    <label htmlFor="title" className="text-sm font-medium text-slate-700 dark:text-zinc-300">Title</label>
                     <Input
                       id="title"
                       type="text"
@@ -404,12 +404,12 @@ function RegisterForm() {
                       value={title}
                       onChange={(e) => setTitle(e.target.value)}
                       required
-                      className="h-11 border-slate-200 focus:border-slate-400 focus:ring-slate-400"
+                      className="h-11 border-slate-200 focus:border-slate-400 focus:ring-slate-400 dark:border-white/[0.12]"
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <label htmlFor="email" className="text-sm font-medium text-slate-700">Email Address</label>
+                    <label htmlFor="email" className="text-sm font-medium text-slate-700 dark:text-zinc-300">Email Address</label>
                     <Input
                       id="email"
                       type="email"
@@ -417,13 +417,13 @@ function RegisterForm() {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
-                      className="h-11 border-slate-200 focus:border-slate-400 focus:ring-slate-400"
+                      className="h-11 border-slate-200 focus:border-slate-400 focus:ring-slate-400 dark:border-white/[0.12]"
                     />
-                    <p className="text-xs text-slate-500">Use your company email address</p>
+                    <p className="text-xs text-slate-500 dark:text-zinc-500">Use your company email address</p>
                   </div>
 
                   <div className="space-y-2">
-                    <label htmlFor="password" className="text-sm font-medium text-slate-700">Password</label>
+                    <label htmlFor="password" className="text-sm font-medium text-slate-700 dark:text-zinc-300">Password</label>
                     <div className="relative">
                       <Input
                         id="password"
@@ -432,11 +432,11 @@ function RegisterForm() {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required
-                        className="h-11 pr-12 border-slate-200 focus:border-slate-400 focus:ring-slate-400"
+                        className="h-11 border-slate-200 pr-12 focus:border-slate-400 focus:ring-slate-400 dark:border-white/[0.12]"
                       />
                       <button
                         type="button"
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:text-zinc-500 dark:hover:text-zinc-300"
                         onClick={() => setShowPassword(!showPassword)}
                       >
                         {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
@@ -445,7 +445,7 @@ function RegisterForm() {
                   </div>
 
                   <div className="space-y-2">
-                    <label htmlFor="confirmPassword" className="text-sm font-medium text-slate-700">Confirm Password</label>
+                    <label htmlFor="confirmPassword" className="text-sm font-medium text-slate-700 dark:text-zinc-300">Confirm Password</label>
                     <Input
                       id="confirmPassword"
                       type={showPassword ? 'text' : 'password'}
@@ -453,20 +453,20 @@ function RegisterForm() {
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       required
-                      className="h-11 border-slate-200 focus:border-slate-400 focus:ring-slate-400"
+                      className="h-11 border-slate-200 focus:border-slate-400 focus:ring-slate-400 dark:border-white/[0.12]"
                     />
                   </div>
 
                   {error && (
-                    <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm flex items-center space-x-2">
-                      <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                    <div className="flex items-center space-x-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-300">
+                      <div className="h-2 w-2 rounded-full bg-red-500" />
                       <span>{error}</span>
                     </div>
                   )}
 
                   <Button
                     type="submit"
-                    className="w-full h-12 bg-gradient-to-r from-slate-900 to-slate-800 hover:from-slate-800 hover:to-slate-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
+                    className="h-12 w-full bg-gradient-to-r from-slate-900 to-slate-800 font-semibold text-white shadow-lg transition-all duration-200 hover:from-slate-800 hover:to-slate-700 hover:shadow-xl"
                     disabled={loading}
                   >
                     {loading ? (
@@ -484,9 +484,9 @@ function RegisterForm() {
                 </form>
 
                 <div className="mt-6 text-center">
-                  <p className="text-sm text-slate-600">
+                  <p className="text-sm text-slate-600 dark:text-zinc-400">
                     Already have an account?{' '}
-                    <Link href="/login" className="font-medium text-slate-900 hover:underline">
+                    <Link href="/login" className="font-medium text-slate-900 hover:underline dark:text-zinc-100">
                       Sign in
                     </Link>
                   </p>
@@ -503,10 +503,10 @@ function RegisterForm() {
 export default function RegisterPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 flex items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-[#0a0a0a] dark:via-[#0f0f0f] dark:to-[#0a0a0a]">
         <div className="text-center">
           <Logo width={180} height={63} className="mx-auto mb-4" />
-          <Loader2 className="h-8 w-8 animate-spin mx-auto text-slate-600" />
+          <Loader2 className="mx-auto h-8 w-8 animate-spin text-slate-600 dark:text-zinc-400" />
         </div>
       </div>
     }>

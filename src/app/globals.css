@@ -2,6 +2,11 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* Reserve scrollbar width so Radix/cmdk dialogs (Ctrl+K) don’t shift layout when body scroll locks */
+html {
+  scrollbar-gutter: stable;
+}
+
 body {
   background: #f8fafc;
   color: #111827;

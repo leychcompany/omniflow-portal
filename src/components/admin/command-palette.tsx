@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import * as Dialog from '@radix-ui/react-dialog'
 import { Command } from 'cmdk'
 import {
   BookOpen,
@@ -180,7 +181,11 @@ export function CommandPalette() {
         </kbd>
       </button>
 
-      <Command.Dialog
+      {/*
+        modal={false}: Radix does not mount RemoveScroll (no body scroll lock).
+        cmdk's Command.Dialog always uses modal Radix dialog → scrollbar disappears → layout shift.
+      */}
+      <Dialog.Root
         open={open}
         onOpenChange={(o) => {
           setOpen(o)
@@ -189,16 +194,39 @@ export function CommandPalette() {
             setSearchResults(null)
           }
         }}
-        label="Quick navigation"
-        shouldFilter={!showSearchResults}
-        className={cn(
-          'fixed left-1/2 top-[20%] -translate-x-1/2 z-[100]',
-          'w-full max-w-xl rounded-2xl overflow-hidden',
-          'bg-white/95 dark:bg-[#141414]/95 backdrop-blur-xl shadow-2xl shadow-slate-900/20 dark:shadow-black/40',
-          'border border-slate-200/80 dark:border-white/[0.08]',
-          'animate-in fade-in-0 zoom-in-95 duration-200'
-        )}
+        modal={false}
       >
+        <Dialog.Portal>
+          <div
+            className={cn(
+              'fixed inset-0 z-[100] bg-slate-900/40 backdrop-blur-sm transition-opacity duration-200 dark:bg-black/55',
+              open ? 'opacity-100' : 'pointer-events-none opacity-0'
+            )}
+            aria-hidden
+            onClick={() => {
+              setOpen(false)
+              setSearchQuery('')
+              setSearchResults(null)
+            }}
+          />
+          <Dialog.Content
+            aria-describedby={undefined}
+            className={cn(
+              'fixed left-1/2 top-[20%] z-[101] w-full max-w-xl -translate-x-1/2 overflow-hidden rounded-2xl border border-slate-200/80 bg-white/95 shadow-2xl shadow-slate-900/20 outline-none backdrop-blur-xl',
+              'dark:border-white/[0.08] dark:bg-[#141414]/95 dark:shadow-black/40',
+              'animate-in fade-in-0 zoom-in-95 duration-200',
+              'data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95'
+            )}
+            onOpenAutoFocus={(e) => {
+              e.preventDefault()
+              requestAnimationFrame(() => {
+                const el = document.querySelector<HTMLInputElement>('[cmdk-input]')
+                el?.focus()
+              })
+            }}
+          >
+            <Dialog.Title className="sr-only">Quick navigation</Dialog.Title>
+            <Command label="Quick navigation" shouldFilter={!showSearchResults}>
         <div className="flex items-center gap-3 border-b border-slate-200/80 dark:border-white/[0.06] px-4 py-3">
           <Search className="h-4 w-4 text-slate-400 dark:text-zinc-500 shrink-0" />
           <Command.Input
@@ -353,7 +381,10 @@ export function CommandPalette() {
           <span className="mx-2">•</span>
           <span>↵</span> <span>select</span>
         </div>
-      </Command.Dialog>
+            </Command>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
 
       <UserDetailModal
         userId={userModalId}

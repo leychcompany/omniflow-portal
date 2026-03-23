@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect, useCallback, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -12,19 +12,15 @@ import { SearchBarSkeleton } from '@/components/ui/search-bar-skeleton'
 import { fetchWithAdminAuth } from '@/lib/admin-fetch'
 import { AdminCardGrid, AdminCard } from '@/components/admin/admin-card-grid'
 import { AdminPageDashboard } from '@/components/admin/admin-page-dashboard'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
 import { AddNewsModal } from '@/components/admin/add-news-modal'
-import { Plus, Search, Newspaper, XCircle, RefreshCw, MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
+import { EditNewsModal } from '@/components/admin/edit-news-modal'
+import { NewsCardActions } from '@/components/admin/news-card-actions'
+import { Plus, Search, Newspaper, XCircle, RefreshCw, ExternalLink } from 'lucide-react'
 import { type NewsArticle, formatDate } from '../_components/admin-types'
 
-export default function AdminNewsPage() {
+function AdminNewsPageInner() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [searchTerm, setSearchTerm] = useState('')
   const [newsArticles, setNewsArticles] = useState<NewsArticle[]>([])
   const [newsLoading, setNewsLoading] = useState(true)
@@ -32,6 +28,7 @@ export default function AdminNewsPage() {
   const [deleteTarget, setDeleteTarget] = useState<NewsArticle | null>(null)
   const [deleteLoading, setDeleteLoading] = useState(false)
   const [addModalOpen, setAddModalOpen] = useState(false)
+  const [editArticleId, setEditArticleId] = useState<string | null>(null)
 
   const fetchNews = useCallback(async () => {
     setNewsLoading(true)
@@ -48,7 +45,17 @@ export default function AdminNewsPage() {
     }
   }, [])
 
-  useEffect(() => { fetchNews() }, [fetchNews])
+  useEffect(() => {
+    fetchNews()
+  }, [fetchNews])
+
+  useEffect(() => {
+    const fromQuery = searchParams.get('edit')
+    if (fromQuery) {
+      setEditArticleId(fromQuery)
+      router.replace('/admin/news', { scroll: false })
+    }
+  }, [searchParams, router])
 
   const handleDeleteNews = async () => {
     if (!deleteTarget) return
@@ -67,10 +74,11 @@ export default function AdminNewsPage() {
     }
   }
 
-  const filteredNews = newsArticles.filter(a =>
-    !searchTerm ||
-    a.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (a.excerpt || '').toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredNews = newsArticles.filter(
+    (a) =>
+      !searchTerm ||
+      a.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (a.excerpt || '').toLowerCase().includes(searchTerm.toLowerCase())
   )
 
   const featuredCount = newsArticles.filter((a) => a.featured).length
@@ -80,7 +88,7 @@ export default function AdminNewsPage() {
   ]
 
   return (
-    <div className="pb-20 md:pb-0 space-y-6">
+    <div className="space-y-6 pb-20 md:pb-0">
       {newsLoading ? (
         <DashboardSkeleton statCount={2} />
       ) : !newsError ? (
@@ -95,28 +103,37 @@ export default function AdminNewsPage() {
       {newsLoading ? (
         <SearchBarSkeleton />
       ) : (
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="flex-1 relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-400" />
-          <Input
-            type="text"
-            placeholder="Search articles..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-11 pr-4 py-2.5 rounded-xl border-slate-200 bg-white text-sm focus:ring-2 focus:ring-blue-500/50 focus:border-blue-400 shadow-sm"
-          />
+        <div className="flex flex-col gap-4 sm:flex-row">
+          <div className="relative flex-1">
+            <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-zinc-400" />
+            <Input
+              type="text"
+              placeholder="Search articles..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full rounded-xl border-slate-200 bg-white py-2.5 pl-11 pr-4 text-sm shadow-sm focus:border-blue-400 focus:ring-2 focus:ring-blue-500/50"
+            />
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={fetchNews}
+              disabled={newsLoading}
+              className="gap-2 rounded-xl border-slate-200 text-slate-600 hover:bg-slate-50 dark:border-white/[0.12] dark:text-zinc-400 dark:hover:bg-white/[0.06]"
+            >
+              <RefreshCw className={`h-4 w-4 ${newsLoading ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
+            <Button
+              onClick={() => setAddModalOpen(true)}
+              className="gap-2 rounded-xl bg-blue-600 text-white shadow-md shadow-blue-500/25 hover:bg-blue-700"
+            >
+              <Plus className="h-4 w-4" />
+              Add Article
+            </Button>
+          </div>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={fetchNews} disabled={newsLoading} className="gap-2 rounded-xl border-slate-200 text-slate-600 hover:bg-slate-50">
-            <RefreshCw className={`h-4 w-4 ${newsLoading ? 'animate-spin' : ''}`} />
-            Refresh
-          </Button>
-          <Button onClick={() => setAddModalOpen(true)} className="gap-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-500/25">
-            <Plus className="h-4 w-4" />
-            Add Article
-          </Button>
-        </div>
-      </div>
       )}
 
       {newsLoading ? (
@@ -129,8 +146,8 @@ export default function AdminNewsPage() {
           </div>
         </div>
       ) : filteredNews.length === 0 ? (
-        <div className="rounded-2xl border border-slate-200/80 dark:border-white/[0.08] bg-white dark:bg-[#141414] p-16 text-center shadow-sm">
-          <Newspaper className="h-12 w-12 text-zinc-300 dark:text-zinc-500 mx-auto mb-4" />
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-16 text-center shadow-sm dark:border-white/[0.08] dark:bg-[#141414]">
+          <Newspaper className="mx-auto mb-4 h-12 w-12 text-zinc-300 dark:text-zinc-500" />
           <p className="text-sm text-zinc-600 dark:text-zinc-400">
             {newsArticles.length === 0 ? 'No articles. Add one to get started.' : 'No matches.'}
           </p>
@@ -140,35 +157,31 @@ export default function AdminNewsPage() {
           {filteredNews.map((article) => (
             <AdminCard key={article.id}>
               <div className="flex items-start justify-between gap-3">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="font-semibold text-slate-900 dark:text-zinc-100 truncate">{article.title}</h3>
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3 className="truncate font-semibold text-slate-900 dark:text-zinc-100">{article.title}</h3>
                     {article.featured && (
-                      <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-500/20 text-blue-800 dark:text-blue-400 font-medium shrink-0">Featured</span>
+                      <span className="shrink-0 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-500/20 dark:text-blue-400">
+                        Featured
+                      </span>
                     )}
                   </div>
-                  <p className="text-sm text-slate-500 dark:text-zinc-400 mt-1 line-clamp-2">{article.excerpt || '—'}</p>
-                  <p className="text-xs text-slate-400 dark:text-zinc-500 mt-2">{formatDate(article.published_at)}</p>
-                </div>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 rounded-lg text-slate-400 dark:text-zinc-500 hover:text-slate-700 dark:hover:text-zinc-200">
-                      <MoreHorizontal className="h-4 w-4" />
-                      <span className="sr-only">Open menu</span>
+                  <p className="mt-1 line-clamp-2 text-sm text-slate-500 dark:text-zinc-400">{article.excerpt || '—'}</p>
+                  <p className="mt-2 text-xs text-slate-400 dark:text-zinc-500">{formatDate(article.published_at)}</p>
+                  <div className="mt-3">
+                    <Button variant="outline" size="sm" className="gap-2 rounded-lg" asChild>
+                      <a href={`/news/${article.slug}`} target="_blank" rel="noopener noreferrer">
+                        <ExternalLink className="h-4 w-4" />
+                        View on site
+                      </a>
                     </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="min-w-36">
-                    <DropdownMenuItem onSelect={() => router.push(`/admin/news/${article.id}/edit`)}>
-                      <Pencil className="h-4 w-4 mr-2" />
-                      Edit
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem variant="destructive" onSelect={() => setDeleteTarget(article)}>
-                      <Trash2 className="h-4 w-4 mr-2" />
-                      Delete
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                  </div>
+                </div>
+                <NewsCardActions
+                  itemTitle={article.title}
+                  onEdit={() => setEditArticleId(article.id)}
+                  onDelete={() => setDeleteTarget(article)}
+                />
               </div>
             </AdminCard>
           ))}
@@ -184,6 +197,30 @@ export default function AdminNewsPage() {
         isLoading={deleteLoading}
       />
       <AddNewsModal open={addModalOpen} onOpenChange={setAddModalOpen} onSuccess={fetchNews} />
+      <EditNewsModal
+        open={!!editArticleId}
+        articleId={editArticleId}
+        onOpenChange={(open) => !open && setEditArticleId(null)}
+        onSuccess={fetchNews}
+      />
     </div>
+  )
+}
+
+function AdminNewsFallback() {
+  return (
+    <div className="space-y-6 pb-20 md:pb-0">
+      <DashboardSkeleton statCount={2} />
+      <SearchBarSkeleton />
+      <CardSkeleton count={6} />
+    </div>
+  )
+}
+
+export default function AdminNewsPage() {
+  return (
+    <Suspense fallback={<AdminNewsFallback />}>
+      <AdminNewsPageInner />
+    </Suspense>
   )
 }

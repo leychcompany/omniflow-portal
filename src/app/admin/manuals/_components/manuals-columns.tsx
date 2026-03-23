@@ -2,20 +2,14 @@
 
 import { ColumnDef } from '@tanstack/react-table'
 import { Button } from '@/components/ui/button'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
 import { SortableHeader } from '@/components/admin/data-table'
-import { ExternalLink, FileText, MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
+import { ManualTableActions } from '@/components/admin/manual-table-actions'
+import { ExternalLink, FileText } from 'lucide-react'
 import { type Manual } from '../../_components/admin-types'
 import { formatDate } from '../../_components/admin-types'
 
 export function getManualsColumns(
-  router: { push: (url: string) => void },
+  onEditManual: (m: Manual) => void,
   setDeleteTarget: (m: Manual | null) => void
 ): ColumnDef<Manual>[] {
   return [
@@ -105,47 +99,18 @@ export function getManualsColumns(
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 text-slate-500 dark:text-zinc-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-500/20 rounded-lg"
+              className="h-9 w-9 rounded-xl text-slate-500 dark:text-zinc-400 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-500/20 dark:hover:text-blue-400"
               asChild
             >
               <a href={`/api/manuals/${manual.id}/view`} target="_blank" rel="noopener noreferrer" title="View PDF">
                 <ExternalLink className="h-4 w-4" />
               </a>
             </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 text-slate-500 dark:text-zinc-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-500/20 rounded-lg"
-              onClick={() => router.push(`/admin/manuals/${manual.id}/edit`)}
-              title="Edit"
-            >
-              <Pencil className="h-4 w-4" />
-            </Button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-500 dark:text-zinc-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/20 rounded-lg">
-                  <MoreHorizontal className="h-4 w-4" />
-                  <span className="sr-only">More</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="min-w-36">
-                <DropdownMenuItem asChild>
-                  <a href={`/api/manuals/${manual.id}/view`} target="_blank" rel="noopener noreferrer">
-                    <ExternalLink className="h-4 w-4 mr-2" />
-                    View PDF
-                  </a>
-                </DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => router.push(`/admin/manuals/${manual.id}/edit`)}>
-                  <Pencil className="h-4 w-4 mr-2" />
-                  Edit
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem variant="destructive" onSelect={() => setDeleteTarget(manual)}>
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Delete
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <ManualTableActions
+              documentTitle={manual.title}
+              onEdit={() => onEditManual(manual)}
+              onDelete={() => setDeleteTarget(manual)}
+            />
           </div>
         )
       },

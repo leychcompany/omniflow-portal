@@ -71,10 +71,10 @@ export default function DeleteUserPage() {
 
   if (loading) {
     return (
-      <Card className="max-w-md mx-auto border-0 shadow-xl bg-white">
+      <Card className="mx-auto max-w-md border border-slate-200/80 bg-white shadow-xl dark:border-white/[0.08] dark:bg-[#141414]">
         <CardContent className="p-12 text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto text-slate-600 mb-4" />
-          <p className="text-slate-600">Loading...</p>
+          <Loader2 className="mx-auto mb-4 h-8 w-8 animate-spin text-slate-600 dark:text-zinc-400" />
+          <p className="text-slate-600 dark:text-zinc-400">Loading...</p>
         </CardContent>
       </Card>
     )
@@ -82,10 +82,10 @@ export default function DeleteUserPage() {
 
   if (!user || error) {
     return (
-      <Card className="max-w-md mx-auto border-0 shadow-xl bg-white">
+      <Card className="mx-auto max-w-md border border-slate-200/80 bg-white shadow-xl dark:border-white/[0.08] dark:bg-[#141414]">
         <CardContent className="p-6">
-          <div className="flex items-center gap-3 text-red-700 mb-4">
-            <XCircle className="h-5 w-5" />
+          <div className="mb-4 flex items-center gap-3 text-red-700 dark:text-red-400">
+            <XCircle className="h-5 w-5 shrink-0" />
             <span>{error || 'User not found'}</span>
           </div>
           <Button variant="outline" onClick={() => router.push('/admin/users')}>
@@ -97,32 +97,32 @@ export default function DeleteUserPage() {
   }
 
   return (
-    <Card className="max-w-md mx-auto border-0 shadow-xl bg-white">
-      <CardHeader className="border-b border-slate-200 pb-4">
+    <Card className="mx-auto max-w-md border border-slate-200/80 bg-white shadow-xl dark:border-white/[0.08] dark:bg-[#141414]">
+      <CardHeader className="border-b border-slate-200 pb-4 dark:border-white/[0.08]">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
-            <Trash2 className="h-6 w-6 text-red-600" />
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-500/15">
+            <Trash2 className="h-6 w-6 text-red-600 dark:text-red-400" />
           </div>
           <div>
-            <CardTitle>Delete User</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-slate-900 dark:text-zinc-100">Delete User</CardTitle>
+            <CardDescription className="text-slate-600 dark:text-zinc-400">
               Are you sure you want to delete <strong>{user.name || user.email || 'this user'}</strong>?
             </CardDescription>
           </div>
         </div>
       </CardHeader>
-      <CardContent className="pt-6 space-y-4">
-        <p className="text-sm text-slate-600">
+      <CardContent className="space-y-4 pt-6">
+        <p className="text-sm text-slate-600 dark:text-zinc-400">
           This action cannot be undone and will permanently remove:
         </p>
-        <ul className="list-disc list-inside text-sm text-slate-600 space-y-1">
+        <ul className="list-inside list-disc space-y-1 text-sm text-slate-600 dark:text-zinc-400">
           <li>User account and authentication</li>
           <li>User profile and data</li>
           <li>Associated invites</li>
         </ul>
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm flex items-center gap-2">
-            <XCircle className="h-4 w-4 flex-shrink-0" />
+          <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-300">
+            <XCircle className="h-4 w-4 shrink-0" />
             <span>{error}</span>
           </div>
         )}
@@ -131,7 +131,7 @@ export default function DeleteUserPage() {
             variant="outline"
             onClick={() => router.push('/admin/users')}
             disabled={deleting}
-            className="hover:bg-slate-100"
+            className="hover:bg-slate-100 dark:hover:bg-white/[0.06]"
           >
             Cancel
           </Button>

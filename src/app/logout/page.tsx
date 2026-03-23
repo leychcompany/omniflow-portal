@@ -34,10 +34,10 @@ export default function LogoutPage() {
   }, [])
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50">
+    <div className="flex min-h-screen items-center justify-center bg-slate-50 dark:bg-[#0a0a0a]">
       <div className="text-center">
-        <Loader2 className="h-10 w-10 animate-spin text-slate-600 mx-auto mb-4" />
-        <p className="text-slate-600">Signing out...</p>
+        <Loader2 className="mx-auto mb-4 h-10 w-10 animate-spin text-slate-600 dark:text-zinc-400" />
+        <p className="text-slate-600 dark:text-zinc-400">Signing out...</p>
       </div>
     </div>
   )

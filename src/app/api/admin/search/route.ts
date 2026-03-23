@@ -70,7 +70,7 @@ export async function GET(req: NextRequest) {
       id: m.id,
       label: m.title,
       sublabel: m.filename,
-      href: `/admin/manuals/${m.id}/edit`,
+      href: `/admin/manuals?edit=${encodeURIComponent(String(m.id))}`,
     }));
 
     const courses = (coursesRes.data ?? []).map((c: Record<string, unknown>) => ({
@@ -84,14 +84,14 @@ export async function GET(req: NextRequest) {
       id: n.id,
       label: n.title,
       sublabel: n.excerpt ? String(n.excerpt).slice(0, 60) + "…" : null,
-      href: `/admin/news/${n.id}/edit`,
+      href: `/admin/news?edit=${encodeURIComponent(String(n.id))}`,
     }));
 
     const software = (softwareRes.data ?? []).map((s: Record<string, unknown>) => ({
       id: s.id,
       label: s.title,
       sublabel: null,
-      href: `/admin/software/${s.id}/edit`,
+      href: `/admin/software?edit=${encodeURIComponent(String(s.id))}`,
     }));
 
     return NextResponse.json({

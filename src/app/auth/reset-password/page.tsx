@@ -1,11 +1,13 @@
 "use client";
 
-import { useEffect, Suspense, useState, useCallback } from "react";
+import { useEffect, Suspense, useState, useCallback, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { Logo } from "@/components/Logo";
-import { Loader2, XCircle, ArrowLeft, Key, Hash } from "lucide-react";
+import { Loader2, XCircle, ArrowLeft, Key, Hash, Eye, EyeOff, Shield } from "lucide-react";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 function ResetPasswordHandler() {
   const router = useRouter();
@@ -14,6 +16,7 @@ function ResetPasswordHandler() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [isProcessing, setIsProcessing] = useState(true);
   const [expiredLinkError, setExpiredLinkError] = useState(false);
@@ -328,7 +331,7 @@ function ResetPasswordHandler() {
     }
   }, [router, searchParams, isProcessing, processHashAndRedirect]);
 
-  const handleSetPassword = async (e: React.FormEvent) => {
+  const handleSetPassword = async (e: FormEvent) => {
     e.preventDefault();
     setMessage(null);
 
@@ -361,115 +364,111 @@ function ResetPasswordHandler() {
     }
   };
 
-  // If showing web form
+  // If showing web form (aligned with set-password / forgot-password visual language)
   if (showWebForm) {
     return (
-      <div style={{ 
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "linear-gradient(to bottom right, #f5f5f5, #ffffff)",
-        padding: "20px"
-      }}>
-        <div style={{
-          maxWidth: "400px",
-          width: "100%",
-          background: "white",
-          borderRadius: "16px",
-          padding: "40px",
-          boxShadow: "0 20px 60px rgba(0,0,0,0.1)"
-        }}>
-          <h1 style={{ 
-            fontSize: "24px", 
-            fontWeight: "bold", 
-            marginBottom: "8px",
-            color: "#111827"
-          }}>Set Your Password</h1>
-          <p style={{ 
-            fontSize: "14px", 
-            color: "#6b7280", 
-            marginBottom: "32px" 
-          }}>Create a secure password for your account</p>
+      <div className="relative flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 via-white to-slate-100 px-4 py-12 dark:from-[#0a0a0a] dark:via-[#0f0f0f] dark:to-[#0a0a0a] sm:px-6 lg:px-8">
+        <div
+          className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmM2Y0ZjYiIGZpbGwtb3BhY2l0eT0iMC40Ij48Y2lyY2xlIGN4PSIzMCIgY3k9IjMwIiByPSIyIi8+PC9nPjwvZz48L3N2Zz4=')] opacity-40 dark:bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNiI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMiIvPjwvZz48L3N2Zz4=')]"
+          aria-hidden
+        />
 
-          <form onSubmit={handleSetPassword}>
-            <div style={{ marginBottom: "20px" }}>
-              <label style={{ 
-                display: "block", 
-                fontSize: "14px", 
-                fontWeight: "600", 
-                marginBottom: "8px",
-                color: "#374151"
-              }}>New Password</label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                style={{
-                  width: "100%",
-                  padding: "12px",
-                  border: "1px solid #d1d5db",
-                  borderRadius: "8px",
-                  fontSize: "16px"
-                }}
-              />
-            </div>
+        <div className="relative z-10 w-full max-w-md">
+          <div className="mb-8 flex justify-center">
+            <Logo width={180} height={63} className="mx-auto" />
+          </div>
 
-            <div style={{ marginBottom: "20px" }}>
-              <label style={{ 
-                display: "block", 
-                fontSize: "14px", 
-                fontWeight: "600", 
-                marginBottom: "8px",
-                color: "#374151"
-              }}>Confirm Password</label>
-              <input
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                required
-                style={{
-                  width: "100%",
-                  padding: "12px",
-                  border: "1px solid #d1d5db",
-                  borderRadius: "8px",
-                  fontSize: "16px"
-                }}
-              />
-            </div>
-
-            {message && (
-              <div style={{
-                padding: "12px",
-                borderRadius: "8px",
-                marginBottom: "20px",
-                background: message.type === 'success' ? "#d1fae5" : "#fee2e2",
-                color: message.type === 'success' ? "#065f46" : "#991b1b",
-                fontSize: "14px"
-              }}>
-                {message.text}
+          <div className="rounded-2xl border border-slate-200/80 bg-white/95 p-8 shadow-2xl backdrop-blur-sm dark:border-white/[0.08] dark:bg-[#141414]/95">
+            <div className="mb-6 flex items-center gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-100 dark:bg-rose-500/15">
+                <Shield className="h-5 w-5 text-rose-600 dark:text-rose-400" />
               </div>
-            )}
+              <div>
+                <h1 className="text-xl font-bold text-slate-900 dark:text-zinc-100">Set your password</h1>
+                <p className="text-sm text-slate-600 dark:text-zinc-400">Create a secure password for your account</p>
+              </div>
+            </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              style={{
-                width: "100%",
-                padding: "12px",
-                background: loading ? "#9ca3af" : "#dc2626",
-                color: "white",
-                border: "none",
-                borderRadius: "8px",
-                fontSize: "16px",
-                fontWeight: "600",
-                cursor: loading ? "not-allowed" : "pointer"
-              }}
-            >
-              {loading ? "Setting Password..." : "Set Password"}
-            </button>
-          </form>
+            <form onSubmit={handleSetPassword} className="space-y-5">
+              <div className="space-y-2">
+                <label htmlFor="reset-password-new" className="text-sm font-medium text-slate-700 dark:text-zinc-300">
+                  New password
+                </label>
+                <div className="relative">
+                  <Input
+                    id="reset-password-new"
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    className="h-12 pr-12"
+                    autoComplete="new-password"
+                  />
+                  <button
+                    type="button"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 transition-colors hover:text-slate-600 dark:text-zinc-500 dark:hover:text-zinc-300"
+                    onClick={() => setShowPassword((v) => !v)}
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                  >
+                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label htmlFor="reset-password-confirm" className="text-sm font-medium text-slate-700 dark:text-zinc-300">
+                  Confirm password
+                </label>
+                <Input
+                  id="reset-password-confirm"
+                  type={showPassword ? "text" : "password"}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                  className="h-12"
+                  autoComplete="new-password"
+                />
+              </div>
+
+              {message && (
+                <div
+                  role="alert"
+                  className={
+                    message.type === "success"
+                      ? "rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 dark:border-emerald-900/50 dark:bg-emerald-950/40 dark:text-emerald-300"
+                      : "rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-300"
+                  }
+                >
+                  {message.text}
+                </div>
+              )}
+
+              <Button
+                type="submit"
+                disabled={loading}
+                className="h-12 w-full rounded-xl bg-gradient-to-r from-rose-600 to-rose-700 font-semibold text-white shadow-lg shadow-rose-500/25 transition-all hover:from-rose-500 hover:to-rose-600 disabled:opacity-60"
+              >
+                {loading ? (
+                  <span className="inline-flex items-center gap-2">
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    Setting password…
+                  </span>
+                ) : (
+                  "Set password"
+                )}
+              </Button>
+            </form>
+
+            <div className="mt-6 border-t border-slate-200 pt-6 text-center dark:border-white/[0.08]">
+              <Link
+                href="/login"
+                className="inline-flex items-center justify-center gap-2 text-sm font-medium text-slate-600 transition-colors hover:text-slate-900 dark:text-zinc-400 dark:hover:text-zinc-200"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Back to sign in
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -500,7 +499,7 @@ function ResetPasswordHandler() {
               <div className="flex flex-col gap-3 w-full">
                 <Link
                   href="/forgot-password"
-                  className="inline-flex items-center justify-center gap-2 w-full h-12 px-4 rounded-lg bg-slate-900 text-white font-semibold hover:bg-slate-800 transition-colors"
+                  className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 font-semibold text-white transition-colors hover:bg-slate-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
                 >
                   <Key className="h-5 w-5" />
                   Request new reset link
@@ -542,9 +541,9 @@ function ResetPasswordHandler() {
           <div className="bg-white/95 dark:bg-[#141414]/95 backdrop-blur-sm rounded-2xl shadow-2xl p-12 max-w-md mx-auto border-0 dark:border dark:border-white/10">
             <div className="flex flex-col items-center gap-6">
               <div className="relative">
-                <div className="w-16 h-16 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
+                <div className="h-16 w-16 animate-spin rounded-full border-4 border-purple-200 border-t-purple-600 dark:border-purple-500/20 dark:border-t-purple-400" />
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <Loader2 className="w-6 h-6 text-purple-600 animate-spin" />
+                  <Loader2 className="h-6 w-6 animate-spin text-purple-600 dark:text-purple-400" />
                 </div>
               </div>
               
@@ -581,9 +580,9 @@ function ResetPasswordHandler() {
           <div className="bg-white/95 dark:bg-[#141414]/95 backdrop-blur-sm dark:border dark:border-white/10 rounded-2xl shadow-2xl p-12 max-w-md mx-auto">
           <div className="flex flex-col items-center gap-6">
             <div className="relative">
-              <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+              <div className="h-16 w-16 animate-spin rounded-full border-4 border-blue-200 border-t-blue-600 dark:border-blue-500/20 dark:border-t-blue-400" />
               <div className="absolute inset-0 flex items-center justify-center">
-                <Loader2 className="w-6 h-6 text-blue-600 animate-spin" />
+                <Loader2 className="h-6 w-6 animate-spin text-blue-600 dark:text-blue-400" />
               </div>
             </div>
             
@@ -614,7 +613,7 @@ export default function ResetPasswordPage() {
           <div className="mb-6 flex justify-center">
             <Logo width={180} height={63} className="mx-auto" />
           </div>
-          <div className="inline-block w-12 h-12 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
+          <div className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-purple-200 border-t-purple-600 dark:border-purple-500/20 dark:border-t-purple-400" />
           <p className="mt-4 text-slate-600 dark:text-zinc-400">Loading...</p>
         </div>
       </div>
