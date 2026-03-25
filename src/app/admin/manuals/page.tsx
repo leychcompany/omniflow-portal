@@ -14,7 +14,7 @@ import { fetchWithAdminAuth } from '@/lib/admin-fetch'
 import { AdminPageDashboard } from '@/components/admin/admin-page-dashboard'
 import { getManualsColumns } from './_components/manuals-columns'
 import { AddManualModal } from '@/components/admin/add-manual-modal'
-import { Plus, Search, FileText, XCircle, RefreshCw } from 'lucide-react'
+import { Plus, Search, FileText, XCircle } from 'lucide-react'
 import { type Manual } from '../_components/admin-types'
 
 const LIMIT = 20
@@ -115,16 +115,10 @@ export default function AdminManualsPage() {
             className="pl-11 h-11 bg-white border-slate-200 rounded-xl shadow-sm focus-visible:ring-2 focus-visible:ring-blue-500/50 focus-visible:border-blue-400"
           />
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={fetchManuals} disabled={loading} className="h-11 rounded-xl">
-            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-            Refresh
-          </Button>
-          <Button size="sm" onClick={() => setAddModalOpen(true)} className="h-11 rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-500/25">
-            <Plus className="h-4 w-4 mr-2" />
-            Add Document
-          </Button>
-        </div>
+        <Button size="sm" onClick={() => setAddModalOpen(true)} className="h-11 rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-500/25 shrink-0">
+          <Plus className="h-4 w-4 mr-2" />
+          Add Document
+        </Button>
       </div>
       )}
       {loading ? (

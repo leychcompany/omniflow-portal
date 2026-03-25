@@ -15,7 +15,7 @@ import { AdminPageDashboard } from '@/components/admin/admin-page-dashboard'
 import { AddNewsModal } from '@/components/admin/add-news-modal'
 import { EditNewsModal } from '@/components/admin/edit-news-modal'
 import { NewsCardActions } from '@/components/admin/news-card-actions'
-import { Plus, Search, Newspaper, XCircle, RefreshCw, ExternalLink } from 'lucide-react'
+import { Plus, Search, Newspaper, XCircle, ExternalLink } from 'lucide-react'
 import { type NewsArticle, formatDate } from '../_components/admin-types'
 
 function AdminNewsPageInner() {
@@ -114,25 +114,13 @@ function AdminNewsPageInner() {
               className="w-full rounded-xl border-slate-200 bg-white py-2.5 pl-11 pr-4 text-sm shadow-sm focus:border-blue-400 focus:ring-2 focus:ring-blue-500/50"
             />
           </div>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={fetchNews}
-              disabled={newsLoading}
-              className="gap-2 rounded-xl border-slate-200 text-slate-600 hover:bg-slate-50 dark:border-white/[0.12] dark:text-zinc-400 dark:hover:bg-white/[0.06]"
-            >
-              <RefreshCw className={`h-4 w-4 ${newsLoading ? 'animate-spin' : ''}`} />
-              Refresh
-            </Button>
-            <Button
-              onClick={() => setAddModalOpen(true)}
-              className="gap-2 rounded-xl bg-blue-600 text-white shadow-md shadow-blue-500/25 hover:bg-blue-700"
-            >
-              <Plus className="h-4 w-4" />
-              Add Article
-            </Button>
-          </div>
+          <Button
+            onClick={() => setAddModalOpen(true)}
+            className="gap-2 rounded-xl bg-blue-600 text-white shadow-md shadow-blue-500/25 hover:bg-blue-700 shrink-0"
+          >
+            <Plus className="h-4 w-4" />
+            Add Article
+          </Button>
         </div>
       )}
 

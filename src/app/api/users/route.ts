@@ -33,9 +33,15 @@ export async function GET(req: NextRequest) {
     }
 
     if (emailDomain) {
-      const domain = emailDomain.startsWith("@") ? emailDomain : `@${emailDomain}`;
-      const pattern = `%${domain}`;
-      query = query.ilike("email", pattern);
+      // Partial domain match (typeahead): "exxon" matches user@exxonmobil.com
+      const fragment = emailDomain
+        .replace(/^@+/, "")
+        .trim()
+        .replace(/[%_]/g, "");
+      if (fragment) {
+        const pattern = `%@${fragment}%`;
+        query = query.ilike("email", pattern);
+      }
     }
 
     const from = (page - 1) * limit;

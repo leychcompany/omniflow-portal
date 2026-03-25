@@ -15,7 +15,7 @@ import { AdminPageDashboard } from '@/components/admin/admin-page-dashboard'
 import { AddCourseModal } from '@/components/admin/add-course-modal'
 import { EditCourseModal } from '@/components/admin/edit-course-modal'
 import { TrainingCourseActions } from '@/components/admin/training-course-actions'
-import { Plus, Search, GraduationCap, XCircle, RefreshCw } from 'lucide-react'
+import { Plus, Search, GraduationCap, XCircle } from 'lucide-react'
 import { type Course } from '../_components/admin-types'
 
 function AdminTrainingPageInner() {
@@ -111,16 +111,10 @@ function AdminTrainingPageInner() {
             className="w-full pl-11 pr-4 py-2.5 rounded-xl"
           />
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={fetchCourses} disabled={coursesLoading} className="gap-2 rounded-xl">
-            <RefreshCw className={`h-4 w-4 ${coursesLoading ? 'animate-spin' : ''}`} />
-            Refresh
-          </Button>
-          <Button onClick={() => setAddModalOpen(true)} className="gap-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-500/25">
-            <Plus className="h-4 w-4" />
-            Add Course
-          </Button>
-        </div>
+        <Button onClick={() => setAddModalOpen(true)} className="gap-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-500/25 shrink-0">
+          <Plus className="h-4 w-4" />
+          Add Course
+        </Button>
       </div>
       )}
 

@@ -24,7 +24,6 @@ import {
   Send,
   Loader2,
   XCircle,
-  RefreshCw,
   Lock,
   Unlock,
   Shield,
@@ -62,6 +61,7 @@ export default function AdminUsersPage() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [bulkUnlockLoading, setBulkUnlockLoading] = useState(false)
+  const [bulkLockLoading, setBulkLockLoading] = useState(false)
   const [page, setPage] = useState(1)
   const [users, setUsers] = useState<User[]>([])
   const [usersTotal, setUsersTotal] = useState(0)
@@ -80,6 +80,7 @@ export default function AdminUsersPage() {
   const adminCount = users.filter((u) => u.role === 'admin').length
   const selectableUsers = users.filter((u) => u.role !== 'admin')
   const selectedLockedCount = selectableUsers.filter((u) => selectedIds.has(u.id) && u.locked).length
+  const selectedUnlockedCount = selectableUsers.filter((u) => selectedIds.has(u.id) && !u.locked).length
 
   const fetchUsers = useCallback(async () => {
     if (!hasUsersDataRef.current) setUsersLoading(true)
@@ -201,6 +202,28 @@ export default function AdminUsersPage() {
     }
   }
 
+  const bulkLock = async () => {
+    if (selectedUnlockedCount === 0) return
+    setBulkLockLoading(true)
+    try {
+      const idsToLock = selectableUsers.filter((u) => selectedIds.has(u.id) && !u.locked).map((u) => u.id)
+      const res = await fetchWithAdminAuth('/api/users/bulk-lock', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userIds: idsToLock }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed')
+      setSelectedIds(new Set())
+      toast.success(data.message ?? `Locked ${idsToLock.length} user(s)`)
+      await fetchUsers()
+    } catch {
+      toast.error('Failed to lock users')
+    } finally {
+      setBulkLockLoading(false)
+    }
+  }
+
   const toggleSelectAll = () => {
     if (selectedIds.size === selectableUsers.length) {
       setSelectedIds(new Set())
@@ -293,16 +316,10 @@ export default function AdminUsersPage() {
               <Search className="h-4 w-4" />
             </button>
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={fetchUsers} disabled={usersLoading} className="h-10">
-              <RefreshCw className={`h-4 w-4 mr-2 ${usersLoading ? 'animate-spin' : ''}`} />
-              Refresh
-            </Button>
-            <Button size="sm" onClick={() => setAddUserModalOpen(true)} className="h-10 bg-zinc-900 dark:bg-blue-600 hover:bg-zinc-800 dark:hover:bg-blue-700">
-              <Plus className="h-4 w-4 mr-2" />
-              Add User
-            </Button>
-          </div>
+          <Button size="sm" onClick={() => setAddUserModalOpen(true)} className="h-10 bg-zinc-900 dark:bg-blue-600 hover:bg-zinc-800 dark:hover:bg-blue-700 shrink-0">
+            <Plus className="h-4 w-4 mr-2" />
+            Add User
+          </Button>
         </div>
         {subTab === 'users' && (
           <div className="flex flex-wrap items-center gap-3">
@@ -354,7 +371,7 @@ export default function AdminUsersPage() {
                 size="sm"
                 variant="outline"
                 onClick={bulkUnlock}
-                disabled={bulkUnlockLoading}
+                disabled={bulkUnlockLoading || bulkLockLoading}
                 className="h-9"
               >
                 {bulkUnlockLoading ? (
@@ -363,6 +380,22 @@ export default function AdminUsersPage() {
                   <Unlock className="h-4 w-4 mr-2" />
                 )}
                 Unlock {selectedLockedCount} selected
+              </Button>
+            )}
+            {selectedUnlockedCount > 0 && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={bulkLock}
+                disabled={bulkLockLoading || bulkUnlockLoading}
+                className="h-9 border-amber-200 dark:border-amber-500/40 text-amber-800 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-500/10"
+              >
+                {bulkLockLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : (
+                  <Lock className="h-4 w-4 mr-2" />
+                )}
+                Lock {selectedUnlockedCount} selected
               </Button>
             )}
           </div>

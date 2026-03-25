@@ -15,7 +15,7 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { BarChart3, Loader2, XCircle, RefreshCw, Activity, ChevronDown } from 'lucide-react'
+import { BarChart3, Loader2, XCircle, Activity, ChevronDown } from 'lucide-react'
 import { formatDate } from '../_components/admin-types'
 
 interface AnalyticsEvent {
@@ -127,16 +127,6 @@ export default function AdminAnalyticsPage() {
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => fetchAnalytics()}
-          disabled={analyticsLoading}
-          className="h-11 rounded-xl"
-        >
-          <RefreshCw className={`h-4 w-4 mr-2 ${analyticsLoading ? 'animate-spin' : ''}`} />
-          Refresh
-        </Button>
       </div>
       )}
 
