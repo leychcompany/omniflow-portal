@@ -70,7 +70,7 @@ export async function GET(req: NextRequest) {
       id: m.id,
       label: m.title,
       sublabel: m.filename,
-      href: `/admin/manuals?edit=${encodeURIComponent(String(m.id))}`,
+      href: `/admin/manuals/${encodeURIComponent(String(m.id))}/edit`,
     }));
 
     const courses = (coursesRes.data ?? []).map((c: Record<string, unknown>) => ({

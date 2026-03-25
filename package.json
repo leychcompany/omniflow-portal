@@ -7,6 +7,7 @@
     "dev:clean": "npx rimraf .next && next dev",
     "build": "next build",
     "start": "next start",
+    "start:prod": "next build && next start",
     "lint": "eslint"
   },
   "dependencies": {

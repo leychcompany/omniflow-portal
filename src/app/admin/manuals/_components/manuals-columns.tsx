@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { ColumnDef } from '@tanstack/react-table'
 import { Button } from '@/components/ui/button'
 import { SortableHeader } from '@/components/admin/data-table'
@@ -8,10 +9,7 @@ import { ExternalLink, FileText } from 'lucide-react'
 import { type Manual } from '../../_components/admin-types'
 import { formatDate } from '../../_components/admin-types'
 
-export function getManualsColumns(
-  onEditManual: (m: Manual) => void,
-  setDeleteTarget: (m: Manual | null) => void
-): ColumnDef<Manual>[] {
+export function getManualsColumns(setDeleteTarget: (m: Manual | null) => void): ColumnDef<Manual>[] {
   return [
     {
       accessorKey: 'title',
@@ -26,7 +24,12 @@ export function getManualsColumns(
               <FileText className="h-5 w-5" />
             </div>
             <div className="min-w-0">
-              <p className="font-semibold text-slate-900 dark:text-zinc-100 truncate">{m.title}</p>
+              <Link
+                href={`/admin/manuals/${m.id}/edit`}
+                className="font-semibold text-slate-900 dark:text-zinc-100 truncate block hover:text-blue-600 dark:hover:text-blue-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50 rounded"
+              >
+                {m.title}
+              </Link>
               {m.description ? (
                 <p className="text-slate-500 dark:text-zinc-400 text-xs mt-0.5 line-clamp-1">{m.description}</p>
               ) : (
@@ -108,7 +111,7 @@ export function getManualsColumns(
             </Button>
             <ManualTableActions
               documentTitle={manual.title}
-              onEdit={() => onEditManual(manual)}
+              editHref={`/admin/manuals/${manual.id}/edit`}
               onDelete={() => setDeleteTarget(manual)}
             />
           </div>

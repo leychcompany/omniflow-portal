@@ -1,18 +1,19 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface ManualTableActionsProps {
   documentTitle: string
-  onEdit: () => void
+  editHref: string
   onDelete: () => void
 }
 
 /** Anchored menu — avoids Radix dropdown “flying in” from the viewport edge. */
-export function ManualTableActions({ documentTitle, onEdit, onDelete }: ManualTableActionsProps) {
+export function ManualTableActions({ documentTitle, editHref, onDelete }: ManualTableActionsProps) {
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
 
@@ -62,20 +63,17 @@ export function ManualTableActions({ documentTitle, onEdit, onDelete }: ManualTa
             'origin-top-right animate-in fade-in zoom-in-95 duration-150'
           )}
         >
-          <button
-            type="button"
+          <Link
+            href={editHref}
             role="menuitem"
             className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:text-zinc-200 dark:hover:bg-white/[0.06]"
-            onClick={() => {
-              setOpen(false)
-              onEdit()
-            }}
+            onClick={() => setOpen(false)}
           >
             <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-500/15 dark:text-blue-400">
               <Pencil className="h-4 w-4" />
             </span>
             Edit document
-          </button>
+          </Link>
           <div className="mx-2 my-1 h-px bg-slate-100 dark:bg-white/[0.06]" />
           <button
             type="button"

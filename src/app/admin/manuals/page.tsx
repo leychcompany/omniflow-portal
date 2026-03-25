@@ -1,7 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, Suspense, useMemo } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -15,16 +14,13 @@ import { fetchWithAdminAuth } from '@/lib/admin-fetch'
 import { AdminPageDashboard } from '@/components/admin/admin-page-dashboard'
 import { getManualsColumns } from './_components/manuals-columns'
 import { AddManualModal } from '@/components/admin/add-manual-modal'
-import { EditManualModal } from '@/components/admin/edit-manual-modal'
 import { Plus, Search, FileText, XCircle, RefreshCw } from 'lucide-react'
 import { type Manual } from '../_components/admin-types'
 
 const LIMIT = 20
 const SEARCH_DEBOUNCE_MS = 300
 
-function AdminManualsPageInner() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
+export default function AdminManualsPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [searchInput, setSearchInput] = useState('')
   const [page, setPage] = useState(1)
@@ -36,7 +32,6 @@ function AdminManualsPageInner() {
   const [deleteTarget, setDeleteTarget] = useState<Manual | null>(null)
   const [deleteLoading, setDeleteLoading] = useState(false)
   const [addModalOpen, setAddModalOpen] = useState(false)
-  const [editManualId, setEditManualId] = useState<string | null>(null)
 
   const fetchManuals = useCallback(async () => {
     setLoading(true)
@@ -67,14 +62,6 @@ function AdminManualsPageInner() {
 
   useEffect(() => { fetchManuals() }, [fetchManuals])
 
-  useEffect(() => {
-    const fromQuery = searchParams.get('edit')
-    if (fromQuery) {
-      setEditManualId(fromQuery)
-      router.replace('/admin/manuals', { scroll: false })
-    }
-  }, [searchParams, router])
-
   const handleDelete = async () => {
     if (!deleteTarget) return
     setDeleteLoading(true)
@@ -94,10 +81,7 @@ function AdminManualsPageInner() {
   const uniqueTags = Array.from(
     new Set(manuals.flatMap((m) => m.tags ?? []).filter(Boolean))
   )
-  const columns = useMemo(
-    () => getManualsColumns((m) => setEditManualId(m.id), setDeleteTarget),
-    []
-  )
+  const columns = useMemo(() => getManualsColumns(setDeleteTarget), [])
 
   const dashboardStats = [
     { label: 'Documents', value: total },
@@ -194,30 +178,6 @@ function AdminManualsPageInner() {
         isLoading={deleteLoading}
       />
       <AddManualModal open={addModalOpen} onOpenChange={setAddModalOpen} onSuccess={fetchManuals} />
-      <EditManualModal
-        open={!!editManualId}
-        manualId={editManualId}
-        onOpenChange={(open) => !open && setEditManualId(null)}
-        onSuccess={fetchManuals}
-      />
     </div>
-  )
-}
-
-function AdminManualsFallback() {
-  return (
-    <div className="space-y-6">
-      <DashboardSkeleton statCount={2} />
-      <SearchBarSkeleton />
-      <TableSkeleton rowCount={6} colCount={4} />
-    </div>
-  )
-}
-
-export default function AdminManualsPage() {
-  return (
-    <Suspense fallback={<AdminManualsFallback />}>
-      <AdminManualsPageInner />
-    </Suspense>
   )
 }
