@@ -3,14 +3,18 @@ import { NextResponse } from 'next/server'
 const MAX_FILES = 3
 const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
 
+/** Default inbox for /support ticket emails (override with SUPPORT_REQUEST_TO if needed). */
+const DEFAULT_SUPPORT_TO = 'helpdesk@omniflow.com'
+
 export async function POST(req: Request) {
   const RESEND_API_KEY = process.env.RESEND_API_KEY
-  const SUPPORT_REQUEST_TO = process.env.SUPPORT_REQUEST_TO
   const SUPPORT_REQUEST_FROM = process.env.REQUEST_FROM
+  const supportTo =
+    process.env.SUPPORT_REQUEST_TO?.trim() || DEFAULT_SUPPORT_TO
 
-  if (!RESEND_API_KEY || !SUPPORT_REQUEST_TO || !SUPPORT_REQUEST_FROM) {
+  if (!RESEND_API_KEY || !SUPPORT_REQUEST_FROM) {
     return NextResponse.json(
-      { error: 'Email is not configured (missing RESEND_API_KEY, SUPPORT_REQUEST_TO, or REQUEST_FROM).' },
+      { error: 'Email is not configured (missing RESEND_API_KEY or REQUEST_FROM).' },
       { status: 500 }
     )
   }
@@ -74,7 +78,7 @@ ${description}
 
     const emailPayload = {
       from: SUPPORT_REQUEST_FROM,
-      to: [SUPPORT_REQUEST_TO],
+      to: [supportTo],
       reply_to: email,
       subject: `Support: ${subject} [${priority}]`,
       text,

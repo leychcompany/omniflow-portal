@@ -8,9 +8,27 @@ import { ManualTableActions } from '@/components/admin/manual-table-actions'
 import { ExternalLink, FileText } from 'lucide-react'
 import { type Manual } from '../../_components/admin-types'
 import { formatDate } from '../../_components/admin-types'
+import { ManualPinToggle } from './manual-pin-toggle'
 
-export function getManualsColumns(setDeleteTarget: (m: Manual | null) => void): ColumnDef<Manual>[] {
+type ManualsColumnsOptions = {
+  setDeleteTarget: (m: Manual | null) => void
+  onPinnedChange?: () => void
+}
+
+export function getManualsColumns({
+  setDeleteTarget,
+  onPinnedChange,
+}: ManualsColumnsOptions): ColumnDef<Manual>[] {
   return [
+    {
+      id: 'pin',
+      header: () => <span className="sr-only">Pin</span>,
+      cell: ({ row }) => (
+        <ManualPinToggle manual={row.original} onChanged={onPinnedChange} />
+      ),
+      enableSorting: false,
+      size: 48,
+    },
     {
       accessorKey: 'title',
       header: ({ column }) => (

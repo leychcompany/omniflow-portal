@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { useAuthStore } from '@/store/auth-store'
 import { DocumentsSearchBar } from '@/components/portal/documents-search-bar'
+import { sortManualsPinnedFirst } from '@/lib/sort-manuals-pinned'
 import {
   FileText,
   Download,
@@ -15,6 +16,7 @@ import {
   Filter,
   X,
   Shield,
+  Pin,
 } from 'lucide-react'
 import { DocumentsSkeleton } from '@/components/portal/skeletons'
 
@@ -27,6 +29,7 @@ interface Manual {
   download_url?: string
   size: string
   description: string
+  pinned_rank?: number | null
 }
 
 function documentMatchesSearch(doc: Manual, rawQuery: string) {
@@ -55,7 +58,8 @@ export default function DocumentsPage() {
       })
       .then((data) => {
         const items = data?.items ?? data
-        setDocuments(Array.isArray(items) ? items : [])
+        const list = Array.isArray(items) ? items : []
+        setDocuments(sortManualsPinnedFirst(list as Manual[]))
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false))
@@ -312,9 +316,23 @@ export default function DocumentsPage() {
               <Card key={doc.id} className="border-0 shadow-sm hover:shadow-lg transition-all flex flex-col">
                 <CardContent className="p-6 flex flex-col flex-1 min-h-0">
                   <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-slate-900 dark:text-zinc-100 w-full mb-2 truncate" title={doc.title}>
-                      {doc.title}
-                    </h3>
+                    <div className="mb-2 flex min-w-0 items-start gap-2">
+                      <h3
+                        className="min-w-0 flex-1 truncate text-lg font-semibold text-slate-900 dark:text-zinc-100"
+                        title={doc.title}
+                      >
+                        {doc.title}
+                      </h3>
+                      {doc.pinned_rank != null && Number.isFinite(Number(doc.pinned_rank)) && (
+                        <Badge
+                          variant="secondary"
+                          className="shrink-0 gap-1 border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-500/40 dark:bg-amber-500/15 dark:text-amber-200"
+                        >
+                          <Pin className="h-3 w-3" aria-hidden />
+                          Featured
+                        </Badge>
+                      )}
+                    </div>
                     <div className="flex flex-wrap items-center gap-1.5 mb-3">
                       {(() => {
                         const seen = new Set<string>()

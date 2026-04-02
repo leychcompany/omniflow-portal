@@ -82,7 +82,10 @@ export default function AdminManualsPage() {
   const uniqueTags = Array.from(
     new Set(manuals.flatMap((m) => m.tags ?? []).filter(Boolean))
   )
-  const columns = useMemo(() => getManualsColumns(setDeleteTarget), [])
+  const columns = useMemo(
+    () => getManualsColumns({ setDeleteTarget, onPinnedChange: fetchManuals }),
+    [fetchManuals]
+  )
 
   const dashboardStats = [
     { label: 'Documents', value: total },
@@ -121,7 +124,7 @@ export default function AdminManualsPage() {
         </Button>
       </div>
       {loading ? (
-        <TableSkeleton rowCount={6} colCount={4} />
+        <TableSkeleton rowCount={6} colCount={5} />
       ) : error ? (
         <div className="border border-rose-200 dark:border-rose-900/50 bg-rose-50/80 dark:bg-rose-950/30 rounded-2xl p-6 flex items-center gap-4 shadow-sm">
           <div className="p-2.5 rounded-xl bg-rose-100 dark:bg-rose-500/20">
