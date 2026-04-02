@@ -1,20 +1,20 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { useAuthStore } from '@/store/auth-store'
-import { 
-  FileText, 
+import { DocumentsSearchBar } from '@/components/portal/documents-search-bar'
+import {
+  FileText,
   Download,
-  BookOpen,
   File,
   Filter,
   X,
-  Shield
+  Shield,
 } from 'lucide-react'
 import { DocumentsSkeleton } from '@/components/portal/skeletons'
 
@@ -29,6 +29,15 @@ interface Manual {
   description: string
 }
 
+function documentMatchesSearch(doc: Manual, rawQuery: string) {
+  const q = rawQuery.trim().toLowerCase()
+  if (!q) return true
+  if ((doc.title || '').toLowerCase().includes(q)) return true
+  if ((doc.description || '').toLowerCase().includes(q)) return true
+  if ((doc.filename || '').toLowerCase().includes(q)) return true
+  return (doc.tags || []).some((t) => t.toLowerCase().includes(q))
+}
+
 export default function DocumentsPage() {
   const { user } = useAuthStore()
   const [documents, setDocuments] = useState<Manual[]>([])
@@ -36,9 +45,10 @@ export default function DocumentsPage() {
   const [error, setError] = useState<string | null>(null)
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [filterSheetOpen, setFilterSheetOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
 
   useEffect(() => {
-    fetch('/api/manuals')
+    fetch('/api/manuals?limit=100')
       .then((res) => {
         if (!res.ok) throw new Error('Failed to load documents')
         return res.json()
@@ -72,16 +82,21 @@ export default function DocumentsPage() {
   const isTagSelected = (tag: string) =>
     selectedTags.some((t) => t.toLowerCase() === tag.toLowerCase())
 
-  const filteredDocuments =
-    selectedTags.length === 0
-      ? documents
-      : documents.filter((doc) =>
-          selectedTags.every((selectedTag) =>
-            (doc.tags || []).some(
-              (t) => t.toLowerCase() === selectedTag.toLowerCase()
-            )
-          )
+  const filteredByTags = useMemo(() => {
+    if (selectedTags.length === 0) return documents
+    return documents.filter((doc) =>
+      selectedTags.every((selectedTag) =>
+        (doc.tags || []).some(
+          (t) => t.toLowerCase() === selectedTag.toLowerCase()
         )
+      )
+    )
+  }, [documents, selectedTags])
+
+  const filteredDocuments = useMemo(
+    () => filteredByTags.filter((doc) => documentMatchesSearch(doc, searchQuery)),
+    [filteredByTags, searchQuery]
+  )
 
   const toggleTag = (tag: string) => {
     setSelectedTags((prev) => {
@@ -141,6 +156,8 @@ export default function DocumentsPage() {
             <h2 className="text-2xl font-bold text-slate-900 dark:text-zinc-100 mb-2">Available Documents</h2>
             <p className="text-slate-600 dark:text-zinc-400">Download technical documentation and guides</p>
           </div>
+
+          <DocumentsSearchBar value={searchQuery} onChange={setSearchQuery} />
 
           {/* Filters */}
           {allTags.length > 0 && (
@@ -348,9 +365,13 @@ export default function DocumentsPage() {
 
           {filteredDocuments.length === 0 && (
             <div className="text-center py-10 text-slate-600 dark:text-zinc-400">
-              {selectedTags.length > 0
-                ? 'No documents match the selected tags.'
-                : 'No documents found.'}
+              {selectedTags.length > 0 && searchQuery.trim()
+                ? 'No documents match the selected tags and search.'
+                : selectedTags.length > 0
+                  ? 'No documents match the selected tags.'
+                  : searchQuery.trim()
+                    ? 'No documents match your search.'
+                    : 'No documents found.'}
             </div>
           )}
         </div>
