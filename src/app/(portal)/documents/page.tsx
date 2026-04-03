@@ -41,6 +41,24 @@ function documentMatchesSearch(doc: Manual, rawQuery: string) {
   return (doc.tags || []).some((t) => t.toLowerCase().includes(q))
 }
 
+/** Tags that appear on `scopeDocs`, plus any `selectedTags` (so chips stay removable if scope is empty). */
+function tagsAvailableForFilters(scopeDocs: Manual[], selectedTags: string[]): string[] {
+  const map = new Map<string, string>()
+  scopeDocs.forEach((d) => {
+    (d.tags || []).forEach((tag) => {
+      const key = tag.toLowerCase()
+      if (!map.has(key)) map.set(key, tag)
+    })
+  })
+  selectedTags.forEach((tag) => {
+    const key = tag.toLowerCase()
+    if (!map.has(key)) map.set(key, tag)
+  })
+  return Array.from(map.values()).sort((a, b) =>
+    a.toLowerCase().localeCompare(b.toLowerCase())
+  )
+}
+
 export default function DocumentsPage() {
   const { user } = useAuthStore()
   const [documents, setDocuments] = useState<Manual[]>([])
@@ -65,24 +83,6 @@ export default function DocumentsPage() {
       .finally(() => setLoading(false))
   }, [])
 
-  const tagMap = new Map<string, string>()
-  documents.flatMap((d) => d.tags || []).forEach((tag) => {
-    const key = tag.toLowerCase()
-    if (!tagMap.has(key)) tagMap.set(key, tag)
-  })
-  const allTags = Array.from(tagMap.values()).sort((a, b) =>
-    a.toLowerCase().localeCompare(b.toLowerCase())
-  )
-
-  const tagCounts = new Map<string, number>()
-  allTags.forEach((tag) => {
-    const key = tag.toLowerCase()
-    const count = documents.filter((d) =>
-      (d.tags || []).some((t) => t.toLowerCase() === key)
-    ).length
-    tagCounts.set(tag, count)
-  })
-
   const isTagSelected = (tag: string) =>
     selectedTags.some((t) => t.toLowerCase() === tag.toLowerCase())
 
@@ -96,6 +96,26 @@ export default function DocumentsPage() {
       )
     )
   }, [documents, selectedTags])
+
+  const tagsForFilterUi = useMemo(
+    () => tagsAvailableForFilters(filteredByTags, selectedTags),
+    [filteredByTags, selectedTags]
+  )
+
+  const tagCounts = useMemo(() => {
+    const counts = new Map<string, number>()
+    const scope = filteredByTags
+    tagsForFilterUi.forEach((tag) => {
+      const key = tag.toLowerCase()
+      const count = scope.filter((d) =>
+        (d.tags || []).some((t) => t.toLowerCase() === key)
+      ).length
+      counts.set(tag, count)
+    })
+    return counts
+  }, [filteredByTags, tagsForFilterUi])
+
+  const hasTagFilters = documents.some((d) => (d.tags || []).length > 0)
 
   const filteredDocuments = useMemo(
     () => filteredByTags.filter((doc) => documentMatchesSearch(doc, searchQuery)),
@@ -164,7 +184,7 @@ export default function DocumentsPage() {
           <DocumentsSearchBar value={searchQuery} onChange={setSearchQuery} />
 
           {/* Filters */}
-          {allTags.length > 0 && (
+          {hasTagFilters && tagsForFilterUi.length > 0 && (
             <>
               {/* Mobile: compact bar */}
               <div className="md:hidden flex items-center gap-2 overflow-x-auto py-2 -mx-4 px-4 scrollbar-hide">
@@ -216,7 +236,7 @@ export default function DocumentsPage() {
                   </div>
                   <div>
                     <div className="flex flex-wrap gap-2 min-w-0">
-                      {allTags.map((tag) => {
+                      {tagsForFilterUi.map((tag) => {
                         const selected = isTagSelected(tag)
                         const count = tagCounts.get(tag) ?? 0
                         return (
@@ -280,7 +300,7 @@ export default function DocumentsPage() {
                   <CardContent className="p-4">
                     <div>
                       <div className="flex flex-wrap gap-2">
-                        {allTags.map((tag) => {
+                        {tagsForFilterUi.map((tag) => {
                           const selected = isTagSelected(tag)
                           const count = tagCounts.get(tag) ?? 0
                           return (
