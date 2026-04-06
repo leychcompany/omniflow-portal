@@ -13,7 +13,7 @@ export default function LogoutPage() {
       if (done) return
       done = true
       useAuthStore.getState().signOut()
-      // Server-side route clears session cookies and redirects to login
+      // Server clears session cookies; default redirect is marketing site
       window.location.href = '/api/auth/logout'
     }
 

@@ -2,6 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { verifyAdmin } from "@/lib/admin-auth";
 import { getStorageErrorMessage } from "@/lib/storage-error-message";
+import { mergeManualTagNames } from "@/lib/merge-manual-tags";
+
+/** Pinned manuals first (lower pinned_rank = higher on list), then alphabetical title. */
+function manualsListOrder<T extends { order: (c: string, o?: { ascending?: boolean; nullsFirst?: boolean }) => T }>(
+  query: T
+): T {
+  return query
+    .order("pinned_rank", { ascending: true, nullsFirst: false })
+    .order("title", { ascending: true });
+}
 
 const SIGNED_URL_EXPIRY = 3600; // 1 hour
 
@@ -54,16 +64,18 @@ export async function GET(req: NextRequest) {
     const limit = Math.min(MAX_LIMIT, Math.max(1, parseInt(searchParams.get("limit") ?? String(DEFAULT_LIMIT), 10)));
     const q = (searchParams.get("q") ?? "").trim();
 
-    let query = supabaseAdmin
-      .from("manuals")
-      .select(`
+    let query = manualsListOrder(
+      supabaseAdmin.from("manuals").select(
+        `
         *,
         manual_tags (
           tag_id,
           tags (id, name)
         )
-      `, { count: "exact" })
-      .order("title");
+      `,
+        { count: "exact" }
+      )
+    );
 
     if (q) {
       const safe = q.replace(/,/g, " ");
@@ -82,7 +94,10 @@ export async function GET(req: NextRequest) {
     const result = (manuals ?? []).map((manual) => {
       const mtList = (manual as { manual_tags?: { tags: { name: string } | null }[] }).manual_tags ?? [];
       const tagNames = mtList.map((mt) => mt?.tags?.name).filter(Boolean) as string[];
-      const tags = tagNames.length ? tagNames : (manual.category ? [manual.category] : []);
+      const tags = mergeManualTagNames(
+        (manual as { category?: string | null }).category,
+        tagNames
+      );
       const { manual_tags: _mt, storage_path: storagePath, ...rest } = manual as { manual_tags?: unknown; storage_path?: string };
       return {
         ...rest,

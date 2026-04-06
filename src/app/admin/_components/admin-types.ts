@@ -33,6 +33,8 @@ export interface Manual {
   description: string | null
   created_at: string
   download_url?: string
+  /** Lower = higher on /documents among pinned; null/undefined = not pinned */
+  pinned_rank?: number | null
 }
 
 export interface NewsArticle {

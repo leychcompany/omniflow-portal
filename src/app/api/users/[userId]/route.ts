@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { verifyAdmin } from "@/lib/admin-auth";
+import { sendAccountUnlockedWelcomeEmail } from "@/lib/send-account-unlocked-email";
 
 async function assertAdmin(
   request: NextRequest
@@ -63,9 +64,11 @@ export async function PATCH(
 
     const { data: targetUser } = await supabaseAdmin
       .from("users")
-      .select("email, name")
+      .select("email, name, locked")
       .eq("id", userId)
       .single();
+
+    const wasLocked = targetUser?.locked === true;
 
     const { error } = await supabaseAdmin
       .from("users")
@@ -74,6 +77,20 @@ export async function PATCH(
 
     if (error) {
       throw error;
+    }
+
+    if (!locked && wasLocked && targetUser?.email) {
+      const emailed = await sendAccountUnlockedWelcomeEmail({
+        to: targetUser.email,
+        name: targetUser.name,
+      });
+      if (!emailed.ok) {
+        console.warn(
+          "User unlocked but welcome email failed:",
+          userId,
+          emailed.error
+        );
+      }
     }
 
     await supabaseAdmin.from("activity_events").insert({

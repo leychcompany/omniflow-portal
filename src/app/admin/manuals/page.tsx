@@ -3,18 +3,17 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { DeleteConfirmDialog } from '@/components/ui/delete-confirm-dialog'
 import { TableSkeleton } from '@/components/ui/table-skeleton'
 import { DashboardSkeleton } from '@/components/ui/dashboard-skeleton'
-import { SearchBarSkeleton } from '@/components/ui/search-bar-skeleton'
+import { DocumentsSearchBar } from '@/components/portal/documents-search-bar'
 import { DataTable } from '@/components/admin/data-table'
 import { TablePagination } from '@/components/admin/table-pagination'
 import { fetchWithAdminAuth } from '@/lib/admin-fetch'
 import { AdminPageDashboard } from '@/components/admin/admin-page-dashboard'
 import { getManualsColumns } from './_components/manuals-columns'
 import { AddManualModal } from '@/components/admin/add-manual-modal'
-import { Plus, Search, FileText, XCircle } from 'lucide-react'
+import { Plus, FileText, XCircle } from 'lucide-react'
 import { type Manual } from '../_components/admin-types'
 
 const LIMIT = 20
@@ -32,9 +31,10 @@ export default function AdminManualsPage() {
   const [deleteTarget, setDeleteTarget] = useState<Manual | null>(null)
   const [deleteLoading, setDeleteLoading] = useState(false)
   const [addModalOpen, setAddModalOpen] = useState(false)
+  const [isFetching, setIsFetching] = useState(false)
 
   const fetchManuals = useCallback(async () => {
-    setLoading(true)
+    setIsFetching(true)
     setError('')
     try {
       const params = new URLSearchParams({ page: String(page), limit: String(LIMIT) })
@@ -48,6 +48,7 @@ export default function AdminManualsPage() {
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Failed to load documents')
     } finally {
+      setIsFetching(false)
       setLoading(false)
     }
   }, [page, searchTerm])
@@ -81,7 +82,10 @@ export default function AdminManualsPage() {
   const uniqueTags = Array.from(
     new Set(manuals.flatMap((m) => m.tags ?? []).filter(Boolean))
   )
-  const columns = useMemo(() => getManualsColumns(setDeleteTarget), [])
+  const columns = useMemo(
+    () => getManualsColumns({ setDeleteTarget, onPinnedChange: fetchManuals }),
+    [fetchManuals]
+  )
 
   const dashboardStats = [
     { label: 'Documents', value: total },
@@ -101,28 +105,26 @@ export default function AdminManualsPage() {
           accent="manuals"
         />
       ) : null}
-      {loading ? (
-        <SearchBarSkeleton />
-      ) : (
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="flex-1 relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-          <Input
-            type="text"
-            placeholder="Search documents..."
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            className="pl-11 h-11 bg-white border-slate-200 rounded-xl shadow-sm focus-visible:ring-2 focus-visible:ring-blue-500/50 focus-visible:border-blue-400"
-          />
-        </div>
-        <Button size="sm" onClick={() => setAddModalOpen(true)} className="h-11 rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-500/25 shrink-0">
-          <Plus className="h-4 w-4 mr-2" />
+      <div className="flex flex-col gap-4 sm:flex-row">
+        <DocumentsSearchBar
+          value={searchInput}
+          onChange={setSearchInput}
+          isLoading={isFetching}
+          disabled={loading}
+          placeholder="Search documents..."
+        />
+        <Button
+          size="sm"
+          onClick={() => setAddModalOpen(true)}
+          disabled={loading}
+          className="h-11 shrink-0 rounded-xl bg-blue-600 text-white shadow-md shadow-blue-500/25 hover:bg-blue-700"
+        >
+          <Plus className="mr-2 h-4 w-4" />
           Add Document
         </Button>
       </div>
-      )}
       {loading ? (
-        <TableSkeleton rowCount={6} colCount={4} />
+        <TableSkeleton rowCount={6} colCount={5} />
       ) : error ? (
         <div className="border border-rose-200 dark:border-rose-900/50 bg-rose-50/80 dark:bg-rose-950/30 rounded-2xl p-6 flex items-center gap-4 shadow-sm">
           <div className="p-2.5 rounded-xl bg-rose-100 dark:bg-rose-500/20">

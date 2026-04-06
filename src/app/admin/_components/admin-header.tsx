@@ -35,11 +35,10 @@ export function AdminHeader({ activeTab }: AdminHeaderProps) {
     try {
       const { data: { session } } = await supabase.auth.getSession()
       await recordAuthEvent('logout', session?.access_token)
-      await supabase.auth.signOut()
-      window.location.href = '/login'
     } catch {
-      window.location.href = '/login'
+      // session route still runs
     }
+    window.location.href = '/api/auth/logout'
   }
 
   return (

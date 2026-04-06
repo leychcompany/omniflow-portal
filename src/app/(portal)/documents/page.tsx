@@ -1,20 +1,22 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { useAuthStore } from '@/store/auth-store'
-import { 
-  FileText, 
+import { DocumentsSearchBar } from '@/components/portal/documents-search-bar'
+import { sortManualsPinnedFirst } from '@/lib/sort-manuals-pinned'
+import {
+  FileText,
   Download,
-  BookOpen,
   File,
   Filter,
   X,
-  Shield
+  Shield,
+  Pin,
 } from 'lucide-react'
 import { DocumentsSkeleton } from '@/components/portal/skeletons'
 
@@ -27,6 +29,34 @@ interface Manual {
   download_url?: string
   size: string
   description: string
+  pinned_rank?: number | null
+}
+
+function documentMatchesSearch(doc: Manual, rawQuery: string) {
+  const q = rawQuery.trim().toLowerCase()
+  if (!q) return true
+  if ((doc.title || '').toLowerCase().includes(q)) return true
+  if ((doc.description || '').toLowerCase().includes(q)) return true
+  if ((doc.filename || '').toLowerCase().includes(q)) return true
+  return (doc.tags || []).some((t) => t.toLowerCase().includes(q))
+}
+
+/** Tags that appear on `scopeDocs`, plus any `selectedTags` (so chips stay removable if scope is empty). */
+function tagsAvailableForFilters(scopeDocs: Manual[], selectedTags: string[]): string[] {
+  const map = new Map<string, string>()
+  scopeDocs.forEach((d) => {
+    (d.tags || []).forEach((tag) => {
+      const key = tag.toLowerCase()
+      if (!map.has(key)) map.set(key, tag)
+    })
+  })
+  selectedTags.forEach((tag) => {
+    const key = tag.toLowerCase()
+    if (!map.has(key)) map.set(key, tag)
+  })
+  return Array.from(map.values()).sort((a, b) =>
+    a.toLowerCase().localeCompare(b.toLowerCase())
+  )
 }
 
 export default function DocumentsPage() {
@@ -36,52 +66,61 @@ export default function DocumentsPage() {
   const [error, setError] = useState<string | null>(null)
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [filterSheetOpen, setFilterSheetOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
 
   useEffect(() => {
-    fetch('/api/manuals')
+    fetch('/api/manuals?limit=100')
       .then((res) => {
         if (!res.ok) throw new Error('Failed to load documents')
         return res.json()
       })
       .then((data) => {
         const items = data?.items ?? data
-        setDocuments(Array.isArray(items) ? items : [])
+        const list = Array.isArray(items) ? items : []
+        setDocuments(sortManualsPinnedFirst(list as Manual[]))
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false))
   }, [])
 
-  const tagMap = new Map<string, string>()
-  documents.flatMap((d) => d.tags || []).forEach((tag) => {
-    const key = tag.toLowerCase()
-    if (!tagMap.has(key)) tagMap.set(key, tag)
-  })
-  const allTags = Array.from(tagMap.values()).sort((a, b) =>
-    a.toLowerCase().localeCompare(b.toLowerCase())
-  )
-
-  const tagCounts = new Map<string, number>()
-  allTags.forEach((tag) => {
-    const key = tag.toLowerCase()
-    const count = documents.filter((d) =>
-      (d.tags || []).some((t) => t.toLowerCase() === key)
-    ).length
-    tagCounts.set(tag, count)
-  })
-
   const isTagSelected = (tag: string) =>
     selectedTags.some((t) => t.toLowerCase() === tag.toLowerCase())
 
-  const filteredDocuments =
-    selectedTags.length === 0
-      ? documents
-      : documents.filter((doc) =>
-          selectedTags.every((selectedTag) =>
-            (doc.tags || []).some(
-              (t) => t.toLowerCase() === selectedTag.toLowerCase()
-            )
-          )
+  const filteredByTags = useMemo(() => {
+    if (selectedTags.length === 0) return documents
+    return documents.filter((doc) =>
+      selectedTags.every((selectedTag) =>
+        (doc.tags || []).some(
+          (t) => t.toLowerCase() === selectedTag.toLowerCase()
         )
+      )
+    )
+  }, [documents, selectedTags])
+
+  const tagsForFilterUi = useMemo(
+    () => tagsAvailableForFilters(filteredByTags, selectedTags),
+    [filteredByTags, selectedTags]
+  )
+
+  const tagCounts = useMemo(() => {
+    const counts = new Map<string, number>()
+    const scope = filteredByTags
+    tagsForFilterUi.forEach((tag) => {
+      const key = tag.toLowerCase()
+      const count = scope.filter((d) =>
+        (d.tags || []).some((t) => t.toLowerCase() === key)
+      ).length
+      counts.set(tag, count)
+    })
+    return counts
+  }, [filteredByTags, tagsForFilterUi])
+
+  const hasTagFilters = documents.some((d) => (d.tags || []).length > 0)
+
+  const filteredDocuments = useMemo(
+    () => filteredByTags.filter((doc) => documentMatchesSearch(doc, searchQuery)),
+    [filteredByTags, searchQuery]
+  )
 
   const toggleTag = (tag: string) => {
     setSelectedTags((prev) => {
@@ -142,8 +181,10 @@ export default function DocumentsPage() {
             <p className="text-slate-600 dark:text-zinc-400">Download technical documentation and guides</p>
           </div>
 
+          <DocumentsSearchBar value={searchQuery} onChange={setSearchQuery} />
+
           {/* Filters */}
-          {allTags.length > 0 && (
+          {hasTagFilters && tagsForFilterUi.length > 0 && (
             <>
               {/* Mobile: compact bar */}
               <div className="md:hidden flex items-center gap-2 overflow-x-auto py-2 -mx-4 px-4 scrollbar-hide">
@@ -195,7 +236,7 @@ export default function DocumentsPage() {
                   </div>
                   <div>
                     <div className="flex flex-wrap gap-2 min-w-0">
-                      {allTags.map((tag) => {
+                      {tagsForFilterUi.map((tag) => {
                         const selected = isTagSelected(tag)
                         const count = tagCounts.get(tag) ?? 0
                         return (
@@ -259,7 +300,7 @@ export default function DocumentsPage() {
                   <CardContent className="p-4">
                     <div>
                       <div className="flex flex-wrap gap-2">
-                        {allTags.map((tag) => {
+                        {tagsForFilterUi.map((tag) => {
                           const selected = isTagSelected(tag)
                           const count = tagCounts.get(tag) ?? 0
                           return (
@@ -295,9 +336,23 @@ export default function DocumentsPage() {
               <Card key={doc.id} className="border-0 shadow-sm hover:shadow-lg transition-all flex flex-col">
                 <CardContent className="p-6 flex flex-col flex-1 min-h-0">
                   <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-slate-900 dark:text-zinc-100 w-full mb-2 truncate" title={doc.title}>
-                      {doc.title}
-                    </h3>
+                    <div className="mb-2 flex min-w-0 items-start gap-2">
+                      <h3
+                        className="min-w-0 flex-1 truncate text-lg font-semibold text-slate-900 dark:text-zinc-100"
+                        title={doc.title}
+                      >
+                        {doc.title}
+                      </h3>
+                      {doc.pinned_rank != null && Number.isFinite(Number(doc.pinned_rank)) && (
+                        <Badge
+                          variant="secondary"
+                          className="shrink-0 gap-1 border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-500/40 dark:bg-amber-500/15 dark:text-amber-200"
+                        >
+                          <Pin className="h-3 w-3" aria-hidden />
+                          Featured
+                        </Badge>
+                      )}
+                    </div>
                     <div className="flex flex-wrap items-center gap-1.5 mb-3">
                       {(() => {
                         const seen = new Set<string>()
@@ -348,9 +403,13 @@ export default function DocumentsPage() {
 
           {filteredDocuments.length === 0 && (
             <div className="text-center py-10 text-slate-600 dark:text-zinc-400">
-              {selectedTags.length > 0
-                ? 'No documents match the selected tags.'
-                : 'No documents found.'}
+              {selectedTags.length > 0 && searchQuery.trim()
+                ? 'No documents match the selected tags and search.'
+                : selectedTags.length > 0
+                  ? 'No documents match the selected tags.'
+                  : searchQuery.trim()
+                    ? 'No documents match your search.'
+                    : 'No documents found.'}
             </div>
           )}
         </div>

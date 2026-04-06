@@ -20,7 +20,6 @@ import {
   Newspaper as NewsIcon,
   Package as PkgIcon,
 } from 'lucide-react'
-import { supabase } from '@/lib/supabase'
 import { fetchWithAdminAuth } from '@/lib/admin-fetch'
 import { UserDetailModal } from '@/components/admin/user-detail-modal'
 import { cn } from '@/lib/utils'
@@ -132,7 +131,7 @@ export function CommandPalette() {
 
   const handleSelect = (href: string) => {
     if (href === '/login') {
-      supabase.auth.signOut().then(() => { window.location.href = '/login' })
+      window.location.href = '/api/auth/logout'
       return
     }
     const userMatch = href.match(/^\/admin\/users\/([^/]+)$/)

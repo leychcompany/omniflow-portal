@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { verifyAdmin } from "@/lib/admin-auth";
 import { getStorageErrorMessage } from "@/lib/storage-error-message";
+import { mergeManualTagNames } from "@/lib/merge-manual-tags";
+import { getNextPinnedRank } from "@/lib/manuals-pinned-rank";
 
 const SIGNED_URL_EXPIRY = 3600;
 
@@ -82,7 +84,10 @@ export async function GET(
     const tagNames = ((manual.manual_tags as { tags: { name: string } | null }[]) ?? [])
       .map((mt) => mt?.tags?.name)
       .filter(Boolean) as string[];
-    const tags = tagNames.length ? tagNames : (manual.category ? [manual.category] : []);
+    const tags = mergeManualTagNames(
+      (manual as { category?: string | null }).category,
+      tagNames
+    );
     const { manual_tags: _mt, ...rest } = manual as { manual_tags?: unknown };
     return NextResponse.json({
       ...rest,
@@ -200,6 +205,26 @@ export async function PATCH(
       if (body.storage_path !== undefined) updates.storage_path = body.storage_path;
       if (body.size !== undefined) updates.size = body.size;
       if (body.description !== undefined) updates.description = body.description;
+
+      if (body.pinned === false) {
+        updates.pinned_rank = null;
+      } else if (body.pinned_rank !== undefined) {
+        if (body.pinned_rank === null) {
+          updates.pinned_rank = null;
+        } else if (typeof body.pinned_rank === "number" && Number.isFinite(body.pinned_rank)) {
+          updates.pinned_rank = Math.max(0, Math.floor(body.pinned_rank));
+        }
+      } else if (body.pinned === true) {
+        const { data: pinRow } = await supabaseAdmin
+          .from("manuals")
+          .select("pinned_rank")
+          .eq("id", id)
+          .single();
+        const current = pinRow?.pinned_rank as number | null | undefined;
+        if (current == null) {
+          updates.pinned_rank = await getNextPinnedRank();
+        }
+      }
     }
 
     const { data, error } = await supabaseAdmin

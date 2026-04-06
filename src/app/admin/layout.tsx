@@ -45,11 +45,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     try {
       const { data: { session } } = await supabase.auth.getSession()
       await recordAuthEvent('logout', session?.access_token)
-      await supabase.auth.signOut()
-      window.location.href = '/login'
     } catch {
-      window.location.href = '/login'
+      // still clear session via API route
     }
+    window.location.href = '/api/auth/logout'
   }
 
   return (

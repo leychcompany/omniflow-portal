@@ -27,6 +27,7 @@ interface ManualForm {
   description: string | null
   filename?: string
   download_url?: string
+  pinned_rank: number | null
 }
 
 export interface EditManualFormProps {
@@ -71,7 +72,15 @@ export function EditManualForm({ manualId, onCancel, onSuccess }: EditManualForm
         const res = await fetchWithAdminAuth(`/api/manuals/${manualId}`)
         const data = await res.json()
         if (!res.ok) throw new Error(data.error || 'Failed to load document')
-        if (!cancelled) setForm({ ...data, tags: data.tags || [] })
+        if (!cancelled)
+          setForm({
+            ...data,
+            tags: data.tags || [],
+            pinned_rank:
+              typeof data.pinned_rank === 'number' && Number.isFinite(data.pinned_rank)
+                ? data.pinned_rank
+                : null,
+          })
       } catch (e) {
         if (!cancelled) setLoadError(e instanceof Error ? e.message : 'Failed to load document')
       } finally {
@@ -126,6 +135,7 @@ export function EditManualForm({ manualId, onCancel, onSuccess }: EditManualForm
             filename,
             storage_path: path,
             size,
+            pinned_rank: form.pinned_rank,
           }),
         })
       } else {
@@ -136,6 +146,7 @@ export function EditManualForm({ manualId, onCancel, onSuccess }: EditManualForm
             title: form.title,
             tags: form.tags || [],
             description: form.description || null,
+            pinned_rank: form.pinned_rank,
           }),
         })
       }
@@ -220,6 +231,36 @@ export function EditManualForm({ manualId, onCancel, onSuccess }: EditManualForm
                   placeholder="e.g. OMNI-3000-6000, Installation"
                   disabled={saving}
                   onDeleteFromPool={handleDeleteTagFromPool}
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                  Pin on Documents page
+                </label>
+                <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
+                  Pinned manuals appear above the rest. Lower numbers come first (e.g. 0 before 1). Leave empty to show in
+                  alphabetical order with unpinned items.
+                </p>
+                <Input
+                  type="number"
+                  min={0}
+                  step={1}
+                  placeholder="Not pinned"
+                  className="h-12 max-w-[200px] rounded-xl"
+                  disabled={saving}
+                  value={form.pinned_rank === null ? '' : String(form.pinned_rank)}
+                  onChange={(e) => {
+                    const raw = e.target.value.trim()
+                    setForm((f) =>
+                      f
+                        ? {
+                            ...f,
+                            pinned_rank: raw === '' ? null : Math.max(0, Math.floor(Number(raw)) || 0),
+                          }
+                        : f
+                    )
+                  }}
                 />
               </div>
 

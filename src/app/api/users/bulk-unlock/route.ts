@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { verifyAdmin } from "@/lib/admin-auth";
+import { sendAccountUnlockedWelcomeEmail } from "@/lib/send-account-unlocked-email";
 
 /**
  * Bulk unlock users. Accepts an array of user IDs.
@@ -60,6 +61,24 @@ export async function POST(req: NextRequest) {
           bulk: true,
         },
       });
+    }
+
+    const emailResults = await Promise.allSettled(
+      toUnlock
+        .filter((u) => !!u.email)
+        .map((u) =>
+          sendAccountUnlockedWelcomeEmail({
+            to: u.email as string,
+            name: u.name,
+          })
+        )
+    );
+    for (const r of emailResults) {
+      if (r.status === "rejected") {
+        console.warn("Bulk unlock welcome email failed:", r.reason);
+      } else if (!r.value.ok) {
+        console.warn("Bulk unlock welcome email failed:", r.value.error);
+      }
     }
 
     return NextResponse.json({
