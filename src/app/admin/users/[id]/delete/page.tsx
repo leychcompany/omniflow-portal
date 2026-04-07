@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { supabase } from '@/lib/supabase'
+import { fetchWithAdminAuth } from '@/lib/admin-fetch'
 import { Trash2, Loader2, XCircle } from 'lucide-react'
 
 interface User {
@@ -27,14 +27,11 @@ export default function DeleteUserPage() {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession()
-        if (!session) {
+        const res = await fetchWithAdminAuth(`/api/users/${id}`)
+        if (res.status === 401) {
           router.push('/login')
           return
         }
-        const res = await fetch(`/api/users/${id}`, {
-          headers: { Authorization: `Bearer ${session.access_token}` },
-        })
         const data = await res.json()
         if (!res.ok) throw new Error(data.error || 'Failed to load user')
         setUser(data)
@@ -52,13 +49,10 @@ export default function DeleteUserPage() {
     setDeleting(true)
     setError('')
     try {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) throw new Error('Session expired. Please log in again.')
-
-      const res = await fetch(`/api/users/${user.id}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${session.access_token}` },
-      })
+      const res = await fetchWithAdminAuth(`/api/users/${user.id}`, { method: 'DELETE' })
+      if (res.status === 401) {
+        throw new Error('Session expired. Please log in again.')
+      }
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed to delete user')
       router.push('/admin/users')
