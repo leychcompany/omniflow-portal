@@ -4,7 +4,6 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { AdminAddModalLayout } from '@/components/admin/admin-add-modal-layout'
-import { supabase } from '@/lib/supabase'
 import { fetchWithAdminAuth } from '@/lib/admin-fetch'
 import { Plus, Mail, Key, Send, Loader2, XCircle, CheckCircle } from 'lucide-react'
 
@@ -54,11 +53,7 @@ export function AddUserModal({ open, onOpenChange, onSuccess }: AddUserModalProp
     setInviteSuccess(false)
 
     try {
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-      if (sessionError || !session) {
-        throw new Error('Session expired. Please log in again.')
-      }
-
+      // Rely on cookie session via fetchWithAdminAuth — avoid getSession(), which can hang in production.
       const payload: { email: string; role: string; password?: string } = {
         email: inviteEmail.trim(),
         role: inviteRole,
