@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { TableRowMenuPortal } from '@/components/admin/table-row-menu-portal'
 
 interface ManualTableActionsProps {
   documentTitle: string
@@ -12,31 +13,14 @@ interface ManualTableActionsProps {
   onDelete: () => void
 }
 
-/** Anchored menu — avoids Radix dropdown “flying in” from the viewport edge. */
 export function ManualTableActions({ documentTitle, editHref, onDelete }: ManualTableActionsProps) {
   const [open, setOpen] = useState(false)
-  const rootRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (!open) return
-    const onPointerDown = (e: PointerEvent) => {
-      if (rootRef.current?.contains(e.target as Node)) return
-      setOpen(false)
-    }
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false)
-    }
-    document.addEventListener('pointerdown', onPointerDown)
-    document.addEventListener('keydown', onKey)
-    return () => {
-      document.removeEventListener('pointerdown', onPointerDown)
-      document.removeEventListener('keydown', onKey)
-    }
-  }, [open])
+  const anchorRef = useRef<HTMLButtonElement>(null)
 
   return (
-    <div className="relative shrink-0" ref={rootRef}>
+    <div className="relative shrink-0">
       <Button
+        ref={anchorRef}
         type="button"
         variant="ghost"
         size="icon"
@@ -53,44 +37,34 @@ export function ManualTableActions({ documentTitle, editHref, onDelete }: Manual
         <MoreHorizontal className="h-4 w-4" />
       </Button>
 
-      {open && (
-        <div
-          role="menu"
-          className={cn(
-            'absolute right-0 top-full z-50 mt-1.5 min-w-[11rem] overflow-hidden rounded-xl',
-            'border border-slate-200/90 bg-white py-1 shadow-lg shadow-slate-900/10',
-            'dark:border-white/[0.1] dark:bg-[#1c1c1c] dark:shadow-black/40',
-            'origin-top-right animate-in fade-in zoom-in-95 duration-150'
-          )}
+      <TableRowMenuPortal open={open} onClose={() => setOpen(false)} anchorRef={anchorRef}>
+        <Link
+          href={editHref}
+          role="menuitem"
+          className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:text-zinc-200 dark:hover:bg-white/[0.06]"
+          onClick={() => setOpen(false)}
         >
-          <Link
-            href={editHref}
-            role="menuitem"
-            className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:text-zinc-200 dark:hover:bg-white/[0.06]"
-            onClick={() => setOpen(false)}
-          >
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-500/15 dark:text-blue-400">
-              <Pencil className="h-4 w-4" />
-            </span>
-            Edit document
-          </Link>
-          <div className="mx-2 my-1 h-px bg-slate-100 dark:bg-white/[0.06]" />
-          <button
-            type="button"
-            role="menuitem"
-            className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm font-medium text-rose-600 transition-colors hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-500/10"
-            onClick={() => {
-              setOpen(false)
-              onDelete()
-            }}
-          >
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 text-rose-600 dark:bg-rose-500/15 dark:text-rose-400">
-              <Trash2 className="h-4 w-4" />
-            </span>
-            Delete
-          </button>
-        </div>
-      )}
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-500/15 dark:text-blue-400">
+            <Pencil className="h-4 w-4" />
+          </span>
+          Edit document
+        </Link>
+        <div className="mx-2 my-1 h-px bg-slate-100 dark:bg-white/[0.06]" />
+        <button
+          type="button"
+          role="menuitem"
+          className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm font-medium text-rose-600 transition-colors hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-500/10"
+          onClick={() => {
+            setOpen(false)
+            onDelete()
+          }}
+        >
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 text-rose-600 dark:bg-rose-500/15 dark:text-rose-400">
+            <Trash2 className="h-4 w-4" />
+          </span>
+          Delete
+        </button>
+      </TableRowMenuPortal>
     </div>
   )
 }

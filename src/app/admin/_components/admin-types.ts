@@ -16,7 +16,6 @@ export interface Course {
   description: string | null
   duration: string
   thumbnail: string | null
-  instructor: string | null
   featured: boolean
   sort_order: number
   created_at: string
@@ -69,7 +68,7 @@ export interface SoftwareItem {
   created_at: string
 }
 
-export const ADMIN_TABS = ['users', 'training', 'manuals', 'software', 'news', 'analytics'] as const
+export const ADMIN_TABS = ['users', 'training', 'documents', 'software', 'news', 'analytics'] as const
 export type AdminTabId = (typeof ADMIN_TABS)[number]
 
 export type AdminNavTabId = 'dashboard' | AdminTabId
@@ -83,7 +82,7 @@ export const ADMIN_TAB_COLORS: Record<AdminNavTabId, {
   dashboard: { nav: 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400', mobile: 'text-blue-600 dark:text-blue-400', dashboard: { border: 'border-l-blue-500 dark:border-l-blue-500', icon: 'bg-blue-50 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400', pills: 'border-blue-100 bg-blue-50/40 dark:border-blue-500/30 dark:bg-blue-500/15' } },
   users: { nav: 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400', mobile: 'text-blue-600 dark:text-blue-400', dashboard: { border: 'border-l-blue-500 dark:border-l-blue-500', icon: 'bg-blue-50 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400', pills: 'border-blue-100 bg-blue-50/40 dark:border-blue-500/30 dark:bg-blue-500/15' } },
   training: { nav: 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400', mobile: 'text-blue-600 dark:text-blue-400', dashboard: { border: 'border-l-blue-500 dark:border-l-blue-500', icon: 'bg-blue-50 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400', pills: 'border-blue-100 bg-blue-50/40 dark:border-blue-500/30 dark:bg-blue-500/15' } },
-  manuals: { nav: 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400', mobile: 'text-blue-600 dark:text-blue-400', dashboard: { border: 'border-l-blue-500 dark:border-l-blue-500', icon: 'bg-blue-50 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400', pills: 'border-blue-100 bg-blue-50/40 dark:border-blue-500/30 dark:bg-blue-500/15' } },
+  documents: { nav: 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400', mobile: 'text-blue-600 dark:text-blue-400', dashboard: { border: 'border-l-blue-500 dark:border-l-blue-500', icon: 'bg-blue-50 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400', pills: 'border-blue-100 bg-blue-50/40 dark:border-blue-500/30 dark:bg-blue-500/15' } },
   software: { nav: 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400', mobile: 'text-blue-600 dark:text-blue-400', dashboard: { border: 'border-l-blue-500 dark:border-l-blue-500', icon: 'bg-blue-50 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400', pills: 'border-blue-100 bg-blue-50/40 dark:border-blue-500/30 dark:bg-blue-500/15' } },
   news: { nav: 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400', mobile: 'text-blue-600 dark:text-blue-400', dashboard: { border: 'border-l-blue-500 dark:border-l-blue-500', icon: 'bg-blue-50 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400', pills: 'border-blue-100 bg-blue-50/40 dark:border-blue-500/30 dark:bg-blue-500/15' } },
   analytics: { nav: 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400', mobile: 'text-blue-600 dark:text-blue-400', dashboard: { border: 'border-l-blue-500 dark:border-l-blue-500', icon: 'bg-blue-50 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400', pills: 'border-blue-100 bg-blue-50/40 dark:border-blue-500/30 dark:bg-blue-500/15' } },

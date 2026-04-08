@@ -102,7 +102,7 @@ export default function AdminManualsPage() {
           description="Manage manuals, guides and PDFs"
           icon={<FileText className="h-6 w-6" />}
           stats={dashboardStats}
-          accent="manuals"
+          accent="documents"
         />
       ) : null}
       <div className="flex flex-col gap-4 sm:flex-row">

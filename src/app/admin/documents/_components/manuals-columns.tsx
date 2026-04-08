@@ -43,7 +43,7 @@ export function getManualsColumns({
             </div>
             <div className="min-w-0">
               <Link
-                href={`/admin/manuals/${m.id}/edit`}
+                href={`/admin/documents/${m.id}/edit`}
                 className="font-semibold text-slate-900 dark:text-zinc-100 truncate block hover:text-blue-600 dark:hover:text-blue-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50 rounded"
               >
                 {m.title}
@@ -53,29 +53,19 @@ export function getManualsColumns({
               ) : (
                 <p className="text-slate-400 dark:text-zinc-500 text-xs mt-0.5 italic">No description</p>
               )}
+              {(m.tags ?? []).length > 0 ? (
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {(m.tags ?? []).map((tag) => (
+                    <span
+                      key={tag}
+                      className="inline-flex shrink-0 items-center rounded-md border border-blue-100 bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700 dark:border-blue-500/30 dark:bg-blue-500/20 dark:text-blue-400"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              ) : null}
             </div>
-          </div>
-        )
-      },
-    },
-    {
-      accessorKey: 'tags',
-      header: ({ column }) => (
-        <SortableHeader column={column}>Tags</SortableHeader>
-      ),
-      cell: ({ row }) => {
-        const tags = (row.original.tags ?? []).slice(0, 4)
-        if (tags.length === 0) return <span className="text-slate-400 dark:text-zinc-500 text-sm">—</span>
-        return (
-          <div className="flex flex-wrap gap-1">
-            {tags.map((tag) => (
-              <span
-                key={tag}
-                className="inline-flex px-2 py-0.5 rounded-md text-xs font-medium bg-blue-50 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400 border border-blue-100 dark:border-blue-500/30"
-              >
-                {tag}
-              </span>
-            ))}
           </div>
         )
       },
@@ -129,7 +119,7 @@ export function getManualsColumns({
             </Button>
             <ManualTableActions
               documentTitle={manual.title}
-              editHref={`/admin/manuals/${manual.id}/edit`}
+              editHref={`/admin/documents/${manual.id}/edit`}
               onDelete={() => setDeleteTarget(manual)}
             />
           </div>

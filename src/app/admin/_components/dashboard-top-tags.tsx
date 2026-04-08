@@ -22,7 +22,7 @@ export function DashboardTopTags({ tags }: DashboardTopTagsProps) {
         <div className="flex items-center justify-between">
           <CardTitle className="text-base font-semibold">Top tags</CardTitle>
           <Link
-            href="/admin/manuals"
+            href="/admin/documents"
             className="text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 flex items-center gap-0.5"
           >
             Manage docs

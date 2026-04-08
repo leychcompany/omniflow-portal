@@ -5,13 +5,7 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { 
-  GraduationCap, 
-  Play, 
-  CheckCircle, 
-  Calendar,
-  Video,
-} from 'lucide-react'
+import { Play, CheckCircle, Calendar, Video, List, User } from 'lucide-react'
 import { TrainingSkeleton } from '@/components/portal/skeletons'
 
 interface Course {
@@ -20,22 +14,39 @@ interface Course {
   description: string
   duration: string
   thumbnail: string | null
-  instructor: string | null
   featured: boolean
+}
+
+interface UpcomingSession {
+  id: string
+  title: string
+  description: string | null
+  instructor?: string | null
+  starts_at: string
+  timezone: string
+  location: string
+  spots_remaining: number
+  waitlist_enabled: boolean
+  registered_count: number
+  capacity: number
+  status: string
 }
 
 export default function TrainingPage() {
   const [courses, setCourses] = useState<Course[]>([])
+  const [sessions, setSessions] = useState<UpcomingSession[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    fetch('/api/courses')
-      .then((res) => {
-        if (!res.ok) throw new Error('Failed to load courses')
-        return res.json()
+    Promise.all([
+      fetch('/api/courses').then((r) => (r.ok ? r.json() : [])),
+      fetch('/api/training/sessions').then((r) => (r.ok ? r.json() : [])),
+    ])
+      .then(([c, s]) => {
+        setCourses(Array.isArray(c) ? c : [])
+        setSessions(Array.isArray(s) ? s : [])
       })
-      .then((data) => setCourses(Array.isArray(data) ? data : []))
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false))
   }, [])
@@ -66,7 +77,13 @@ export default function TrainingPage() {
                 Access comprehensive training programs and earn certifications
               </p>
             </div>
-            <div className="mt-4 sm:mt-0">
+            <div className="mt-4 sm:mt-0 flex flex-wrap gap-2">
+              <Button asChild variant="outline">
+                <Link href="/training/my-registrations">
+                  <List className="h-4 w-4 mr-2" />
+                  My classes
+                </Link>
+              </Button>
               <Button asChild className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-500/25 hover:shadow-xl transition-all">
                 <Link href="/training/request">
                   <Calendar className="h-4 w-4 mr-2" />
@@ -78,6 +95,42 @@ export default function TrainingPage() {
         </div>
 
         <div className="space-y-6">
+            {sessions.length > 0 && (
+              <div>
+                <h2 className="text-xl font-semibold text-slate-900 dark:text-zinc-100 mb-4">Upcoming classes</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {sessions.map((s) => (
+                    <Card key={s.id} className="border border-slate-200 dark:border-white/[0.08] shadow-sm">
+                      <CardContent className="p-5">
+                        <h3 className="font-semibold text-slate-900 dark:text-zinc-100">{s.title}</h3>
+                        <p className="text-sm text-slate-600 dark:text-zinc-400 mt-2">
+                          {new Date(s.starts_at).toLocaleString(undefined, {
+                            dateStyle: 'medium',
+                            timeStyle: 'short',
+                            timeZone: s.timezone || undefined,
+                          })}{' '}
+                          · {s.location || 'TBA'}
+                        </p>
+                        {s.instructor && (
+                          <p className="text-xs text-slate-500 dark:text-zinc-500 mt-1 flex items-center gap-1">
+                            <User className="h-3.5 w-3.5 shrink-0" />
+                            Instructor: {s.instructor}
+                          </p>
+                        )}
+                        <p className="text-xs text-slate-500 dark:text-zinc-500 mt-2">
+                          {s.registered_count}/{s.capacity} enrolled
+                          {s.spots_remaining <= 0 && s.waitlist_enabled && ' · waitlist open'}
+                        </p>
+                        <Button asChild size="sm" className="mt-4 bg-blue-600 hover:bg-blue-700 text-white">
+                          <Link href={`/training/sessions/${s.id}`}>View &amp; register</Link>
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Featured Course */}
             {featuredCourse && (
             <Card className="border-0 shadow-lg bg-gradient-to-r from-blue-50 to-slate-50 dark:from-blue-950/30 dark:to-slate-950/30">

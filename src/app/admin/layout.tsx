@@ -28,7 +28,7 @@ const TAB_CONFIG: { id: AdminNavTabId; label: string; icon: React.ComponentType<
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, href: '/admin' },
   { id: 'users', label: 'Users', icon: Users },
   { id: 'training', label: 'Training', icon: GraduationCap },
-  { id: 'manuals', label: 'Documents', icon: BookOpen },
+  { id: 'documents', label: 'Documents', icon: BookOpen },
   { id: 'software', label: 'Software', icon: Package },
   { id: 'news', label: 'News', icon: Newspaper },
   { id: 'analytics', label: 'Analytics', icon: BarChart3 },

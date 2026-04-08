@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { id, title, description, duration, thumbnail, instructor, featured, sort_order } = body;
+    const { id, title, description, duration, thumbnail, featured, sort_order } = body;
 
     if (!id || !title) {
       return NextResponse.json(
@@ -45,7 +45,6 @@ export async function POST(req: NextRequest) {
         description: description ?? null,
         duration: duration ?? "In Person",
         thumbnail: thumbnail ?? null,
-        instructor: instructor ?? null,
         featured: featured ?? false,
         sort_order: sort_order ?? 0,
       })

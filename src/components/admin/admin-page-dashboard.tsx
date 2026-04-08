@@ -19,7 +19,7 @@ interface AdminPageDashboardProps {
   className?: string
 }
 
-const DEFAULT_ACCENT = 'manuals' as const
+const DEFAULT_ACCENT = 'documents' as const
 
 export function AdminPageDashboard({
   title,

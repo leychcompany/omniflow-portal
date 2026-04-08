@@ -6,7 +6,6 @@ export interface Course {
   progress: number
   completed: boolean
   thumbnail: string
-  instructor: string
   rating: number
   students: number
 }
@@ -21,7 +20,6 @@ export const courses: Course[] = [
     progress: 0,
     completed: false,
     thumbnail: '/images/tr7000.png',
-    instructor: 'OMNI Training',
     rating: 0,
     students: 0,
   },
@@ -34,7 +32,6 @@ export const courses: Course[] = [
     progress: 0,
     completed: false,
     thumbnail: '/images/tr6100.png',
-    instructor: 'OMNI Training',
     rating: 0,
     students: 0,
   },
@@ -47,7 +44,6 @@ export const courses: Course[] = [
     progress: 0,
     completed: false,
     thumbnail: '/images/tr6300.png',
-    instructor: 'OMNI Training',
     rating: 0,
     students: 0,
   },
@@ -60,7 +56,6 @@ export const courses: Course[] = [
     progress: 0,
     completed: false,
     thumbnail: '/images/tr6400.png',
-    instructor: 'OMNI Training',
     rating: 0,
     students: 0,
   },

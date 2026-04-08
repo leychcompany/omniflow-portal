@@ -4,7 +4,7 @@ import { ReactNode, useEffect } from 'react'
 
 interface AdminAddModalLayoutProps {
   children: ReactNode
-  maxWidth?: 'sm' | 'md' | 'lg' | 'xl'
+  maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl'
   onBackdropClick?: () => void
   /** When true, the card uses flex column + hidden overflow so children can pin a footer with internal scroll */
   pinnedFooter?: boolean
@@ -15,6 +15,7 @@ const maxWidthClasses = {
   md: 'max-w-lg',
   lg: 'max-w-xl',
   xl: 'max-w-2xl',
+  '2xl': 'max-w-4xl',
 }
 
 export function AdminAddModalLayout({

@@ -9,7 +9,7 @@ import { ADMIN_TABS, type AdminTabId } from './admin-types'
 const TAB_CONFIG: { id: AdminTabId; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
   { id: 'users', label: 'Users', icon: Users },
   { id: 'training', label: 'Training', icon: GraduationCap },
-  { id: 'manuals', label: 'Documents', icon: BookOpen },
+  { id: 'documents', label: 'Documents', icon: BookOpen },
   { id: 'software', label: 'Software', icon: Package },
   { id: 'news', label: 'News', icon: Newspaper },
   { id: 'analytics', label: 'Analytics', icon: BarChart3 },

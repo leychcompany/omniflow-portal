@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { Send, Loader2 } from 'lucide-react'
+import { Send } from 'lucide-react'
 import { TrainingRequestSkeleton } from '@/components/portal/skeletons'
 
 type Status = 'idle' | 'submitting' | 'success' | 'error'

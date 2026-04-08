@@ -99,7 +99,18 @@ function NavLink({
   )
 }
 
-const PORTAL_ROUTES = ['/home', '/ai-assistant', '/training', '/support', '/documents', '/software', '/news', '/training/request', '/settings']
+const PORTAL_ROUTES = [
+  '/home',
+  '/ai-assistant',
+  '/training',
+  '/support',
+  '/documents',
+  '/software',
+  '/news',
+  '/training/request',
+  '/training/my-registrations',
+  '/settings',
+]
 
 export function PortalLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter()

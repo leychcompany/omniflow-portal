@@ -53,8 +53,8 @@ export default function AdminDashboardPage() {
           label="Documents"
           value={counts.manuals}
           icon={<BookOpen className="h-5 w-5 text-slate-600 dark:text-slate-300" />}
-          accent="manuals"
-          href="/admin/manuals"
+          accent="documents"
+          href="/admin/documents"
         />
         <DashboardStatCard
           label="Courses"
@@ -151,7 +151,7 @@ export default function AdminDashboardPage() {
           <ChevronRight className="h-5 w-5 text-slate-400 dark:text-zinc-500 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" />
         </Link>
         <Link
-          href="/admin/manuals"
+          href="/admin/documents"
           className="group flex items-center justify-between rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-[#141414] px-5 py-4 shadow-sm transition-all hover:border-slate-300 dark:hover:border-white/[0.12] hover:shadow-md"
         >
           <span className="font-medium text-slate-700 dark:text-zinc-200">Manage Documents</span>

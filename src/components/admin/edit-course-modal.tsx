@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { AdminAddModalLayout } from '@/components/admin/admin-add-modal-layout'
 import { supabase } from '@/lib/supabase'
 import { fetchWithAdminAuth } from '@/lib/admin-fetch'
-import { Pencil, Loader2, XCircle, Image } from 'lucide-react'
+import { Pencil, Loader2, XCircle, Image, ImageOff } from 'lucide-react'
 
 interface CourseForm {
   id: string
@@ -15,7 +15,6 @@ interface CourseForm {
   description: string | null
   duration: string
   thumbnail: string | null
-  instructor: string | null
   featured: boolean
   sort_order: number
 }
@@ -34,12 +33,14 @@ export function EditCourseModal({ open, courseId, onOpenChange, onSuccess }: Edi
   const [saving, setSaving] = useState(false)
   const [imageUploading, setImageUploading] = useState(false)
   const [error, setError] = useState('')
+  const [thumbnailPreviewFailed, setThumbnailPreviewFailed] = useState(false)
 
   useEffect(() => {
     if (!open || !courseId) {
       setForm(null)
       setLoadError('')
       setError('')
+      setThumbnailPreviewFailed(false)
       return
     }
     let cancelled = false
@@ -51,7 +52,10 @@ export function EditCourseModal({ open, courseId, onOpenChange, onSuccess }: Edi
         const res = await fetchWithAdminAuth(`/api/courses/${courseId}`)
         const data = await res.json()
         if (!res.ok) throw new Error(data.error || 'Failed to load course')
-        if (!cancelled) setForm(data)
+        if (!cancelled) {
+          setForm(data)
+          setThumbnailPreviewFailed(false)
+        }
       } catch (e) {
         if (!cancelled) setLoadError(e instanceof Error ? e.message : 'Failed to load course')
       } finally {
@@ -62,6 +66,10 @@ export function EditCourseModal({ open, courseId, onOpenChange, onSuccess }: Edi
       cancelled = true
     }
   }, [open, courseId])
+
+  useEffect(() => {
+    setThumbnailPreviewFailed(false)
+  }, [form?.thumbnail])
 
   const handleClose = () => {
     if (!saving) onOpenChange(false)
@@ -106,7 +114,6 @@ export function EditCourseModal({ open, courseId, onOpenChange, onSuccess }: Edi
           description: form.description || null,
           duration: form.duration,
           thumbnail: form.thumbnail || null,
-          instructor: form.instructor || null,
           featured: form.featured,
           sort_order: form.sort_order,
         }),
@@ -125,7 +132,7 @@ export function EditCourseModal({ open, courseId, onOpenChange, onSuccess }: Edi
   if (!open || !courseId) return null
 
   return (
-    <AdminAddModalLayout maxWidth="md" onBackdropClick={handleClose}>
+    <AdminAddModalLayout maxWidth="2xl" onBackdropClick={handleClose}>
       <AnimatePresence mode="wait">
         <motion.div
           key={courseId}
@@ -148,7 +155,7 @@ export function EditCourseModal({ open, courseId, onOpenChange, onSuccess }: Edi
               </span>
             </h2>
             <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-              Update training details, thumbnail, and visibility
+              Update course copy, thumbnail, and visibility
             </p>
           </div>
 
@@ -187,73 +194,87 @@ export function EditCourseModal({ open, courseId, onOpenChange, onSuccess }: Edi
                 <div>
                   <label className="mb-2 block text-sm font-medium text-zinc-700 dark:text-zinc-300">Description</label>
                   <textarea
-                    className="min-h-[88px] w-full rounded-lg border border-zinc-200 bg-white px-3 py-2.5 text-zinc-900 placeholder:text-zinc-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 dark:border-white/[0.12] dark:bg-white/[0.04] dark:text-zinc-100 dark:placeholder:text-zinc-500"
-                    rows={3}
+                    className="min-h-[120px] w-full rounded-lg border border-zinc-200 bg-white px-3 py-2.5 text-zinc-900 placeholder:text-zinc-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 dark:border-white/[0.12] dark:bg-white/[0.04] dark:text-zinc-100 dark:placeholder:text-zinc-500"
+                    rows={4}
                     placeholder="Course description"
                     value={form.description || ''}
                     onChange={(e) => setForm((f) => (f ? { ...f, description: e.target.value } : f))}
                     disabled={saving}
                   />
                 </div>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="grid gap-6 lg:grid-cols-[minmax(0,300px)_1fr] lg:items-start">
                   <div>
-                    <label className="mb-2 block text-sm font-medium text-zinc-700 dark:text-zinc-300">Duration</label>
-                    <Input
-                      placeholder="In Person"
-                      value={form.duration}
-                      onChange={(e) => setForm((f) => (f ? { ...f, duration: e.target.value } : f))}
-                      className="h-11"
-                      disabled={saving}
-                    />
+                    <label className="mb-2 block text-sm font-medium text-zinc-700 dark:text-zinc-300">Thumbnail preview</label>
+                    <div className="overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50 dark:border-white/[0.12] dark:bg-white/[0.04]">
+                      <div className="relative aspect-video w-full">
+                        {form.thumbnail?.trim() && !thumbnailPreviewFailed ? (
+                          // eslint-disable-next-line @next/next/no-img-element -- remote + local course thumbnails
+                          <img
+                            src={form.thumbnail.trim()}
+                            alt=""
+                            className="h-full w-full object-cover"
+                            onError={() => setThumbnailPreviewFailed(true)}
+                          />
+                        ) : form.thumbnail?.trim() && thumbnailPreviewFailed ? (
+                          <div className="flex h-full min-h-[140px] flex-col items-center justify-center gap-2 px-4 text-center text-sm text-zinc-500 dark:text-zinc-400">
+                            <Image className="h-10 w-10 opacity-40" />
+                            <span>Could not load image</span>
+                          </div>
+                        ) : (
+                          <div className="flex h-full min-h-[140px] flex-col items-center justify-center gap-2 px-4 text-center text-sm text-zinc-500 dark:text-zinc-400">
+                            <Image className="h-10 w-10 opacity-40" />
+                            <span>No thumbnail yet</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
                   <div>
-                    <label className="mb-2 block text-sm font-medium text-zinc-700 dark:text-zinc-300">Instructor</label>
-                    <Input
-                      placeholder="OMNI Training"
-                      value={form.instructor || ''}
-                      onChange={(e) => setForm((f) => (f ? { ...f, instructor: e.target.value } : f))}
-                      className="h-11"
-                      disabled={saving}
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-zinc-700 dark:text-zinc-300">Thumbnail</label>
-                  <div className="flex gap-2">
-                    <Input
-                      placeholder="/images/tr7000.png or upload"
-                      value={form.thumbnail || ''}
-                      onChange={(e) => setForm((f) => (f ? { ...f, thumbnail: e.target.value } : f))}
-                      className="h-11 flex-1"
-                      disabled={saving}
-                    />
-                    <label
-                      className={`inline-flex h-11 cursor-pointer items-center justify-center rounded-lg border border-zinc-200 bg-white px-4 transition-colors hover:bg-zinc-50 dark:border-white/[0.12] dark:bg-white/[0.04] dark:hover:bg-white/[0.08] ${imageUploading || saving ? 'cursor-not-allowed opacity-50' : ''}`}
-                    >
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={async (e) => {
-                          const f = e.target.files?.[0]
-                          if (f && form) {
-                            const url = await handleUploadImage(f)
-                            if (url) setForm((c) => (c ? { ...c, thumbnail: url } : c))
-                            e.target.value = ''
-                          }
+                    <label className="mb-2 block text-sm font-medium text-zinc-700 dark:text-zinc-300">Thumbnail</label>
+                    <div className="flex flex-wrap gap-2">
+                      <label
+                        className={`inline-flex h-11 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-lg border border-zinc-200 bg-white px-4 text-sm font-medium transition-colors hover:bg-zinc-50 dark:border-white/[0.12] dark:bg-white/[0.04] dark:hover:bg-white/[0.08] ${imageUploading || saving ? 'cursor-not-allowed opacity-50' : ''}`}
+                      >
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0]
+                            if (file && form) {
+                              const url = await handleUploadImage(file)
+                              if (url) setForm((c) => (c ? { ...c, thumbnail: url } : c))
+                              e.target.value = ''
+                            }
+                          }}
+                          disabled={imageUploading || saving}
+                        />
+                        {imageUploading ? (
+                          <Loader2 className="h-4 w-4 animate-spin text-blue-500" />
+                        ) : (
+                          <Image className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
+                        )}
+                        <span className="hidden sm:inline">{form.thumbnail?.trim() ? 'Replace' : 'Upload'}</span>
+                      </label>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="h-11 shrink-0 gap-2 border-zinc-200 dark:border-white/[0.12]"
+                        disabled={saving || imageUploading || !form.thumbnail?.trim()}
+                        title="Clear thumbnail"
+                        onClick={() => {
+                          setForm((f) => (f ? { ...f, thumbnail: null } : f))
+                          setThumbnailPreviewFailed(false)
                         }}
-                        disabled={imageUploading || saving}
-                      />
-                      {imageUploading ? (
-                        <Loader2 className="h-4 w-4 animate-spin text-blue-500" />
-                      ) : (
-                        <Image className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
-                      )}
-                    </label>
+                      >
+                        <ImageOff className="h-4 w-4" />
+                        <span className="hidden sm:inline">Remove</span>
+                      </Button>
+                    </div>
+                    <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                      Upload an image (JPEG, PNG, GIF, WebP, max 5 MB). Remove clears the thumbnail.
+                    </p>
                   </div>
-                  <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                    URL or upload (JPEG, PNG, GIF, WebP, max 5 MB)
-                  </p>
                 </div>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:items-end">
                   <label className="flex cursor-pointer items-center gap-2 pt-1">

@@ -25,8 +25,8 @@ import { UserDetailModal } from '@/components/admin/user-detail-modal'
 import { cn } from '@/lib/utils'
 
 const COMMANDS = [
-  { id: 'manuals', label: 'Documents', icon: BookOpen, href: '/admin/manuals', keywords: ['docs', 'pdf', 'manuals'] },
-  { id: 'manuals-add', label: 'Add Document', icon: Plus, href: '/admin/manuals/add', keywords: ['add', 'upload', 'new'] },
+  { id: 'documents', label: 'Documents', icon: BookOpen, href: '/admin/documents', keywords: ['docs', 'pdf', 'manuals'] },
+  { id: 'documents-add', label: 'Add Document', icon: Plus, href: '/admin/documents/add', keywords: ['add', 'upload', 'new'] },
   { id: 'news', label: 'News', icon: Newspaper, href: '/admin/news', keywords: ['articles'] },
   { id: 'news-add', label: 'Add Article', icon: Plus, href: '/admin/news/add', keywords: ['add', 'new'] },
   { id: 'software', label: 'Software', icon: Package, href: '/admin/software', keywords: ['downloads'] },

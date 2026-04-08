@@ -1,29 +1,33 @@
 'use client'
 
-import { useState, useEffect, useCallback, Suspense } from 'react'
+import { useState, useEffect, useCallback, useMemo, Suspense } from 'react'
+import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { DeleteConfirmDialog } from '@/components/ui/delete-confirm-dialog'
-import { CardSkeleton } from '@/components/ui/card-skeleton'
+import { TableSkeleton } from '@/components/ui/table-skeleton'
 import { DashboardSkeleton } from '@/components/ui/dashboard-skeleton'
-import { SearchBarSkeleton } from '@/components/ui/search-bar-skeleton'
+import { DocumentsSearchBar } from '@/components/portal/documents-search-bar'
+import { DataTable } from '@/components/admin/data-table'
 import { fetchWithAdminAuth } from '@/lib/admin-fetch'
-import { AdminCardGrid, AdminCard } from '@/components/admin/admin-card-grid'
 import { AdminPageDashboard } from '@/components/admin/admin-page-dashboard'
 import { AddCourseModal } from '@/components/admin/add-course-modal'
 import { EditCourseModal } from '@/components/admin/edit-course-modal'
-import { TrainingCourseActions } from '@/components/admin/training-course-actions'
-import { Plus, Search, GraduationCap, XCircle } from 'lucide-react'
+import { getTrainingCoursesColumns } from './_components/training-courses-columns'
+import { Plus, GraduationCap, XCircle, CalendarRange } from 'lucide-react'
 import { type Course } from '../_components/admin-types'
+
+const SEARCH_DEBOUNCE_MS = 300
 
 function AdminTrainingPageInner() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [searchTerm, setSearchTerm] = useState('')
+  const [searchInput, setSearchInput] = useState('')
   const [courses, setCourses] = useState<Course[]>([])
   const [coursesLoading, setCoursesLoading] = useState(true)
+  const [isFetching, setIsFetching] = useState(false)
   const [coursesError, setCoursesError] = useState('')
   const [deleteTarget, setDeleteTarget] = useState<Course | null>(null)
   const [deleteLoading, setDeleteLoading] = useState(false)
@@ -31,7 +35,7 @@ function AdminTrainingPageInner() {
   const [editCourseId, setEditCourseId] = useState<string | null>(null)
 
   const fetchCourses = useCallback(async () => {
-    setCoursesLoading(true)
+    setIsFetching(true)
     setCoursesError('')
     try {
       const res = await fetchWithAdminAuth('/api/courses')
@@ -41,11 +45,14 @@ function AdminTrainingPageInner() {
     } catch (e: unknown) {
       setCoursesError(e instanceof Error ? e.message : 'Failed to load courses')
     } finally {
+      setIsFetching(false)
       setCoursesLoading(false)
     }
   }, [])
 
-  useEffect(() => { fetchCourses() }, [fetchCourses])
+  useEffect(() => {
+    void fetchCourses()
+  }, [fetchCourses])
 
   useEffect(() => {
     const fromQuery = searchParams.get('edit')
@@ -54,6 +61,13 @@ function AdminTrainingPageInner() {
       router.replace('/admin/training', { scroll: false })
     }
   }, [searchParams, router])
+
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setSearchTerm(searchInput)
+    }, SEARCH_DEBOUNCE_MS)
+    return () => clearTimeout(t)
+  }, [searchInput])
 
   const handleDeleteCourse = async () => {
     if (!deleteTarget) return
@@ -72,20 +86,38 @@ function AdminTrainingPageInner() {
     }
   }
 
-  const filteredCourses = courses.filter(c =>
-    !searchTerm ||
-    c.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (c.description || '').toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredCourses = useMemo(
+    () =>
+      courses.filter(
+        (c) =>
+          !searchTerm ||
+          c.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (c.description || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (c.duration || '').toLowerCase().includes(searchTerm.toLowerCase())
+      ),
+    [courses, searchTerm]
   )
 
   const featuredCourses = courses.filter((c) => c.featured).length
   const dashboardStats = [
-    { label: 'Courses', value: searchTerm ? `${filteredCourses.length} of ${courses.length}` : courses.length },
+    {
+      label: 'Courses',
+      value: searchTerm ? `${filteredCourses.length} of ${courses.length}` : courses.length,
+    },
     { label: 'Featured', value: featuredCourses },
   ]
 
+  const columns = useMemo(
+    () =>
+      getTrainingCoursesColumns({
+        setDeleteTarget,
+        onEdit: setEditCourseId,
+      }),
+    []
+  )
+
   return (
-    <div className="pb-20 md:pb-0 space-y-6">
+    <div className="space-y-6 pb-20 md:pb-0">
       {coursesLoading ? (
         <DashboardSkeleton statCount={2} />
       ) : !coursesError ? (
@@ -97,67 +129,68 @@ function AdminTrainingPageInner() {
           accent="training"
         />
       ) : null}
-      {coursesLoading ? (
-        <SearchBarSkeleton />
-      ) : (
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="flex-1 relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-400" />
-          <Input
-            type="text"
-            placeholder="Search courses..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-11 pr-4 py-2.5 rounded-xl"
-          />
+
+      <div className="flex flex-col gap-4 sm:flex-row">
+        <DocumentsSearchBar
+          value={searchInput}
+          onChange={setSearchInput}
+          isLoading={isFetching}
+          disabled={coursesLoading}
+          placeholder="Search courses..."
+        />
+        <div className="flex shrink-0 flex-wrap gap-2">
+          <Button asChild variant="outline" className="h-11 gap-2 rounded-xl">
+            <Link href="/admin/training/sessions">
+              <CalendarRange className="h-4 w-4" />
+              Scheduled classes
+            </Link>
+          </Button>
+          <Button
+            onClick={() => setAddModalOpen(true)}
+            disabled={coursesLoading}
+            className="h-11 gap-2 rounded-xl bg-blue-600 text-white shadow-md shadow-blue-500/25 hover:bg-blue-700"
+          >
+            <Plus className="h-4 w-4" />
+            Add Course
+          </Button>
         </div>
-        <Button onClick={() => setAddModalOpen(true)} className="gap-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-500/25 shrink-0">
-          <Plus className="h-4 w-4" />
-          Add Course
-        </Button>
       </div>
-      )}
 
       {coursesLoading ? (
-        <CardSkeleton count={6} />
+        <TableSkeleton rowCount={6} colCount={5} />
       ) : coursesError ? (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-6">
-          <div className="flex items-center gap-3 text-red-700">
-            <XCircle className="h-5 w-5 shrink-0" />
-            <span className="text-sm">{coursesError}</span>
+        <div className="flex items-center gap-4 rounded-2xl border border-rose-200 bg-rose-50/80 p-6 shadow-sm dark:border-rose-900/50 dark:bg-rose-950/30">
+          <div className="rounded-xl bg-rose-100 p-2.5 dark:bg-rose-500/20">
+            <XCircle className="h-6 w-6 text-rose-600 dark:text-rose-400" />
           </div>
+          <span className="text-sm font-medium text-rose-800 dark:text-rose-400">{coursesError}</span>
         </div>
       ) : filteredCourses.length === 0 ? (
-        <div className="rounded-2xl border border-slate-200/80 dark:border-white/[0.08] bg-white dark:bg-[#141414] p-16 text-center shadow-sm">
-          <GraduationCap className="h-12 w-12 text-slate-400 dark:text-zinc-500 mx-auto mb-4" />
-          <p className="text-sm text-slate-600 dark:text-zinc-400">
-            {courses.length === 0 ? 'No courses. Add one to get started.' : 'No matches.'}
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-16 text-center shadow-sm dark:border-white/[0.08] dark:bg-[#141414]">
+          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-50 dark:bg-blue-500/20">
+            <GraduationCap className="h-8 w-8 text-blue-500 dark:text-blue-400" />
+          </div>
+          <p className="mb-2 text-base font-semibold text-slate-700 dark:text-zinc-200">
+            {courses.length === 0 ? 'No courses yet' : 'No matches found'}
           </p>
+          <p className="mx-auto mb-6 max-w-sm text-sm text-slate-500 dark:text-zinc-400">
+            {courses.length === 0
+              ? 'Add a course to build your training catalog.'
+              : 'Try a different search term.'}
+          </p>
+          {courses.length === 0 && (
+            <Button
+              size="sm"
+              onClick={() => setAddModalOpen(true)}
+              className="rounded-xl bg-blue-600 shadow-md shadow-blue-500/25 hover:bg-blue-700"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Add your first course
+            </Button>
+          )}
         </div>
       ) : (
-        <AdminCardGrid>
-          {filteredCourses.map((course) => (
-            <AdminCard key={course.id}>
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="font-semibold text-slate-900 dark:text-zinc-100 truncate">{course.title}</h3>
-                    {course.featured && (
-                      <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-500/20 text-blue-800 dark:text-blue-400 font-medium shrink-0">Featured</span>
-                    )}
-                  </div>
-                  <p className="text-sm text-slate-500 dark:text-zinc-400 mt-1 line-clamp-2">{course.description || '—'}</p>
-                  <p className="text-xs text-slate-400 dark:text-zinc-500 mt-2">{course.duration} · {course.instructor || '—'}</p>
-                </div>
-                <TrainingCourseActions
-                  courseTitle={course.title}
-                  onEdit={() => setEditCourseId(course.id)}
-                  onDelete={() => setDeleteTarget(course)}
-                />
-              </div>
-            </AdminCard>
-          ))}
-        </AdminCardGrid>
+        <DataTable columns={columns} data={filteredCourses} headerVariant="indigo" />
       )}
 
       <DeleteConfirmDialog
@@ -183,8 +216,7 @@ function AdminTrainingFallback() {
   return (
     <div className="space-y-6 pb-20 md:pb-0">
       <DashboardSkeleton statCount={2} />
-      <SearchBarSkeleton />
-      <CardSkeleton count={6} />
+      <TableSkeleton rowCount={6} colCount={5} />
     </div>
   )
 }

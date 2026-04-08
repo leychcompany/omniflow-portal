@@ -10,14 +10,14 @@ export default function EditManualPage() {
   const id = typeof params.id === 'string' ? params.id : ''
 
   useEffect(() => {
-    if (!id) router.replace('/admin/manuals')
+    if (!id) router.replace('/admin/documents')
   }, [id, router])
 
   if (!id) {
     return null
   }
 
-  const back = () => router.push('/admin/manuals')
+  const back = () => router.push('/admin/documents')
 
   return (
     <EditManualForm

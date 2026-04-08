@@ -48,7 +48,6 @@ export async function PATCH(
         description: body.description,
         duration: body.duration,
         thumbnail: body.thumbnail,
-        instructor: body.instructor,
         featured: body.featured,
         sort_order: body.sort_order,
       })

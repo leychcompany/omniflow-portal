@@ -1,9 +1,9 @@
 -- Seed courses (from courses-data.ts)
-INSERT INTO courses (id, title, description, duration, thumbnail, instructor, featured, sort_order) VALUES
-  ('TR7000', 'OMNI 7000', 'Comprehensive instrument training for operators, technicians and integrators. Get experience using the latest OMNI 7000 hardware and software tools.', 'In Person', '/images/tr7000.png', 'OMNI Training', true, 0),
-  ('TR6100', 'Basic Operator Online Class – TR6100', 'If you need to get the baseline skills required to operate the OMNI 3000/6000 flow computer, this is the class for you.', 'In Person', '/images/tr6100.png', 'OMNI Training', false, 1),
-  ('TR6300', 'Operator / Technician Training - TR6300', 'If you''re looking for a class that goes beyond basic navigation and front panel operations, this is the class for you.', 'In Person', '/images/tr6300.png', 'OMNI Training', false, 2),
-  ('TR6400', 'Advanced Technician Class – TR6400', 'If you''re already an experienced OMNI user, or you''ve completed our Operator/Technician (TR6300) class and you''re ready for the next step, this is the class for you.', 'In Person', '/images/tr6400.png', 'OMNI Training', false, 3)
+INSERT INTO courses (id, title, description, duration, thumbnail, featured, sort_order) VALUES
+  ('TR7000', 'OMNI 7000', 'Comprehensive instrument training for operators, technicians and integrators. Get experience using the latest OMNI 7000 hardware and software tools.', 'In Person', '/images/tr7000.png', true, 0),
+  ('TR6100', 'Basic Operator Online Class – TR6100', 'If you need to get the baseline skills required to operate the OMNI 3000/6000 flow computer, this is the class for you.', 'In Person', '/images/tr6100.png', false, 1),
+  ('TR6300', 'Operator / Technician Training - TR6300', 'If you''re looking for a class that goes beyond basic navigation and front panel operations, this is the class for you.', 'In Person', '/images/tr6300.png', false, 2),
+  ('TR6400', 'Advanced Technician Class – TR6400', 'If you''re already an experienced OMNI user, or you''ve completed our Operator/Technician (TR6300) class and you''re ready for the next step, this is the class for you.', 'In Person', '/images/tr6400.png', false, 3)
 ON CONFLICT (id) DO NOTHING;
 
 -- Seed manuals (from manuals-data.ts)
