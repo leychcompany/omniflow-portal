@@ -3,11 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "dev:clean": "npx rimraf .next && next dev",
+    "dev": "next dev -p 3009",
+    "dev:clean": "npx rimraf .next && next dev -p 3009",
     "build": "next build",
-    "start": "next start",
-    "start:prod": "next build && next start",
+    "start": "next start -p 3009",
+    "start:prod": "next build && next start -p 3009",
     "lint": "eslint"
   },
   "dependencies": {
