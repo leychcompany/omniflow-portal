@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 import { notifyHelpdesk } from "@/lib/notify-helpdesk";
+import { sendAccountUnlockedWelcomeEmail } from "@/lib/send-account-unlocked-email";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -154,6 +155,23 @@ export async function POST(req: NextRequest) {
           notifyHelpdesk("user_created", { email: normalizedEmail }).catch((e) =>
             console.error("Helpdesk notify failed:", e)
           );
+
+          const { data: newProfile } = await supabaseAdmin
+            .from("users")
+            .select("name")
+            .eq("id", createdUserId)
+            .single();
+          const emailed = await sendAccountUnlockedWelcomeEmail({
+            to: normalizedEmail,
+            name: newProfile?.name ?? null,
+          });
+          if (!emailed.ok) {
+            console.warn(
+              "User created but welcome email failed:",
+              createdUserId,
+              emailed.error
+            );
+          }
         }
       } else {
         // Create invite record BEFORE inviteUserByEmail so Auth Hook can detect admin invite
