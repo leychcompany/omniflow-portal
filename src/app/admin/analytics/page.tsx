@@ -150,8 +150,54 @@ export default function AdminAnalyticsPage() {
           </p>
         </div>
       ) : (
-        <div className="border border-slate-200/80 dark:border-white/[0.08] bg-white dark:bg-[#141414] rounded-2xl overflow-hidden shadow-sm">
-          <div className="overflow-x-auto">
+        <>
+          <div className="md:hidden space-y-3">
+            {analyticsEvents.map((evt) => (
+              <div
+                key={evt.id}
+                className="border border-slate-200/80 dark:border-white/[0.08] bg-white dark:bg-[#141414] rounded-2xl p-4 space-y-3 shadow-sm"
+              >
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-zinc-500">User</p>
+                  <p className="font-medium text-slate-900 dark:text-zinc-100 text-sm mt-0.5">
+                    {evt.user_name || evt.user_email || evt.user_id}
+                  </p>
+                  {evt.user_name && evt.user_email && (
+                    <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5 break-all">{evt.user_email}</p>
+                  )}
+                </div>
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-zinc-500">Event</p>
+                  <div className="mt-1">
+                    <Badge
+                      variant="secondary"
+                      className="text-xs border-blue-200 dark:border-blue-500/40 bg-blue-50/60 dark:bg-blue-500/20 text-blue-800 dark:text-blue-400 font-medium"
+                    >
+                      {evt.event_type.replaceAll('_', ' ')}
+                    </Badge>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-zinc-500">Resource</p>
+                  <p className="text-sm text-slate-700 dark:text-zinc-300 mt-0.5 break-words">
+                    {evt.event_type === 'login' || evt.event_type === 'logout' ? (
+                      <span className="text-xs" title={JSON.stringify(evt.metadata)}>
+                        {(evt.metadata as { ip?: string })?.ip || '—'}
+                      </span>
+                    ) : (
+                      evt.resource_label
+                    )}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-zinc-500">When</p>
+                  <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">{formatDate(evt.created_at)}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="hidden md:block border border-slate-200/80 dark:border-white/[0.08] bg-white dark:bg-[#141414] rounded-2xl overflow-hidden shadow-sm">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-slate-200 dark:border-white/[0.06] bg-slate-50/50 dark:bg-white/[0.03]">
@@ -195,7 +241,7 @@ export default function AdminAnalyticsPage() {
               </tbody>
             </table>
           </div>
-        </div>
+        </>
       )}
     </div>
   )

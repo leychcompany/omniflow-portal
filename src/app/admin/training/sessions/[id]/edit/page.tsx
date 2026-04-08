@@ -16,13 +16,20 @@ function toLocalInput(iso: string | null | undefined): string {
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`
 }
 
+type AttendanceStatus = 'scheduled' | 'confirmed'
+
 interface RegRow {
   id: string
   user_id: string
   status: string
   waitlist_position: number | null
+  attendance_status?: string | null
   created_at: string
   user: { email: string; name: string | null }
+}
+
+function rosterAttendance(r: RegRow): AttendanceStatus {
+  return r.attendance_status === 'confirmed' ? 'confirmed' : 'scheduled'
 }
 
 interface UserSearchRow {
@@ -60,6 +67,7 @@ export default function EditTrainingSessionPage() {
   const [userResults, setUserResults] = useState<UserSearchRow[]>([])
   const [userSearchLoading, setUserSearchLoading] = useState(false)
   const [addingUserId, setAddingUserId] = useState<string | null>(null)
+  const [attendanceSavingId, setAttendanceSavingId] = useState<string | null>(null)
 
   const rosterUserIds = useMemo(() => new Set(regs.map((r) => r.user_id)), [regs])
 
@@ -67,9 +75,17 @@ export default function EditTrainingSessionPage() {
     if (!id) return
     setRegsLoading(true)
     try {
-      const res = await fetchWithAdminAuth(`/api/admin/training/sessions/${id}/registrations`)
+      const res = await fetchWithAdminAuth(`/api/admin/training/sessions/${id}/registrations`, {
+        cache: 'no-store',
+      })
       const data = await res.json()
-      if (res.ok) setRegs(data.items ?? [])
+      if (res.ok) {
+        setRegs(data.items ?? [])
+      } else {
+        toast.error(typeof data.error === 'string' ? data.error : 'Failed to load roster')
+      }
+    } catch {
+      toast.error('Failed to load roster')
     } finally {
       setRegsLoading(false)
     }
@@ -166,7 +182,7 @@ export default function EditTrainingSessionPage() {
       toast.success(data.status === 'waitlisted' ? 'Added to waitlist' : 'Added to roster')
       setUserQuery('')
       setUserResults([])
-      loadRegs()
+      await loadRegs()
     } catch (e: unknown) {
       toast.error(e instanceof Error ? e.message : 'Failed')
     } finally {
@@ -228,12 +244,35 @@ export default function EditTrainingSessionPage() {
     }
   }
 
+  const setAttendance = async (regId: string, attendance_status: AttendanceStatus) => {
+    if (!id) return
+    setAttendanceSavingId(regId)
+    try {
+      const res = await fetchWithAdminAuth(`/api/admin/training/sessions/${id}/registrations/${regId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ attendance_status }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed')
+      setRegs((prev) =>
+        prev.map((r) => (r.id === regId ? { ...r, attendance_status: data.attendance_status ?? attendance_status } : r))
+      )
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : 'Failed')
+      loadRegs()
+    } finally {
+      setAttendanceSavingId(null)
+    }
+  }
+
   const exportCsv = () => {
     const lines = [
-      ['status', 'email', 'name', 'waitlist_position', 'created_at'].join(','),
+      ['status', 'attendance', 'email', 'name', 'waitlist_position', 'created_at'].join(','),
       ...regs.map((r) =>
         [
           r.status,
+          rosterAttendance(r),
           `"${(r.user.email || '').replace(/"/g, '""')}"`,
           `"${(r.user.name || '').replace(/"/g, '""')}"`,
           r.waitlist_position ?? '',
@@ -399,7 +438,7 @@ export default function EditTrainingSessionPage() {
             Add portal member
           </div>
           <p className="text-xs text-zinc-600 dark:text-zinc-400 mb-3">
-            Search existing accounts (they must already appear under Admin → Users). They are enrolled like a self-registration and receive the same confirmation email.
+            Search existing accounts (they must already appear under Admin → Users). They are enrolled like a self-registration and receive the same confirmation email. Attendance (scheduled vs confirmed) tracks commitment and is separate from registered vs waitlist.
           </p>
           <div className="relative max-w-lg">
             <Input
@@ -439,33 +478,96 @@ export default function EditTrainingSessionPage() {
         ) : regs.length === 0 ? (
           <p className="text-sm text-zinc-500">No active registrations.</p>
         ) : (
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-zinc-200 dark:border-white/[0.06] text-left text-zinc-600 dark:text-zinc-400">
-                <th className="py-2 pr-2">Status</th>
-                <th className="py-2 pr-2">Name</th>
-                <th className="py-2 pr-2">Email</th>
-                <th className="py-2 w-20" />
-              </tr>
-            </thead>
-            <tbody>
+          <>
+            <div className="md:hidden space-y-3">
               {regs.map((r) => (
-                <tr key={r.id} className="border-b border-zinc-100 dark:border-white/[0.04]">
-                  <td className="py-2 pr-2">
-                    {r.status}
-                    {r.waitlist_position != null && <span className="text-xs text-zinc-500 ml-1">#{r.waitlist_position}</span>}
-                  </td>
-                  <td className="py-2 pr-2">{r.user.name || '—'}</td>
-                  <td className="py-2 pr-2">{r.user.email}</td>
-                  <td className="py-2 text-right">
-                    <Button type="button" variant="ghost" size="icon" className="text-rose-600" onClick={() => removeReg(r.id)}>
+                <div
+                  key={r.id}
+                  className="rounded-lg border border-zinc-200 dark:border-white/[0.08] bg-zinc-50/50 dark:bg-white/[0.03] p-4 space-y-2 text-sm"
+                >
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-medium text-zinc-900 dark:text-zinc-100 capitalize">{r.status}</span>
+                    {r.waitlist_position != null && (
+                      <span className="text-xs text-zinc-500">#{r.waitlist_position}</span>
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">Name</p>
+                    <p className="text-zinc-800 dark:text-zinc-200 mt-0.5">{r.user.name || '—'}</p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">Email</p>
+                    <p className="text-zinc-700 dark:text-zinc-300 mt-0.5 break-all">{r.user.email}</p>
+                  </div>
+                  <div>
+                    <label htmlFor={`attendance-${r.id}`} className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
+                      Attendance
+                    </label>
+                    <select
+                      id={`attendance-${r.id}`}
+                      className="mt-1 w-full max-w-xs h-9 rounded-lg border border-zinc-200 dark:border-white/[0.12] bg-white dark:bg-[#141414] px-2 text-sm"
+                      value={rosterAttendance(r)}
+                      disabled={attendanceSavingId === r.id}
+                      onChange={(e) =>
+                        setAttendance(r.id, e.target.value === 'confirmed' ? 'confirmed' : 'scheduled')
+                      }
+                    >
+                      <option value="scheduled">Scheduled</option>
+                      <option value="confirmed">Confirmed</option>
+                    </select>
+                  </div>
+                  <div className="flex justify-end pt-2 border-t border-zinc-200 dark:border-white/[0.06]">
+                    <Button type="button" variant="ghost" size="icon" className="text-rose-600" onClick={() => removeReg(r.id)} title="Remove">
                       <Trash2 className="h-4 w-4" />
                     </Button>
-                  </td>
-                </tr>
+                  </div>
+                </div>
               ))}
-            </tbody>
-          </table>
+            </div>
+
+            <table className="hidden md:table w-full text-sm">
+              <thead>
+                <tr className="border-b border-zinc-200 dark:border-white/[0.06] text-left text-zinc-600 dark:text-zinc-400">
+                  <th className="py-2 pr-2">Status</th>
+                  <th className="py-2 pr-3 whitespace-nowrap">Attendance</th>
+                  <th className="py-2 pr-2">Name</th>
+                  <th className="py-2 pr-2">Email</th>
+                  <th className="py-2 w-20" />
+                </tr>
+              </thead>
+              <tbody>
+                {regs.map((r) => (
+                  <tr key={r.id} className="border-b border-zinc-100 dark:border-white/[0.04]">
+                    <td className="py-2 pr-2 align-middle">
+                      {r.status}
+                      {r.waitlist_position != null && <span className="text-xs text-zinc-500 ml-1">#{r.waitlist_position}</span>}
+                    </td>
+                    <td className="py-2 pr-3 align-middle">
+                      <select
+                        className="h-8 max-w-[10.5rem] rounded-lg border border-zinc-200 dark:border-white/[0.12] bg-white dark:bg-[#141414] px-2 text-xs"
+                        value={rosterAttendance(r)}
+                        disabled={attendanceSavingId === r.id}
+                        aria-label={`Attendance for ${r.user.email}`}
+                        onChange={(e) =>
+                          setAttendance(r.id, e.target.value === 'confirmed' ? 'confirmed' : 'scheduled')
+                        }
+                      >
+                        <option value="scheduled">Scheduled</option>
+                        <option value="confirmed">Confirmed</option>
+                      </select>
+                    </td>
+                    <td className="py-2 pr-2 align-middle">{r.user.name || '—'}</td>
+                    <td className="py-2 pr-2 align-middle break-all">{r.user.email}</td>
+                    <td className="py-2 text-right align-middle">
+                      <Button type="button" variant="ghost" size="icon" className="text-rose-600" onClick={() => removeReg(r.id)}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </>
         )}
       </div>
 

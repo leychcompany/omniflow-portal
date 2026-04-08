@@ -435,92 +435,160 @@ export default function AdminUsersPage() {
               <p className="text-sm text-zinc-500 dark:text-zinc-400">No users found</p>
             </div>
           ) : (
-            <div className="border border-zinc-200 dark:border-white/[0.08] bg-white dark:bg-[#141414] rounded-lg overflow-hidden">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-zinc-200 dark:border-white/[0.06] bg-zinc-50/50 dark:bg-white/[0.03]">
-                    <th className="w-12 py-3 px-2 pr-0">
-                      <input
-                        type="checkbox"
-                        checked={selectableUsers.length > 0 && selectableUsers.every((u) => selectedIds.has(u.id))}
-                        onChange={toggleSelectAll}
-                        className="rounded border-zinc-300 dark:border-white/30 text-blue-600 focus:ring-blue-500"
-                      />
-                    </th>
-                    <th className="text-left py-3 px-4 font-medium text-zinc-600 dark:text-zinc-400">User</th>
-                    <th className="text-left py-3 px-4 font-medium text-zinc-600 dark:text-zinc-400 hidden sm:table-cell">Role</th>
-                    <th className="text-left py-3 px-4 font-medium text-zinc-600 dark:text-zinc-400 hidden md:table-cell">Status</th>
-                    <th className="text-right py-3 px-4 font-medium text-zinc-600 dark:text-zinc-400 w-24">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {users.map((u) => (
-                    <tr key={u.id} className="border-b border-zinc-100 dark:border-white/[0.04] last:border-0 hover:bg-zinc-50/50 dark:hover:bg-white/[0.04]">
-                      <td className="w-10 py-4 px-2 pr-0 align-top">
-                        {u.role !== 'admin' && (
-                          <input
-                            type="checkbox"
-                            checked={selectedIds.has(u.id)}
-                            onChange={() => toggleSelect(u.id)}
-                            onClick={(e) => e.stopPropagation()}
-                            className="rounded border-zinc-300 dark:border-white/30 text-blue-600 focus:ring-blue-500"
-                          />
-                        )}
-                      </td>
-                      <td className="py-4 px-4">
+            <>
+              <div className="md:hidden space-y-3">
+                {users.map((u) => (
+                  <div
+                    key={u.id}
+                    className="border border-zinc-200 dark:border-white/[0.08] bg-white dark:bg-[#141414] rounded-xl p-4 space-y-3 shadow-sm"
+                  >
+                    <div className="flex items-start gap-3">
+                      {u.role !== 'admin' && (
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.has(u.id)}
+                          onChange={() => toggleSelect(u.id)}
+                          className="mt-1 rounded border-zinc-300 dark:border-white/30 text-blue-600 focus:ring-blue-500 shrink-0"
+                          aria-label={`Select ${u.name}`}
+                        />
+                      )}
+                      <div className="min-w-0 flex-1">
                         <button
                           type="button"
                           onClick={() => setUserModalId(u.id)}
-                          className="block w-full text-left hover:bg-zinc-50 dark:hover:bg-white/[0.04] -mx-2 -my-1 px-2 py-1 rounded-md transition-colors"
+                          className="block w-full text-left rounded-md transition-colors"
                         >
                           <p className="font-medium text-zinc-900 dark:text-zinc-100">{u.name}</p>
-                          <p className="text-zinc-500 dark:text-zinc-400 text-xs">{u.email}</p>
+                          <p className="text-zinc-500 dark:text-zinc-400 text-xs break-all mt-0.5">{u.email}</p>
                         </button>
-                      </td>
-                      <td className="py-4 px-4 hidden sm:table-cell">
-                        <Badge variant={u.role === 'admin' ? 'default' : 'secondary'} className="text-xs">
-                          <Shield className="h-3 w-3 mr-1" />
-                          {u.role}
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge variant={u.role === 'admin' ? 'default' : 'secondary'} className="text-xs">
+                        <Shield className="h-3 w-3 mr-1" />
+                        {u.role}
+                      </Badge>
+                      <Badge className={`text-xs ${getStatusColor(u.status)}`}>{u.status}</Badge>
+                      {u.locked && (
+                        <Badge variant="outline" className="text-xs border-amber-200 dark:border-amber-500/40 text-amber-700 dark:text-amber-400">
+                          Locked
                         </Badge>
-                      </td>
-                      <td className="py-4 px-4 hidden md:table-cell">
-                        <Badge className={`text-xs ${getStatusColor(u.status)}`}>{u.status}</Badge>
-                        {u.locked && (
-                          <Badge variant="outline" className="ml-1 text-xs border-amber-200 dark:border-amber-500/40 text-amber-700 dark:text-amber-400">
-                            Locked
-                          </Badge>
-                        )}
-                      </td>
-                      <td className="py-4 px-4 text-right">
-                        <div className="flex items-center justify-end gap-1">
+                      )}
+                    </div>
+                    <div className="flex items-center justify-end gap-1 pt-2 border-t border-zinc-100 dark:border-white/[0.06]">
+                      {u.role !== 'admin' && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
+                          onClick={() => toggleLock(u.id)}
+                          title={u.locked ? 'Unlock' : 'Lock'}
+                        >
+                          {u.locked ? <Unlock className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
+                        </Button>
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-zinc-500 hover:text-red-600"
+                        onClick={() => router.push(`/admin/users/${u.id}/delete`)}
+                        disabled={u.role === 'admin' && adminCount <= 1}
+                        title="Delete"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="hidden md:block border border-zinc-200 dark:border-white/[0.08] bg-white dark:bg-[#141414] rounded-lg overflow-hidden">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-zinc-200 dark:border-white/[0.06] bg-zinc-50/50 dark:bg-white/[0.03]">
+                      <th className="w-12 py-3 px-2 pr-0">
+                        <input
+                          type="checkbox"
+                          checked={selectableUsers.length > 0 && selectableUsers.every((u) => selectedIds.has(u.id))}
+                          onChange={toggleSelectAll}
+                          className="rounded border-zinc-300 dark:border-white/30 text-blue-600 focus:ring-blue-500"
+                        />
+                      </th>
+                      <th className="text-left py-3 px-4 font-medium text-zinc-600 dark:text-zinc-400">User</th>
+                      <th className="text-left py-3 px-4 font-medium text-zinc-600 dark:text-zinc-400">Role</th>
+                      <th className="text-left py-3 px-4 font-medium text-zinc-600 dark:text-zinc-400">Status</th>
+                      <th className="text-right py-3 px-4 font-medium text-zinc-600 dark:text-zinc-400 w-24">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {users.map((u) => (
+                      <tr key={u.id} className="border-b border-zinc-100 dark:border-white/[0.04] last:border-0 hover:bg-zinc-50/50 dark:hover:bg-white/[0.04]">
+                        <td className="w-10 py-4 px-2 pr-0 align-top">
                           {u.role !== 'admin' && (
+                            <input
+                              type="checkbox"
+                              checked={selectedIds.has(u.id)}
+                              onChange={() => toggleSelect(u.id)}
+                              onClick={(e) => e.stopPropagation()}
+                              className="rounded border-zinc-300 dark:border-white/30 text-blue-600 focus:ring-blue-500"
+                            />
+                          )}
+                        </td>
+                        <td className="py-4 px-4">
+                          <button
+                            type="button"
+                            onClick={() => setUserModalId(u.id)}
+                            className="block w-full text-left hover:bg-zinc-50 dark:hover:bg-white/[0.04] -mx-2 -my-1 px-2 py-1 rounded-md transition-colors"
+                          >
+                            <p className="font-medium text-zinc-900 dark:text-zinc-100">{u.name}</p>
+                            <p className="text-zinc-500 dark:text-zinc-400 text-xs">{u.email}</p>
+                          </button>
+                        </td>
+                        <td className="py-4 px-4">
+                          <Badge variant={u.role === 'admin' ? 'default' : 'secondary'} className="text-xs">
+                            <Shield className="h-3 w-3 mr-1" />
+                            {u.role}
+                          </Badge>
+                        </td>
+                        <td className="py-4 px-4">
+                          <Badge className={`text-xs ${getStatusColor(u.status)}`}>{u.status}</Badge>
+                          {u.locked && (
+                            <Badge variant="outline" className="ml-1 text-xs border-amber-200 dark:border-amber-500/40 text-amber-700 dark:text-amber-400">
+                              Locked
+                            </Badge>
+                          )}
+                        </td>
+                        <td className="py-4 px-4 text-right">
+                          <div className="flex items-center justify-end gap-1">
+                            {u.role !== 'admin' && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
+                                onClick={() => toggleLock(u.id)}
+                                title={u.locked ? 'Unlock' : 'Lock'}
+                              >
+                                {u.locked ? <Unlock className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
+                              </Button>
+                            )}
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
-                              onClick={() => toggleLock(u.id)}
-                              title={u.locked ? 'Unlock' : 'Lock'}
+                              className="h-8 w-8 text-zinc-500 hover:text-red-600"
+                              onClick={() => router.push(`/admin/users/${u.id}/delete`)}
+                              disabled={u.role === 'admin' && adminCount <= 1}
+                              title="Delete"
                             >
-                              {u.locked ? <Unlock className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
+                              <Trash2 className="h-4 w-4" />
                             </Button>
-                          )}
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-zinc-500 hover:text-red-600"
-                            onClick={() => router.push(`/admin/users/${u.id}/delete`)}
-                            disabled={u.role === 'admin' && adminCount <= 1}
-                            title="Delete"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
           {users.length > 0 && usersTotalPages > 1 && (
             <TablePagination
@@ -551,59 +619,111 @@ export default function AdminUsersPage() {
               <p className="text-sm text-zinc-500 dark:text-zinc-400">No pending invites</p>
             </div>
           ) : (
-            <div className="border border-zinc-200 dark:border-white/[0.08] bg-white dark:bg-[#141414] rounded-lg overflow-hidden">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-zinc-200 dark:border-white/[0.06] bg-zinc-50/50 dark:bg-white/[0.03]">
-                    <th className="text-left py-3 px-4 font-medium text-zinc-600 dark:text-zinc-400">Email</th>
-                    <th className="text-left py-3 px-4 font-medium text-zinc-600 dark:text-zinc-400 hidden sm:table-cell">Expires</th>
-                    <th className="text-right py-3 px-4 font-medium text-zinc-600 dark:text-zinc-400 w-28">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredInvites.map((inv) => (
-                    <tr key={inv.id} className="border-b border-zinc-100 dark:border-white/[0.04] last:border-0 hover:bg-zinc-50/50 dark:hover:bg-white/[0.04]">
-                      <td className="py-4 px-4 font-medium text-zinc-900 dark:text-zinc-100">{inv.email}</td>
-                      <td className="py-4 px-4 text-zinc-500 dark:text-zinc-400 hidden sm:table-cell">
+            <>
+              <div className="md:hidden space-y-3">
+                {filteredInvites.map((inv) => (
+                  <div
+                    key={inv.id}
+                    className="border border-zinc-200 dark:border-white/[0.08] bg-white dark:bg-[#141414] rounded-xl p-4 space-y-3 shadow-sm"
+                  >
+                    <div>
+                      <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">Email</p>
+                      <p className="font-medium text-zinc-900 dark:text-zinc-100 text-sm mt-0.5 break-all">{inv.email}</p>
+                    </div>
+                    <div>
+                      <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">Expires</p>
+                      <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-0.5">
                         {inv.expires_at ? formatDate(inv.expires_at) : '—'}
-                      </td>
-                      <td className="py-4 px-4 text-right">
-                        <div className="flex items-center justify-end gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
-                            onClick={() => resendInvite(inv)}
-                            disabled={!!resendingId || !!deletingId}
-                            title="Resend"
-                          >
-                            {resendingId === inv.id ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <Send className="h-4 w-4" />
-                            )}
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-zinc-500 hover:text-red-600"
-                            onClick={() => deleteInvite(inv.id)}
-                            disabled={!!resendingId || !!deletingId}
-                            title="Delete"
-                          >
-                            {deletingId === inv.id ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <Trash2 className="h-4 w-4" />
-                            )}
-                          </Button>
-                        </div>
-                      </td>
+                      </p>
+                    </div>
+                    <div className="flex items-center justify-end gap-1 pt-2 border-t border-zinc-100 dark:border-white/[0.06]">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
+                        onClick={() => resendInvite(inv)}
+                        disabled={!!resendingId || !!deletingId}
+                        title="Resend"
+                      >
+                        {resendingId === inv.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Send className="h-4 w-4" />
+                        )}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-zinc-500 hover:text-red-600"
+                        onClick={() => deleteInvite(inv.id)}
+                        disabled={!!resendingId || !!deletingId}
+                        title="Delete"
+                      >
+                        {deletingId === inv.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Trash2 className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="hidden md:block border border-zinc-200 dark:border-white/[0.08] bg-white dark:bg-[#141414] rounded-lg overflow-hidden">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-zinc-200 dark:border-white/[0.06] bg-zinc-50/50 dark:bg-white/[0.03]">
+                      <th className="text-left py-3 px-4 font-medium text-zinc-600 dark:text-zinc-400">Email</th>
+                      <th className="text-left py-3 px-4 font-medium text-zinc-600 dark:text-zinc-400">Expires</th>
+                      <th className="text-right py-3 px-4 font-medium text-zinc-600 dark:text-zinc-400 w-28">Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {filteredInvites.map((inv) => (
+                      <tr key={inv.id} className="border-b border-zinc-100 dark:border-white/[0.04] last:border-0 hover:bg-zinc-50/50 dark:hover:bg-white/[0.04]">
+                        <td className="py-4 px-4 font-medium text-zinc-900 dark:text-zinc-100">{inv.email}</td>
+                        <td className="py-4 px-4 text-zinc-500 dark:text-zinc-400">
+                          {inv.expires_at ? formatDate(inv.expires_at) : '—'}
+                        </td>
+                        <td className="py-4 px-4 text-right">
+                          <div className="flex items-center justify-end gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
+                              onClick={() => resendInvite(inv)}
+                              disabled={!!resendingId || !!deletingId}
+                              title="Resend"
+                            >
+                              {resendingId === inv.id ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Send className="h-4 w-4" />
+                              )}
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-zinc-500 hover:text-red-600"
+                              onClick={() => deleteInvite(inv.id)}
+                              disabled={!!resendingId || !!deletingId}
+                              title="Delete"
+                            >
+                              {deletingId === inv.id ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Trash2 className="h-4 w-4" />
+                              )}
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </>
       )}

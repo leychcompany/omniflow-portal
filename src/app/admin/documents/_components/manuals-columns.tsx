@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { ColumnDef } from '@tanstack/react-table'
+import { type CellContext, ColumnDef } from '@tanstack/react-table'
 import { Button } from '@/components/ui/button'
 import { SortableHeader } from '@/components/admin/data-table'
 import { ManualTableActions } from '@/components/admin/manual-table-actions'
@@ -22,6 +22,7 @@ export function getManualsColumns({
   return [
     {
       id: 'pin',
+      meta: { mobileLabel: 'Pin' },
       header: () => <span className="sr-only">Pin</span>,
       cell: ({ row }) => (
         <ManualPinToggle manual={row.original} onChanged={onPinnedChange} />
@@ -31,6 +32,7 @@ export function getManualsColumns({
     },
     {
       accessorKey: 'title',
+      meta: { mobileLabel: 'Document' },
       header: ({ column }) => (
         <SortableHeader column={column}>Document</SortableHeader>
       ),
@@ -72,6 +74,20 @@ export function getManualsColumns({
     },
     {
       id: 'file-info',
+      meta: {
+        mobileLabel: 'File',
+        mobileContent: ({ row }: CellContext<Manual, unknown>) => {
+          const m = row.original
+          return (
+            <div className="min-w-0">
+              <p className="text-slate-600 dark:text-zinc-300 text-xs font-mono break-all" title={m.filename ?? undefined}>
+                {m.filename ?? '—'}
+              </p>
+              {m.size && <p className="text-slate-400 dark:text-zinc-500 text-xs mt-0.5">{m.size}</p>}
+            </div>
+          )
+        },
+      },
       header: () => <span className="hidden lg:block">File</span>,
       cell: ({ row }) => {
         const m = row.original
@@ -89,6 +105,14 @@ export function getManualsColumns({
     },
     {
       accessorKey: 'created_at',
+      meta: {
+        mobileLabel: 'Added',
+        mobileContent: ({ row }: CellContext<Manual, unknown>) => (
+          <span className="text-slate-500 dark:text-zinc-400 text-xs">
+            {row.original.created_at ? formatDate(row.original.created_at) : '—'}
+          </span>
+        ),
+      },
       header: ({ column }) => (
         <SortableHeader column={column}>
           <span className="hidden xl:inline">Added</span>

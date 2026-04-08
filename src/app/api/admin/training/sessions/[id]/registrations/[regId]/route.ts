@@ -4,6 +4,68 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import { buildSessionContext, notifyTrainingAttendee } from "@/lib/training-notify-email";
 import { getSessionDisplayTitle, loadUserNotifyFields } from "@/lib/training-session-queries";
 
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string; regId: string }> }
+) {
+  const auth = await verifyAdmin(req);
+  if (!auth.ok) return auth.response;
+
+  try {
+    const { id: sessionId, regId } = await params;
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    }
+    const raw =
+      body && typeof body === "object" && "attendance_status" in body
+        ? (body as { attendance_status: unknown }).attendance_status
+        : undefined;
+    const attendanceNorm =
+      typeof raw === "string" ? raw.trim().toLowerCase() : "";
+    if (attendanceNorm !== "scheduled" && attendanceNorm !== "confirmed") {
+      return NextResponse.json(
+        { error: "attendance_status must be scheduled or confirmed" },
+        { status: 400 }
+      );
+    }
+    const attendance = attendanceNorm;
+
+    const { data: reg, error: rErr } = await supabaseAdmin
+      .from("training_registrations")
+      .select("id, session_id, status")
+      .eq("id", regId)
+      .eq("session_id", sessionId)
+      .single();
+
+    if (rErr || !reg) {
+      return NextResponse.json({ error: "Registration not found" }, { status: 404 });
+    }
+    if (!["registered", "waitlisted"].includes(reg.status as string)) {
+      return NextResponse.json({ error: "Not an active roster row" }, { status: 400 });
+    }
+
+    const { data: updated, error: uErr } = await supabaseAdmin
+      .from("training_registrations")
+      .update({ attendance_status: attendance })
+      .eq("id", regId)
+      .select("id, attendance_status")
+      .single();
+
+    if (uErr) {
+      console.error("PATCH registration attendance:", uErr);
+      return NextResponse.json({ error: uErr.message || "Failed to update" }, { status: 500 });
+    }
+
+    return NextResponse.json(updated);
+  } catch (e: unknown) {
+    console.error("admin PATCH registration:", e);
+    return NextResponse.json({ error: "Failed" }, { status: 500 });
+  }
+}
+
 export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string; regId: string }> }

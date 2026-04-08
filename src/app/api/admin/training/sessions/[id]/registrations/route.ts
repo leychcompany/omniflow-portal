@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyAdmin } from "@/lib/admin-auth";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+
+export const dynamic = "force-dynamic";
 import {
   buildSessionContext,
   notifyInternalTrainingSignup,
@@ -16,7 +18,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     const { id: sessionId } = await params;
     const { data: regs, error } = await supabaseAdmin
       .from("training_registrations")
-      .select("id, user_id, status, waitlist_position, created_at, reminder_7d_sent_at, reminder_1d_sent_at")
+      .select("*")
       .eq("session_id", sessionId)
       .in("status", ["registered", "waitlisted"])
       .order("status", { ascending: true })
@@ -82,9 +84,17 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       return NextResponse.json({ error: outError }, { status: 400 });
     }
 
-    const regId = row?.out_registration_id as string | undefined;
-    const regStatus = row?.out_status as string | undefined;
+    const regId = row?.out_registration_id as string | undefined | null;
+    const regStatus = row?.out_status as string | undefined | null;
     const wlPos = row?.out_waitlist_position as number | null | undefined;
+
+    if (!regId || !regStatus) {
+      console.error("admin_add_user_to_training_session: missing out row", { rows, row });
+      return NextResponse.json(
+        { error: "Enrollment did not return a registration. Check server logs or try again." },
+        { status: 500 }
+      );
+    }
 
     const { data: sess } = await supabaseAdmin.from("training_sessions").select("*").eq("id", sessionId).single();
     if (sess && regId) {

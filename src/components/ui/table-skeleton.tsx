@@ -15,7 +15,26 @@ export function TableSkeleton({
 }: TableSkeletonProps) {
   return (
     <div className={`border border-slate-200/80 dark:border-white/[0.08] bg-white dark:bg-[#141414] rounded-2xl overflow-hidden shadow-sm ${className}`}>
-      <table className="w-full text-sm">
+      <div className="md:hidden space-y-3 p-3">
+        {Array.from({ length: rowCount }).map((_, rowIndex) => (
+          <div
+            key={rowIndex}
+            className="rounded-xl border border-slate-100 dark:border-white/[0.06] p-4 space-y-3 bg-slate-50/40 dark:bg-white/[0.02]"
+          >
+            {Array.from({ length: Math.min(colCount, 4) }).map((_, i) => (
+              <div key={i} className="space-y-1.5">
+                <div className="h-3 w-16 bg-slate-200 dark:bg-white/10 rounded animate-pulse" />
+                <div
+                  className="h-4 bg-slate-100 dark:bg-white/[0.06] rounded animate-pulse"
+                  style={{ width: i === 0 ? '85%' : '55%' }}
+                />
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+
+      <table className="hidden md:table w-full text-sm">
         {hasHeader && (
           <thead>
             <tr className="border-b border-slate-200 dark:border-white/[0.06] bg-slate-50/80 dark:bg-white/[0.03]">

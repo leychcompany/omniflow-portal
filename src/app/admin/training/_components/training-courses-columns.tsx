@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { ColumnDef } from '@tanstack/react-table'
+import { type CellContext, ColumnDef } from '@tanstack/react-table'
 import { SortableHeader } from '@/components/admin/data-table'
 import { TrainingCourseActions } from '@/components/admin/training-course-actions'
 import { GraduationCap } from 'lucide-react'
@@ -20,6 +20,7 @@ export function getTrainingCoursesColumns({
   return [
     {
       accessorKey: 'title',
+      meta: { mobileLabel: 'Course' },
       header: ({ column }) => (
         <SortableHeader column={column}>Course</SortableHeader>
       ),
@@ -56,6 +57,12 @@ export function getTrainingCoursesColumns({
     },
     {
       accessorKey: 'duration',
+      meta: {
+        mobileLabel: 'Duration',
+        mobileContent: ({ row }: CellContext<Course, unknown>) => (
+          <span className="text-sm text-slate-600 dark:text-zinc-300">{row.original.duration || '—'}</span>
+        ),
+      },
       header: ({ column }) => (
         <SortableHeader column={column}>
           <span className="hidden sm:inline">Duration</span>
@@ -69,6 +76,12 @@ export function getTrainingCoursesColumns({
     },
     {
       accessorKey: 'sort_order',
+      meta: {
+        mobileLabel: 'Order',
+        mobileContent: ({ row }: CellContext<Course, unknown>) => (
+          <span className="text-xs tabular-nums text-slate-500 dark:text-zinc-400">{row.original.sort_order ?? 0}</span>
+        ),
+      },
       header: ({ column }) => (
         <SortableHeader column={column}>
           <span className="hidden lg:inline">Order</span>
@@ -82,6 +95,14 @@ export function getTrainingCoursesColumns({
     },
     {
       accessorKey: 'created_at',
+      meta: {
+        mobileLabel: 'Added',
+        mobileContent: ({ row }: CellContext<Course, unknown>) => (
+          <span className="text-xs text-slate-500 dark:text-zinc-400">
+            {row.original.created_at ? formatDate(row.original.created_at) : '—'}
+          </span>
+        ),
+      },
       header: ({ column }) => (
         <SortableHeader column={column}>
           <span className="hidden xl:inline">Added</span>
