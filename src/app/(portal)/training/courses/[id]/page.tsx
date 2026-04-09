@@ -209,14 +209,6 @@ export default function TrainingCourseDetailPage() {
               </div>
             </div>
           ) : null}
-          <div className="flex flex-wrap gap-3 pt-2">
-            <Button asChild variant="outline">
-              <Link href="/training/schedule" className="inline-flex items-center">
-                <Calendar className="mr-2 h-4 w-4" aria-hidden />
-                View full schedule
-              </Link>
-            </Button>
-          </div>
         </div>
         <div className="w-full shrink-0 overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 dark:border-white/[0.08] dark:bg-white/[0.04] lg:w-80">
           <div className="aspect-video w-full lg:aspect-[4/3]">
@@ -241,8 +233,14 @@ export default function TrainingCourseDetailPage() {
         {sessions.length === 0 ? (
           <Card className="border border-slate-200 dark:border-white/[0.08]">
             <CardContent className="p-6 text-sm text-slate-600 dark:text-zinc-400">
-              There are no open sessions scheduled for this course yet. Browse the full schedule for other upcoming
-              classes.
+              There are no open sessions scheduled for this course yet. Browse the{' '}
+              <Link
+                href="/training/schedule"
+                className="font-medium text-blue-600 hover:underline dark:text-blue-400"
+              >
+                full schedule
+              </Link>{' '}
+              for other upcoming classes.
             </CardContent>
           </Card>
         ) : (
