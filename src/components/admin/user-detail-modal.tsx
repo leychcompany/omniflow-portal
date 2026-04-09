@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { supabase } from '@/lib/supabase'
 import { fetchWithAdminAuth } from '@/lib/admin-fetch'
-import { Loader2, XCircle, Shield, Lock, Unlock, Trash2, Mail, User } from 'lucide-react'
+import { Loader2, XCircle, Shield, Lock, Unlock, Trash2, Mail, User, Phone } from 'lucide-react'
 
 interface UserDetail {
   id: string
@@ -20,6 +20,7 @@ interface UserDetail {
   created_at?: string
   company?: string | null
   title?: string | null
+  phone?: string | null
 }
 
 interface UserDetailModalProps {
@@ -147,7 +148,7 @@ export function UserDetailModal({ userId, open, onOpenChange, adminCount = 0, on
                 )}
               </div>
             </DialogHeader>
-            {(user.company || user.title) && (
+            {(user.company || user.title || user.phone) && (
               <div className="grid grid-cols-2 gap-3 text-sm py-2 border-t border-slate-100 dark:border-white/[0.08]">
                 {user.company && (
                   <div>
@@ -159,6 +160,15 @@ export function UserDetailModal({ userId, open, onOpenChange, adminCount = 0, on
                   <div>
                     <p className="text-slate-500 dark:text-zinc-400 font-medium">Title</p>
                     <p className="text-slate-900 dark:text-zinc-100 truncate">{user.title}</p>
+                  </div>
+                )}
+                {user.phone && (
+                  <div className="col-span-2">
+                    <p className="text-slate-500 dark:text-zinc-400 font-medium flex items-center gap-1">
+                      <Phone className="h-3.5 w-3.5" aria-hidden />
+                      Phone
+                    </p>
+                    <p className="text-slate-900 dark:text-zinc-100">{user.phone}</p>
                   </div>
                 )}
               </div>

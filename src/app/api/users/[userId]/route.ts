@@ -24,7 +24,7 @@ export async function GET(
     const { userId } = await params;
     const { data, error } = await supabaseAdmin
       .from("users")
-      .select("id, email, name, role, created_at, locked, first_name, last_name, company, title")
+      .select("id, email, name, role, created_at, locked, first_name, last_name, company, title, phone")
       .eq("id", userId)
       .single();
 

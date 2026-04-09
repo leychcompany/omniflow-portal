@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { verifyAdmin } from "@/lib/admin-auth";
+import { sanitizeCourseHtml } from "@/lib/sanitize-course-html";
+
+function parseMoney(value: unknown): number | null {
+  if (value === null || value === undefined || value === "") return null;
+  const n = typeof value === "number" ? value : parseFloat(String(value));
+  return Number.isFinite(n) ? n : null;
+}
 
 export async function GET() {
   try {
@@ -28,7 +35,21 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { id, title, description, duration, thumbnail, featured, sort_order } = body;
+    const {
+      id,
+      title,
+      description,
+      duration,
+      thumbnail,
+      featured,
+      sort_order,
+      topics,
+      price,
+      early_bird_price,
+      format,
+      location,
+      prerequisite_course_id,
+    } = body;
 
     if (!id || !title) {
       return NextResponse.json(
@@ -37,16 +58,41 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const newId = String(id).trim();
+    const preId =
+      typeof prerequisite_course_id === "string" && prerequisite_course_id.trim()
+        ? prerequisite_course_id.trim()
+        : null;
+    if (preId === newId) {
+      return NextResponse.json(
+        { error: "Prerequisite cannot be the same course" },
+        { status: 400 }
+      );
+    }
+
     const { data, error } = await supabaseAdmin
       .from("courses")
       .insert({
-        id: String(id).trim(),
+        id: newId,
         title,
-        description: description ?? null,
-        duration: duration ?? "In Person",
+        description: sanitizeCourseHtml(description),
+        duration:
+          typeof duration === "string" && duration.trim()
+            ? duration.trim()
+            : null,
         thumbnail: thumbnail ?? null,
         featured: featured ?? false,
         sort_order: sort_order ?? 0,
+        topics: sanitizeCourseHtml(
+          typeof topics === "string" ? topics : null
+        ),
+        price: parseMoney(price),
+        early_bird_price: parseMoney(early_bird_price),
+        format:
+          typeof format === "string" && format.trim() ? format.trim() : null,
+        location:
+          typeof location === "string" && location.trim() ? location.trim() : null,
+        prerequisite_course_id: preId,
       })
       .select()
       .single();

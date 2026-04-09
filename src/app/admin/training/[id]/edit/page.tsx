@@ -1,29 +1,13 @@
-'use client'
+import { notFound } from "next/navigation";
+import { CourseForm } from "@/components/admin/course-form";
 
-import { useEffect } from 'react'
-import { useRouter, useParams } from 'next/navigation'
-import { Loader2 } from 'lucide-react'
+export default async function AdminTrainingEditCoursePage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  if (!id?.trim()) notFound();
 
-/**
- * Legacy URL: redirects to Training list with ?edit= so the edit modal opens.
- */
-export default function EditCourseRedirectPage() {
-  const router = useRouter()
-  const params = useParams()
-  const id = typeof params.id === 'string' ? params.id : ''
-
-  useEffect(() => {
-    if (!id) {
-      router.replace('/admin/training')
-      return
-    }
-    router.replace(`/admin/training?edit=${encodeURIComponent(id)}`)
-  }, [id, router])
-
-  return (
-    <div className="flex min-h-[40vh] flex-col items-center justify-center gap-3 text-zinc-500 dark:text-zinc-400">
-      <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-      <p className="text-sm">Opening editor…</p>
-    </div>
-  )
+  return <CourseForm mode="edit" courseId={id.trim()} />;
 }

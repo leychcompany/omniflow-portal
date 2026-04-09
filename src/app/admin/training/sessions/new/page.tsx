@@ -125,7 +125,7 @@ function NewTrainingSessionPageInner() {
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed')
       toast.success('Class created')
-      router.push(`/admin/training/sessions/${data.id}/edit`)
+      router.push('/admin/training')
     } catch (e: unknown) {
       toast.error(e instanceof Error ? e.message : 'Failed')
     } finally {

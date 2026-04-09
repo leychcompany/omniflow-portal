@@ -1,5 +1,5 @@
-import { redirect } from 'next/navigation'
+import { CourseForm } from "@/components/admin/course-form";
 
-export default function AdminTrainingAddPage() {
-  redirect('/admin/training')
+export default function AdminTrainingAddCoursePage() {
+  return <CourseForm mode="create" />;
 }

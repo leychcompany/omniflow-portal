@@ -19,6 +19,12 @@ export interface Course {
   featured: boolean
   sort_order: number
   created_at: string
+  topics?: string | null
+  price?: number | null
+  early_bird_price?: number | null
+  format?: string | null
+  location?: string | null
+  prerequisite_course_id?: string | null
 }
 
 export interface Manual {

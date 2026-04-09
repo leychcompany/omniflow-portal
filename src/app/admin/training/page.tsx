@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback, useMemo, Suspense } from 'react'
 import Link from 'next/link'
-import { useRouter, useSearchParams } from 'next/navigation'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { DeleteConfirmDialog } from '@/components/ui/delete-confirm-dialog'
@@ -12,17 +11,14 @@ import { DocumentsSearchBar } from '@/components/portal/documents-search-bar'
 import { DataTable } from '@/components/admin/data-table'
 import { fetchWithAdminAuth } from '@/lib/admin-fetch'
 import { AdminPageDashboard } from '@/components/admin/admin-page-dashboard'
-import { AddCourseModal } from '@/components/admin/add-course-modal'
-import { EditCourseModal } from '@/components/admin/edit-course-modal'
 import { getTrainingCoursesColumns } from './_components/training-courses-columns'
 import { Plus, GraduationCap, XCircle, CalendarRange } from 'lucide-react'
 import { type Course } from '../_components/admin-types'
+import { stripHtml } from '@/lib/strip-html'
 
 const SEARCH_DEBOUNCE_MS = 300
 
 function AdminTrainingPageInner() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
   const [searchTerm, setSearchTerm] = useState('')
   const [searchInput, setSearchInput] = useState('')
   const [courses, setCourses] = useState<Course[]>([])
@@ -31,8 +27,6 @@ function AdminTrainingPageInner() {
   const [coursesError, setCoursesError] = useState('')
   const [deleteTarget, setDeleteTarget] = useState<Course | null>(null)
   const [deleteLoading, setDeleteLoading] = useState(false)
-  const [addModalOpen, setAddModalOpen] = useState(false)
-  const [editCourseId, setEditCourseId] = useState<string | null>(null)
 
   const fetchCourses = useCallback(async () => {
     setIsFetching(true)
@@ -53,14 +47,6 @@ function AdminTrainingPageInner() {
   useEffect(() => {
     void fetchCourses()
   }, [fetchCourses])
-
-  useEffect(() => {
-    const fromQuery = searchParams.get('edit')
-    if (fromQuery) {
-      setEditCourseId(fromQuery)
-      router.replace('/admin/training', { scroll: false })
-    }
-  }, [searchParams, router])
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -88,13 +74,18 @@ function AdminTrainingPageInner() {
 
   const filteredCourses = useMemo(
     () =>
-      courses.filter(
-        (c) =>
-          !searchTerm ||
-          c.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          (c.description || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-          (c.duration || '').toLowerCase().includes(searchTerm.toLowerCase())
-      ),
+      courses.filter((c) => {
+        if (!searchTerm) return true
+        const q = searchTerm.toLowerCase()
+        return (
+          c.title.toLowerCase().includes(q) ||
+          stripHtml(c.description).toLowerCase().includes(q) ||
+          stripHtml(c.topics).toLowerCase().includes(q) ||
+          (c.duration || '').toLowerCase().includes(q) ||
+          (c.format || '').toLowerCase().includes(q) ||
+          (c.location || '').toLowerCase().includes(q)
+        )
+      }),
     [courses, searchTerm]
   )
 
@@ -111,7 +102,6 @@ function AdminTrainingPageInner() {
     () =>
       getTrainingCoursesColumns({
         setDeleteTarget,
-        onEdit: setEditCourseId,
       }),
     []
   )
@@ -146,18 +136,20 @@ function AdminTrainingPageInner() {
             </Link>
           </Button>
           <Button
-            onClick={() => setAddModalOpen(true)}
+            asChild
             disabled={coursesLoading}
             className="h-11 gap-2 rounded-xl bg-blue-600 text-white shadow-md shadow-blue-500/25 hover:bg-blue-700"
           >
-            <Plus className="h-4 w-4" />
-            Add Course
+            <Link href="/admin/training/add">
+              <Plus className="h-4 w-4" />
+              Add Course
+            </Link>
           </Button>
         </div>
       </div>
 
       {coursesLoading ? (
-        <TableSkeleton rowCount={6} colCount={5} />
+        <TableSkeleton rowCount={6} colCount={4} />
       ) : coursesError ? (
         <div className="flex items-center gap-4 rounded-2xl border border-rose-200 bg-rose-50/80 p-6 shadow-sm dark:border-rose-900/50 dark:bg-rose-950/30">
           <div className="rounded-xl bg-rose-100 p-2.5 dark:bg-rose-500/20">
@@ -179,13 +171,11 @@ function AdminTrainingPageInner() {
               : 'Try a different search term.'}
           </p>
           {courses.length === 0 && (
-            <Button
-              size="sm"
-              onClick={() => setAddModalOpen(true)}
-              className="rounded-xl bg-blue-600 shadow-md shadow-blue-500/25 hover:bg-blue-700"
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Add your first course
+            <Button asChild size="sm" className="rounded-xl bg-blue-600 shadow-md shadow-blue-500/25 hover:bg-blue-700">
+              <Link href="/admin/training/add">
+                <Plus className="mr-2 h-4 w-4" />
+                Add your first course
+              </Link>
             </Button>
           )}
         </div>
@@ -201,13 +191,6 @@ function AdminTrainingPageInner() {
         onConfirm={handleDeleteCourse}
         isLoading={deleteLoading}
       />
-      <AddCourseModal open={addModalOpen} onOpenChange={setAddModalOpen} onSuccess={fetchCourses} />
-      <EditCourseModal
-        open={!!editCourseId}
-        courseId={editCourseId}
-        onOpenChange={(open) => !open && setEditCourseId(null)}
-        onSuccess={fetchCourses}
-      />
     </div>
   )
 }
@@ -216,7 +199,7 @@ function AdminTrainingFallback() {
   return (
     <div className="space-y-6 pb-20 md:pb-0">
       <DashboardSkeleton statCount={2} />
-      <TableSkeleton rowCount={6} colCount={5} />
+      <TableSkeleton rowCount={6} colCount={4} />
     </div>
   )
 }

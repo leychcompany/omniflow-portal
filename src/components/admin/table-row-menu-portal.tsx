@@ -100,7 +100,7 @@ export function TableRowMenuPortal({
       className={cn(
         'overflow-y-auto overflow-x-hidden rounded-xl border border-slate-200/90 bg-white py-1 shadow-lg shadow-slate-900/10',
         'dark:border-white/[0.1] dark:bg-[#1c1c1c] dark:shadow-black/40',
-        'origin-top-right animate-in fade-in zoom-in-95 duration-150',
+        'transition-none',
         className
       )}
     >

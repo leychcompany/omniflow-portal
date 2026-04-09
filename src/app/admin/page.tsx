@@ -1,5 +1,6 @@
 'use client'
 
+import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import {
@@ -14,8 +15,20 @@ import {
 } from 'lucide-react'
 import { useAdminBootstrap } from './_components/admin-bootstrap-context'
 import { DashboardStatCard } from './_components/dashboard-stat-card'
-import { DashboardActivityChart } from './_components/dashboard-activity-chart'
 import { DashboardRecentActivity } from './_components/dashboard-recent-activity'
+
+const DashboardActivityChart = dynamic(
+  () =>
+    import('./_components/dashboard-activity-chart').then((m) => ({
+      default: m.DashboardActivityChart,
+    })),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-[280px] w-full animate-pulse rounded-lg bg-slate-100 dark:bg-white/[0.06]" />
+    ),
+  }
+)
 import { DashboardTopTags } from './_components/dashboard-top-tags'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 

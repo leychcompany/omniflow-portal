@@ -6,9 +6,10 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Send } from 'lucide-react'
+import { toast } from 'sonner'
 import { TrainingRequestSkeleton } from '@/components/portal/skeletons'
 
-type Status = 'idle' | 'submitting' | 'success' | 'error'
+type Status = 'idle' | 'submitting' | 'error'
 
 interface Course {
   id: string
@@ -81,11 +82,11 @@ function TrainingRequestInner() {
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
-        throw new Error(data.error || 'Failed to send request')
+        throw new Error((data as { error?: string }).error || 'Failed to send request')
       }
 
-      setStatus('success')
-      const defaultCourseId = courseOptions.find((c) => (c as { featured?: boolean }).featured)?.id ?? courseOptions[0]?.id ?? ''
+      const defaultCourseId =
+        courseOptions.find((c) => (c as { featured?: boolean }).featured)?.id ?? courseOptions[0]?.id ?? ''
       setForm({
         name: '',
         email: '',
@@ -94,13 +95,14 @@ function TrainingRequestInner() {
         courseId: defaultCourseId,
         message: '',
       })
-      // Redirect to training page after successful submission
+      setStatus('idle')
+      toast.success('Training request sent', {
+        description: "We've received your request and will get back to you soon.",
+      })
       router.push('/training')
-    } catch (err: any) {
+    } catch (err: unknown) {
       setStatus('error')
-      setError(err.message || 'Failed to send request')
-    } finally {
-      setTimeout(() => setStatus('idle'), 3000)
+      setError(err instanceof Error ? err.message : 'Failed to send request')
     }
   }
 
@@ -196,9 +198,6 @@ function TrainingRequestInner() {
 
               {status === 'error' && (
                 <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-              )}
-              {status === 'success' && (
-                <p className="text-sm text-green-600 dark:text-green-400">Request sent. We will contact you shortly.</p>
               )}
 
               <div className="flex items-center gap-3">

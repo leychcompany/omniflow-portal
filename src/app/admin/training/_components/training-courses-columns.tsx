@@ -7,15 +7,14 @@ import { TrainingCourseActions } from '@/components/admin/training-course-action
 import { GraduationCap } from 'lucide-react'
 import { type Course } from '../../_components/admin-types'
 import { formatDate } from '../../_components/admin-types'
+import { stripHtml } from '@/lib/strip-html'
 
 type TrainingCoursesColumnsOptions = {
   setDeleteTarget: (c: Course | null) => void
-  onEdit: (id: string) => void
 }
 
 export function getTrainingCoursesColumns({
   setDeleteTarget,
-  onEdit,
 }: TrainingCoursesColumnsOptions): ColumnDef<Course>[] {
   return [
     {
@@ -38,8 +37,10 @@ export function getTrainingCoursesColumns({
               >
                 {c.title}
               </Link>
-              {c.description ? (
-                <p className="mt-0.5 line-clamp-1 text-xs text-slate-500 dark:text-zinc-400">{c.description}</p>
+              {stripHtml(c.description) ? (
+                <p className="mt-0.5 line-clamp-1 text-xs text-slate-500 dark:text-zinc-400">
+                  {stripHtml(c.description)}
+                </p>
               ) : (
                 <p className="mt-0.5 text-xs italic text-slate-400 dark:text-zinc-500">No description</p>
               )}
@@ -54,25 +55,6 @@ export function getTrainingCoursesColumns({
           </div>
         )
       },
-    },
-    {
-      accessorKey: 'duration',
-      meta: {
-        mobileLabel: 'Duration',
-        mobileContent: ({ row }: CellContext<Course, unknown>) => (
-          <span className="text-sm text-slate-600 dark:text-zinc-300">{row.original.duration || '—'}</span>
-        ),
-      },
-      header: ({ column }) => (
-        <SortableHeader column={column}>
-          <span className="hidden sm:inline">Duration</span>
-        </SortableHeader>
-      ),
-      cell: ({ row }) => (
-        <span className="hidden text-sm text-slate-600 dark:text-zinc-300 sm:inline">
-          {row.original.duration || '—'}
-        </span>
-      ),
     },
     {
       accessorKey: 'sort_order',
@@ -123,7 +105,7 @@ export function getTrainingCoursesColumns({
           <div className="flex justify-end">
             <TrainingCourseActions
               courseTitle={course.title}
-              onEdit={() => onEdit(course.id)}
+              editHref={`/admin/training/${course.id}/edit`}
               onDelete={() => setDeleteTarget(course)}
             />
           </div>

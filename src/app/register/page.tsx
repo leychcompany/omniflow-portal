@@ -10,13 +10,14 @@ import { Logo } from '@/components/Logo'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/auth-store'
 import { isBlockedEmailDomain, getBlockedDomainsMessage } from '@/lib/blocked-email-domains'
-import { Eye, EyeOff, Loader2, Shield, Users, Zap, BookOpen, ArrowRight, UserPlus, Mail, Hash } from 'lucide-react'
+import { Eye, EyeOff, Loader2, Shield, Users, Zap, BookOpen, ArrowRight, UserPlus, Mail, Hash, Phone } from 'lucide-react'
 
 function RegisterForm() {
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
   const [company, setCompany] = useState('')
   const [title, setTitle] = useState('')
+  const [phone, setPhone] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -54,8 +55,14 @@ function RegisterForm() {
     e.preventDefault()
     setError('')
 
-    if (!firstName.trim() || !lastName.trim() || !company.trim() || !title.trim() || !email.trim() || !password) {
+    if (!firstName.trim() || !lastName.trim() || !company.trim() || !title.trim() || !phone.trim() || !email.trim() || !password) {
       setError('Please fill in all required fields')
+      return
+    }
+
+    const phoneDigits = phone.replace(/\D/g, '')
+    if (phoneDigits.length < 7) {
+      setError('Please enter a valid phone number (at least 7 digits)')
       return
     }
 
@@ -86,6 +93,7 @@ function RegisterForm() {
             last_name: lastName.trim(),
             company: company.trim(),
             title: title.trim(),
+            phone: phone.trim(),
           },
         },
       })
@@ -403,6 +411,24 @@ function RegisterForm() {
                       placeholder="Engineer"
                       value={title}
                       onChange={(e) => setTitle(e.target.value)}
+                      required
+                      className="h-11 border-slate-200 focus:border-slate-400 focus:ring-slate-400 dark:border-white/[0.12]"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label htmlFor="phone" className="text-sm font-medium text-slate-700 dark:text-zinc-300 flex items-center gap-1.5">
+                      <Phone className="h-3.5 w-3.5 opacity-70" aria-hidden />
+                      Phone
+                    </label>
+                    <Input
+                      id="phone"
+                      type="tel"
+                      inputMode="tel"
+                      autoComplete="tel"
+                      placeholder="+1 (555) 123-4567"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
                       required
                       className="h-11 border-slate-200 focus:border-slate-400 focus:ring-slate-400 dark:border-white/[0.12]"
                     />

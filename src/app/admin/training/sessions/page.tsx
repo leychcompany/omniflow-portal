@@ -4,14 +4,9 @@ import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
 import { fetchWithAdminAuth } from '@/lib/admin-fetch'
-import { Plus, Pencil, ArrowLeft, Copy, MoreHorizontal } from 'lucide-react'
+import { TrainingSessionRowActions } from '@/components/admin/training-session-row-actions'
+import { Plus, Pencil, ArrowLeft } from 'lucide-react'
 import type { BadgeProps } from '@/components/ui/badge'
 
 interface SessionRow {
@@ -156,30 +151,10 @@ export default function AdminTrainingSessionsPage() {
                         Edit
                       </Link>
                     </Button>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="icon"
-                          className="h-8 w-8 shrink-0"
-                          aria-label={`More actions for ${s.display_title || 'class'}`}
-                        >
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-48">
-                        <DropdownMenuItem asChild>
-                          <Link
-                            href={`/admin/training/sessions/new?from=${encodeURIComponent(s.id)}`}
-                            className="cursor-pointer"
-                          >
-                            <Copy className="h-4 w-4" />
-                            Duplicate class
-                          </Link>
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <TrainingSessionRowActions
+                      sessionLabel={s.display_title || s.id.slice(0, 8)}
+                      duplicateHref={`/admin/training/sessions/new?from=${encodeURIComponent(s.id)}`}
+                    />
                   </div>
                 </div>
               )
@@ -260,30 +235,10 @@ export default function AdminTrainingSessionsPage() {
                               <span className="hidden lg:inline">Edit</span>
                             </Link>
                           </Button>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="icon"
-                                className="h-8 w-8 shrink-0"
-                                aria-label={`More actions for ${s.display_title || 'class'}`}
-                              >
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-48">
-                              <DropdownMenuItem asChild>
-                                <Link
-                                  href={`/admin/training/sessions/new?from=${encodeURIComponent(s.id)}`}
-                                  className="cursor-pointer"
-                                >
-                                  <Copy className="h-4 w-4" />
-                                  Duplicate class
-                                </Link>
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                          <TrainingSessionRowActions
+                            sessionLabel={s.display_title || s.id.slice(0, 8)}
+                            duplicateHref={`/admin/training/sessions/new?from=${encodeURIComponent(s.id)}`}
+                          />
                         </div>
                       </td>
                     </tr>
