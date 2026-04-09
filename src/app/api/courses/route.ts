@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { verifyAdmin } from "@/lib/admin-auth";
-import { sanitizeCourseHtml } from "@/lib/sanitize-course-html";
 
 function parseMoney(value: unknown): number | null {
   if (value === null || value === undefined || value === "") return null;
@@ -34,6 +33,7 @@ export async function POST(req: NextRequest) {
   if (!auth.ok) return auth.response;
 
   try {
+    const { sanitizeCourseHtml } = await import("@/lib/sanitize-course-html");
     const body = await req.json();
     const {
       id,
