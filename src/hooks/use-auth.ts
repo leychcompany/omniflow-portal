@@ -1,6 +1,7 @@
 "use client";
 
 import { supabase } from "@/lib/supabase";
+import { isInvalidRefreshAuthError } from "@/lib/supabase-auth-session";
 import { useAuthStore } from "@/store/auth-store";
 import type { User } from "@/types";
 import { useCallback, useEffect } from "react";
@@ -79,8 +80,15 @@ export function useAuth() {
     const refreshProfile = () => {
       supabase.auth
         .getSession()
-        .then(({ data: { session } }) => {
+        .then(async ({ data: { session }, error }) => {
           if (finished) return;
+          if (error && isInvalidRefreshAuthError(error)) {
+            await supabase.auth.signOut().catch(() => {});
+            useAuthStore.getState().signOut();
+            setUser(null);
+            redirectToLoginIfProtected();
+            return;
+          }
           if (session?.user) {
             fetchUserProfile();
           } else {
@@ -88,9 +96,13 @@ export function useAuth() {
             redirectToLoginIfProtected();
           }
         })
-        .catch((error) => {
+        .catch(async (error) => {
           if (finished) return;
           console.error("useAuth: Error getting session:", error);
+          if (isInvalidRefreshAuthError(error)) {
+            await supabase.auth.signOut().catch(() => {});
+          }
+          useAuthStore.getState().signOut();
           setUser(null);
           redirectToLoginIfProtected();
         });

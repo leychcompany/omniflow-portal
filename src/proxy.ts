@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
+import { isInvalidRefreshAuthError } from "@/lib/supabase-auth-session";
 
 const PUBLIC_PATHS = [
   "/",
@@ -59,8 +60,30 @@ export async function proxy(req: NextRequest) {
     }
   );
 
-  const { data: { user } } = await supabase.auth.getUser();
-  const isAuthenticated = !!user;
+  let isAuthenticated = false;
+  try {
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser();
+    if (error) {
+      if (isInvalidRefreshAuthError(error)) {
+        await supabase.auth.signOut();
+      }
+    } else {
+      isAuthenticated = !!user;
+    }
+  } catch (e) {
+    if (isInvalidRefreshAuthError(e)) {
+      try {
+        await supabase.auth.signOut();
+      } catch {
+        /* ignore */
+      }
+    } else {
+      console.warn("proxy: getUser failed:", e);
+    }
+  }
   const pathname = req.nextUrl.pathname;
 
   if (pathname.startsWith("/api")) {

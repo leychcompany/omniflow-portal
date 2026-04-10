@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Logo } from '@/components/Logo'
 import { supabase } from '@/lib/supabase'
+import { isInvalidRefreshAuthError } from '@/lib/supabase-auth-session'
 import { useAuthStore } from '@/store/auth-store'
 import { recordAuthEvent } from '@/lib/record-analytics-event'
 import { useTheme } from 'next-themes'
@@ -61,13 +62,26 @@ function LoginForm() {
     }
   }, [router])
 
-  // Clear any stale persisted state when no valid session (fixes cookie issues)
+  // Clear stale cookies / zustand when refresh token is invalid (e.g. revoked by newer login)
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!user) {
+    supabase.auth
+      .getUser()
+      .then(async ({ data: { user }, error }) => {
+        if (error && isInvalidRefreshAuthError(error)) {
+          await supabase.auth.signOut().catch(() => {})
+          useAuthStore.getState().signOut()
+          return
+        }
+        if (!user) {
+          useAuthStore.getState().signOut()
+        }
+      })
+      .catch(async (err) => {
+        if (isInvalidRefreshAuthError(err)) {
+          await supabase.auth.signOut().catch(() => {})
+        }
         useAuthStore.getState().signOut()
-      }
-    })
+      })
   }, [])
 
   const handleLogin = async (e: React.FormEvent) => {
