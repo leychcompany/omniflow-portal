@@ -29,6 +29,18 @@ interface RegRow {
   waitlist_position: number | null
   attendance_status?: string | null
   created_at: string
+  certificate_company_name?: string | null
+  work_title?: string | null
+  first_name?: string | null
+  last_name?: string | null
+  company_address?: string | null
+  city?: string | null
+  state_province?: string | null
+  postal_code?: string | null
+  country?: string | null
+  contact_email?: string | null
+  contact_phone?: string | null
+  food_restrictions?: string | null
   user: { email: string; name: string | null }
 }
 
@@ -268,15 +280,47 @@ export default function EditTrainingSessionPage() {
   }
 
   const exportCsv = () => {
+    const esc = (s: string | null | undefined) => `"${(s ?? '').replace(/"/g, '""')}"`
     const lines = [
-      ['status', 'attendance', 'email', 'name', 'waitlist_position', 'created_at'].join(','),
+      [
+        'status',
+        'attendance',
+        'email',
+        'name',
+        'waitlist_position',
+        'certificate_company',
+        'work_title',
+        'first_name',
+        'last_name',
+        'company_address',
+        'city',
+        'state_province',
+        'postal_code',
+        'country',
+        'contact_email',
+        'contact_phone',
+        'food_restrictions',
+        'created_at',
+      ].join(','),
       ...regs.map((r) =>
         [
           r.status,
           rosterAttendance(r),
-          `"${(r.user.email || '').replace(/"/g, '""')}"`,
-          `"${(r.user.name || '').replace(/"/g, '""')}"`,
+          esc(r.user.email),
+          esc(r.user.name),
           r.waitlist_position ?? '',
+          esc(r.certificate_company_name),
+          esc(r.work_title),
+          esc(r.first_name),
+          esc(r.last_name),
+          esc(r.company_address),
+          esc(r.city),
+          esc(r.state_province),
+          esc(r.postal_code),
+          esc(r.country),
+          esc(r.contact_email),
+          esc(r.contact_phone),
+          esc(r.food_restrictions),
           r.created_at,
         ].join(',')
       ),

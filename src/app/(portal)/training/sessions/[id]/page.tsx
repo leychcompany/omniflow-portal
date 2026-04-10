@@ -88,22 +88,6 @@ export default function TrainingSessionDetailPage() {
       .catch(() => {})
   }
 
-  const register = async () => {
-    if (!id) return
-    setActionLoading(true)
-    setError(null)
-    try {
-      const res = await fetchWithAuthRetry(`/api/training/sessions/${id}/register`, { method: 'POST' })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Could not complete signup')
-      refresh()
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Error')
-    } finally {
-      setActionLoading(false)
-    }
-  }
-
   const cancel = async () => {
     if (!id) return
     setActionLoading(true)
@@ -208,13 +192,13 @@ export default function TrainingSessionDetailPage() {
 
           <div className="flex flex-wrap gap-3 pt-2">
             {!mine && !signupClosed && session.spots_remaining > 0 && (
-              <Button onClick={register} disabled={actionLoading} className="bg-blue-600 hover:bg-blue-700">
-                {actionLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Sign up'}
+              <Button asChild className="bg-blue-600 hover:bg-blue-700">
+                <Link href={`/training/sessions/${id}/signup`}>Sign up</Link>
               </Button>
             )}
             {!mine && !signupClosed && session.spots_remaining <= 0 && session.waitlist_enabled && (
-              <Button onClick={register} disabled={actionLoading} variant="secondary">
-                {actionLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Join waitlist'}
+              <Button asChild variant="secondary">
+                <Link href={`/training/sessions/${id}/signup?waitlist=1`}>Join waitlist</Link>
               </Button>
             )}
             {!mine && signupClosed && (

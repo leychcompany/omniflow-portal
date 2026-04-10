@@ -3,6 +3,8 @@
  */
 
 import { formatTrainingScheduleEmailBlock } from "@/lib/format-training-session-schedule";
+import { formatEnrollmentDetailsPlainText, type TrainingEnrollmentBody } from "@/lib/training-enrollment";
+import { trainingSignupDisclaimerEmailBlock } from "@/lib/training-signup-disclaimers";
 
 const RESEND_URL = "https://api.resend.com/emails";
 
@@ -93,7 +95,7 @@ export function notifyTrainingAttendee(
   switch (kind) {
     case "registration_confirmed":
       subject = `You’re signed up: ${ctx.sessionTitle}`;
-      body += `You’ve signed up for this class. Payment is handled offline (for example by purchase order); your OMNI representative will follow up as needed.\n\n${block}\n\nWe look forward to seeing you.`;
+      body += `You’ve signed up for this class. Payment is handled offline (for example by purchase order); your OMNI representative will follow up as needed.\n\n${block}\n\n${trainingSignupDisclaimerEmailBlock()}\n\nWe look forward to seeing you.`;
       break;
     case "waitlist_joined":
       subject = `Waitlist: ${ctx.sessionTitle}`;
@@ -101,11 +103,11 @@ export function notifyTrainingAttendee(
       if (extra?.waitlistPosition != null) {
         body += `Your position: #${extra.waitlistPosition}\n\n`;
       }
-      body += `If a seat opens, we’ll email you.`;
+      body += `${trainingSignupDisclaimerEmailBlock()}\n\nIf a seat opens, we’ll email you.`;
       break;
     case "promoted_from_waitlist":
       subject = `A seat opened — you’re signed up: ${ctx.sessionTitle}`;
-      body += `Good news — a seat opened and your signup is confirmed:\n\n${block}`;
+      body += `Good news — a seat opened and your signup is confirmed:\n\n${block}\n\n${trainingSignupDisclaimerEmailBlock()}`;
       break;
     case "registration_cancelled_self":
       subject = `Signup cancelled: ${ctx.sessionTitle}`;
@@ -152,6 +154,8 @@ export function notifyInternalTrainingSignup(
     attendeeName: string | null;
     sessionTitle: string;
     status: "registered" | "waitlisted";
+    /** Portal self-serve signup payload; omit when added by admin so management sees a short notice. */
+    enrollment?: TrainingEnrollmentBody | null;
   }
 ): void {
   const inbox = process.env.TRAINING_ALERTS_TO?.trim() || process.env.TRAINING_REQUEST_TO?.trim();
@@ -159,11 +163,14 @@ export function notifyInternalTrainingSignup(
   if (recipients.length === 0) return;
   const name = params.attendeeName || params.attendeeEmail;
   const subject = `Training: ${params.status === "registered" ? "New signup" : "Waitlist"} — ${params.sessionTitle}`;
+  const enrollmentBlock = params.enrollment
+    ? `\n\n${formatEnrollmentDetailsPlainText(params.enrollment)}`
+    : `\n\nEnrollment details: Not collected via the portal signup form (e.g. admin-added enrollment). For full contact data, see Admin → Users or the session roster in the app.`;
   const text = `
 ${params.status === "registered" ? "New class signup" : "New waitlist signup"}
 
-Attendee: ${name} <${params.attendeeEmail}>
-Class: ${params.sessionTitle}
+Account (login): ${name} <${params.attendeeEmail}>
+Class: ${params.sessionTitle}${enrollmentBlock}
 `.trim();
   for (const to of recipients) {
     safeSend(sendResend(to, subject, text));

@@ -8,6 +8,7 @@ import {
 } from "@/lib/training-notify-email";
 import { getSessionDisplayTitle, loadUserNotifyFields } from "@/lib/training-session-queries";
 import { trainingSessionCannotSelfServeSignup } from "@/lib/training-session-public";
+import { trainingEnrollmentBodySchema, trainingEnrollmentRow } from "@/lib/training-enrollment";
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const auth = await verifyAuth(req);
@@ -15,6 +16,16 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   try {
     const { id: sessionId } = await params;
+
+    const json = await req.json().catch(() => null);
+    const parsed = trainingEnrollmentBodySchema.safeParse(json ?? {});
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Please complete all required enrollment fields.", details: parsed.error.flatten() },
+        { status: 400 }
+      );
+    }
+    const enrollment = parsed.data;
 
     const { data: gate, error: gateErr } = await supabaseAdmin
       .from("training_sessions")
@@ -56,6 +67,21 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const regStatus = row?.out_status as string | undefined;
     const wlPos = row?.out_waitlist_position as number | null | undefined;
 
+    if (regId) {
+      const rowPayload = trainingEnrollmentRow(enrollment);
+      const { error: updErr } = await supabaseAdmin
+        .from("training_registrations")
+        .update(rowPayload)
+        .eq("id", regId);
+      if (updErr) {
+        console.error("training_registrations enrollment update:", updErr);
+        return NextResponse.json(
+          { error: "Signup could not save your details. Please try again or contact support." },
+          { status: 500 }
+        );
+      }
+    }
+
     const { data: sess } = await supabaseAdmin.from("training_sessions").select("*").eq("id", sessionId).single();
     if (sess && regId) {
       const title = await getSessionDisplayTitle(sess as Parameters<typeof getSessionDisplayTitle>[0]);
@@ -74,6 +100,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
           attendeeName: user.name,
           sessionTitle: title,
           status: "registered",
+          enrollment,
         });
       } else if (regStatus === "waitlisted") {
         notifyTrainingAttendee("waitlist_joined", user.email, user.name, ctx, {
@@ -84,6 +111,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
           attendeeName: user.name,
           sessionTitle: title,
           status: "waitlisted",
+          enrollment,
         });
       }
     }
