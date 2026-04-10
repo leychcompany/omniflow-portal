@@ -40,7 +40,7 @@ export async function GET(req: NextRequest) {
       supabaseAdmin
         .from("courses")
         .select("id, title")
-        .or(`title.ilike.${term},description.ilike.${term},topics.ilike.${term},format.ilike.${term},location.ilike.${term}`)
+        .or(`title.ilike.${term},description.ilike.${term},topics.ilike.${term},format.ilike.${term}`)
         .limit(SEARCH_LIMIT),
       // News articles
       supabaseAdmin

@@ -2,6 +2,8 @@
  * Training class transactional emails via Resend. Fail-open: log only, no throw.
  */
 
+import { formatTrainingScheduleEmailBlock } from "@/lib/format-training-session-schedule";
+
 const RESEND_URL = "https://api.resend.com/emails";
 
 export type TrainingEmailKind =
@@ -34,9 +36,15 @@ function portalBase(): string {
 }
 
 function formatSessionBlock(ctx: TrainingSessionEmailContext): string {
+  const schedule = formatTrainingScheduleEmailBlock(
+    ctx.startsAtIso,
+    ctx.endsAtIso,
+    ctx.timezone
+  );
   return `
 Class: ${ctx.sessionTitle}
-When: ${ctx.startsAtIso}${ctx.endsAtIso ? ` – ${ctx.endsAtIso}` : ""} (${ctx.timezone})
+${schedule}
+
 Location: ${ctx.location || "TBA"}
 
 View details: ${ctx.portalSessionUrl}
@@ -84,8 +92,8 @@ export function notifyTrainingAttendee(
 
   switch (kind) {
     case "registration_confirmed":
-      subject = `You’re registered: ${ctx.sessionTitle}`;
-      body += `You’re confirmed for this class:\n\n${block}\n\nWe look forward to seeing you.`;
+      subject = `You’re signed up: ${ctx.sessionTitle}`;
+      body += `You’ve signed up for this class. Payment is handled offline (for example by purchase order); your OMNI representative will follow up as needed.\n\n${block}\n\nWe look forward to seeing you.`;
       break;
     case "waitlist_joined":
       subject = `Waitlist: ${ctx.sessionTitle}`;
@@ -96,20 +104,24 @@ export function notifyTrainingAttendee(
       body += `If a seat opens, we’ll email you.`;
       break;
     case "promoted_from_waitlist":
-      subject = `A seat opened — you’re confirmed: ${ctx.sessionTitle}`;
-      body += `Good news — a seat opened and you’re now confirmed:\n\n${block}`;
+      subject = `A seat opened — you’re signed up: ${ctx.sessionTitle}`;
+      body += `Good news — a seat opened and your signup is confirmed:\n\n${block}`;
       break;
     case "registration_cancelled_self":
-      subject = `Registration cancelled: ${ctx.sessionTitle}`;
-      body += `You’ve cancelled your registration for:\n\n${block}`;
+      subject = `Signup cancelled: ${ctx.sessionTitle}`;
+      body += `You’ve cancelled your signup for:\n\n${block}`;
       break;
     case "removed_by_admin":
       subject = `Update: ${ctx.sessionTitle}`;
-      body += `You’re no longer registered or on the waitlist for this class:\n\n${block}\n\nIf this was unexpected, contact your OMNI representative.`;
+      body += `You’re no longer signed up or on the waitlist for this class:\n\n${block}\n\nIf this was unexpected, contact your OMNI representative.`;
       break;
     case "session_cancelled":
       subject = `Cancelled: ${ctx.sessionTitle}`;
-      body += `This scheduled class has been cancelled:\n\n${ctx.sessionTitle}\nStarts (was): ${ctx.startsAtIso}\n\nWe’re sorry for the inconvenience. For questions, reply to this email or contact support.`;
+      body += `This scheduled class has been cancelled:\n\n${ctx.sessionTitle}\n\n${formatTrainingScheduleEmailBlock(
+        ctx.startsAtIso,
+        ctx.endsAtIso,
+        ctx.timezone
+      )}\n\nLocation: ${ctx.location || "TBA"}\n\nWe’re sorry for the inconvenience. For questions, reply to this email or contact support.`;
       break;
     case "session_updated":
       subject = `Schedule update: ${ctx.sessionTitle}`;
@@ -146,9 +158,9 @@ export function notifyInternalTrainingSignup(
   const recipients = toEmails.length > 0 ? toEmails : inbox ? [inbox] : [];
   if (recipients.length === 0) return;
   const name = params.attendeeName || params.attendeeEmail;
-  const subject = `Training: ${params.status === "registered" ? "Registration" : "Waitlist"} — ${params.sessionTitle}`;
+  const subject = `Training: ${params.status === "registered" ? "New signup" : "Waitlist"} — ${params.sessionTitle}`;
   const text = `
-${params.status === "registered" ? "New registration" : "New waitlist signup"}
+${params.status === "registered" ? "New class signup" : "New waitlist signup"}
 
 Attendee: ${name} <${params.attendeeEmail}>
 Class: ${params.sessionTitle}

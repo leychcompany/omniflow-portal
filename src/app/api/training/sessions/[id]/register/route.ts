@@ -7,6 +7,7 @@ import {
   notifyTrainingAttendee,
 } from "@/lib/training-notify-email";
 import { getSessionDisplayTitle, loadUserNotifyFields } from "@/lib/training-session-queries";
+import { trainingSessionCannotSelfServeSignup } from "@/lib/training-session-public";
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const auth = await verifyAuth(req);
@@ -14,6 +15,27 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   try {
     const { id: sessionId } = await params;
+
+    const { data: gate, error: gateErr } = await supabaseAdmin
+      .from("training_sessions")
+      .select("status, registration_closes_at")
+      .eq("id", sessionId)
+      .single();
+    if (gateErr || !gate) {
+      return NextResponse.json({ error: "Session not found" }, { status: 404 });
+    }
+    if (
+      trainingSessionCannotSelfServeSignup(
+        gate.status as string,
+        gate.registration_closes_at as string | null
+      )
+    ) {
+      return NextResponse.json(
+        { error: "Signup is not available for this class." },
+        { status: 400 }
+      );
+    }
+
     const { data: rows, error } = await supabaseAdmin.rpc("register_for_training_session", {
       p_session_id: sessionId,
       p_user_id: auth.userId,
@@ -21,7 +43,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
     if (error) {
       console.error("register_for_training_session:", error);
-      return NextResponse.json({ error: error.message || "Registration failed" }, { status: 500 });
+      return NextResponse.json({ error: error.message || "Signup failed" }, { status: 500 });
     }
 
     const row = (Array.isArray(rows) ? rows[0] : rows) as Record<string, unknown> | undefined | null;
@@ -72,14 +94,14 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       waitlist_position: wlPos ?? null,
       message:
         regStatus === "registered"
-          ? "You’re registered for this class."
+          ? "You’re signed up for this class."
           : regStatus === "waitlisted"
             ? "You’re on the waitlist."
             : "OK",
     });
   } catch (e: unknown) {
     console.error("POST register:", e);
-    return NextResponse.json({ error: "Registration failed" }, { status: 500 });
+    return NextResponse.json({ error: "Signup failed" }, { status: 500 });
   }
 }
 

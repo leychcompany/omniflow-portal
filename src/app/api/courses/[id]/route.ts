@@ -86,12 +86,6 @@ export async function PATCH(
           ? body.format.trim()
           : null;
     }
-    if ("location" in body) {
-      patch.location =
-        typeof body.location === "string" && body.location.trim()
-          ? body.location.trim()
-          : null;
-    }
     if ("prerequisite_course_id" in body) {
       const preRaw = body.prerequisite_course_id;
       if (preRaw === null || preRaw === undefined || preRaw === "") {

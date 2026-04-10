@@ -6,7 +6,7 @@ const bodySchema = z.object({
   email: z.string().email(),
   phone: z.string().optional().nullable(),
   company: z.string().optional().nullable(),
-  courseId: z.string().min(1),
+  courseId: z.string().optional().nullable(),
   message: z.string().optional().nullable(),
 })
 
@@ -36,25 +36,26 @@ export async function POST(req: Request) {
   }
 
   const data = parsed.data
+  const courseOrTopic = data.courseId?.trim() ? data.courseId.trim() : 'General inquiry'
 
   const text = `
-Training request received
+Training center — contact form
 
 Name: ${data.name}
 Email: ${data.email}
 Phone: ${data.phone || 'N/A'}
 Company: ${data.company || 'N/A'}
-Course: ${data.courseId}
+Course / topic: ${courseOrTopic}
 
-Notes:
-${data.message || 'N/A'}
+Message:
+${data.message?.trim() || 'N/A'}
 `
 
   const emailPayload = {
     from: TRAINING_REQUEST_FROM,
     to: [TRAINING_REQUEST_TO],
     reply_to: data.email,
-    subject: `Training request: ${data.courseId} - ${data.name}`,
+    subject: `Training center inquiry: ${courseOrTopic} — ${data.name}`,
     text,
   }
 

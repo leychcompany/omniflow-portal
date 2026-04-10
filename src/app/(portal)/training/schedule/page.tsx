@@ -3,23 +3,25 @@
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { TrainingHubNav } from '@/components/portal/training-hub-nav'
 import { TrainingSkeleton } from '@/components/portal/skeletons'
-import { Calendar, User } from 'lucide-react'
+import { Calendar } from 'lucide-react'
+import { formatTrainingSessionListSummary } from '@/lib/format-training-session-schedule'
+import {
+  isTrainingSessionSignupBlockedByStatus,
+  publicTrainingSessionStatusLabel,
+} from '@/lib/training-session-public'
 
 interface UpcomingSession {
   id: string
   title: string
   description: string | null
-  instructor?: string | null
   starts_at: string
+  ends_at: string | null
   timezone: string
   location: string
-  spots_remaining: number
-  waitlist_enabled: boolean
-  registered_count: number
-  capacity: number
   status: string
 }
 
@@ -107,10 +109,15 @@ export default function TrainingSchedulePage() {
             <CardContent className="p-8 text-center text-slate-600 dark:text-zinc-400">
               <Calendar className="mx-auto mb-4 h-12 w-12 opacity-40" />
               <p className="font-medium text-slate-800 dark:text-zinc-200">No upcoming classes</p>
-              <p className="mt-2 text-sm">Check back later or request training for a course.</p>
-              <Button asChild className="mt-6 bg-blue-600 text-white hover:bg-blue-700">
-                <Link href="/training">Browse courses</Link>
-              </Button>
+              <p className="mt-2 text-sm">Check back later, or get in touch for help, information, or a quote.</p>
+              <div className="mt-6 flex flex-wrap justify-center gap-3">
+                <Button asChild className="bg-blue-600 text-white hover:bg-blue-700">
+                  <Link href="/training">Browse courses</Link>
+                </Button>
+                <Button asChild variant="outline">
+                  <Link href="/training/request">Support & quotes</Link>
+                </Button>
+              </div>
             </CardContent>
           </Card>
         ) : (
@@ -120,38 +127,51 @@ export default function TrainingSchedulePage() {
                 {label}
               </h2>
               <ul className="space-y-3">
-                {items.map((s) => (
+                {items.map((s) => {
+                  const signupBlocked = isTrainingSessionSignupBlockedByStatus(s.status)
+                  return (
                   <li key={s.id}>
                     <Card className="border border-slate-200 dark:border-white/[0.08] shadow-sm transition-shadow hover:shadow-md">
                       <CardContent className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between">
                         <div className="min-w-0 space-y-1">
-                          <h3 className="font-semibold text-slate-900 dark:text-zinc-100">{s.title}</h3>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <h3 className="font-semibold text-slate-900 dark:text-zinc-100">{s.title}</h3>
+                            {signupBlocked && (
+                              <Badge variant="outline" className="font-normal capitalize shrink-0">
+                                {publicTrainingSessionStatusLabel(s.status)}
+                              </Badge>
+                            )}
+                          </div>
                           <p className="text-sm text-slate-600 dark:text-zinc-400">
-                            {new Date(s.starts_at).toLocaleString(undefined, {
-                              timeStyle: 'short',
-                              timeZone: s.timezone || undefined,
-                            })}{' '}
-                            <span className="text-slate-400 dark:text-zinc-600">·</span>{' '}
+                            {formatTrainingSessionListSummary(s.starts_at, s.ends_at, s.timezone, undefined)}
+                            <span className="text-slate-400 dark:text-zinc-600"> · </span>
                             {s.location || 'TBA'}
                           </p>
-                          {s.instructor && (
-                            <p className="text-xs text-slate-500 dark:text-zinc-500 flex items-center gap-1">
-                              <User className="h-3.5 w-3.5 shrink-0" />
-                              {s.instructor}
-                            </p>
-                          )}
-                          <p className="text-xs text-slate-500 dark:text-zinc-500">
-                            {s.registered_count}/{s.capacity} enrolled
-                            {s.spots_remaining <= 0 && s.waitlist_enabled && ' · waitlist open'}
-                          </p>
                         </div>
-                        <Button asChild className="shrink-0 bg-blue-600 text-white hover:bg-blue-700">
-                          <Link href={`/training/sessions/${s.id}`}>View & register</Link>
-                        </Button>
+                        <div className="flex shrink-0 flex-col items-stretch gap-2 sm:items-end">
+                          {signupBlocked ? (
+                            <>
+                              <Button type="button" disabled variant="secondary" className="w-full sm:w-auto">
+                                Signup unavailable
+                              </Button>
+                              <Link
+                                href={`/training/sessions/${s.id}`}
+                                className="text-center text-sm font-medium text-blue-600 hover:underline dark:text-blue-400 sm:text-right"
+                              >
+                                View class details
+                              </Link>
+                            </>
+                          ) : (
+                            <Button asChild className="bg-blue-600 text-white hover:bg-blue-700">
+                              <Link href={`/training/sessions/${s.id}`}>View & sign up</Link>
+                            </Button>
+                          )}
+                        </div>
                       </CardContent>
                     </Card>
                   </li>
-                ))}
+                  )
+                })}
               </ul>
             </section>
           ))

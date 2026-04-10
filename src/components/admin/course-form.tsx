@@ -31,7 +31,6 @@ type CourseFormState = {
   price: string;
   early_bird_price: string;
   format: string;
-  location: string;
   prerequisite_course_id: string;
 };
 
@@ -47,7 +46,6 @@ const emptyCreateState = (): CourseFormState => ({
   price: "",
   early_bird_price: "",
   format: "",
-  location: "",
   prerequisite_course_id: "",
 });
 
@@ -116,7 +114,6 @@ export function CourseForm(props: CourseFormProps) {
           early_bird_price:
             data.early_bird_price != null ? String(data.early_bird_price) : "",
           format: data.format ?? "",
-          location: data.location ?? "",
           prerequisite_course_id: data.prerequisite_course_id ?? "",
         });
         setThumbnailPreviewFailed(false);
@@ -182,7 +179,6 @@ export function CourseForm(props: CourseFormProps) {
         early_bird_price:
           form.early_bird_price.trim() === "" ? null : form.early_bird_price.trim(),
         format: form.format.trim() || null,
-        location: form.location.trim() || null,
         prerequisite_course_id: form.prerequisite_course_id.trim() || null,
       };
 
@@ -428,23 +424,6 @@ export function CourseForm(props: CourseFormProps) {
               />
               <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
                 How long the course runs—not the same as format above.
-              </p>
-            </div>
-            <div>
-              <label className="mb-2 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                Location
-              </label>
-              <Input
-                placeholder="e.g. Houston, TX · Training center · Online"
-                value={form.location}
-                onChange={(e) =>
-                  setForm((f) => (f ? { ...f, location: e.target.value } : f))
-                }
-                className="h-11"
-                disabled={disabled}
-              />
-              <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                Where the course is usually held, if applicable.
               </p>
             </div>
             <div>

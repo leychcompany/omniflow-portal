@@ -23,7 +23,6 @@ export interface Course {
   price?: number | null
   early_bird_price?: number | null
   format?: string | null
-  location?: string | null
   prerequisite_course_id?: string | null
 }
 

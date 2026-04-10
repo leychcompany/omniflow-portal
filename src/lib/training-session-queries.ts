@@ -5,7 +5,6 @@ export interface TrainingSessionRow {
   course_id: string | null;
   title: string | null;
   description: string | null;
-  instructor?: string | null;
   starts_at: string;
   ends_at: string | null;
   timezone: string;

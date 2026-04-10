@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyAdmin } from "@/lib/admin-auth";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { DEFAULT_TRAINING_TIMEZONE } from "@/lib/training-timezones";
 import { countRegistrations, getSessionDisplayTitle } from "@/lib/training-session-queries";
 
 export async function GET(req: NextRequest) {
@@ -49,10 +50,9 @@ export async function POST(req: NextRequest) {
       course_id = null,
       title = null,
       description = null,
-      instructor = null,
       starts_at,
       ends_at = null,
-      timezone = "America/Chicago",
+      timezone = DEFAULT_TRAINING_TIMEZONE,
       location = "",
       capacity,
       status = "draft",
@@ -75,7 +75,6 @@ export async function POST(req: NextRequest) {
         course_id: course_id || null,
         title: title || null,
         description,
-        instructor: instructor ?? null,
         starts_at,
         ends_at,
         timezone,

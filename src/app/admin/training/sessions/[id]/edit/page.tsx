@@ -8,6 +8,10 @@ import { Input } from '@/components/ui/input'
 import { fetchWithAdminAuth } from '@/lib/admin-fetch'
 import { ArrowLeft, Loader2, Trash2, Download, UserPlus } from 'lucide-react'
 import { toast } from 'sonner'
+import {
+  DEFAULT_TRAINING_TIMEZONE,
+  trainingTimezoneSelectOptions,
+} from '@/lib/training-timezones'
 
 function toLocalInput(iso: string | null | undefined): string {
   if (!iso) return ''
@@ -53,10 +57,9 @@ export default function EditTrainingSessionPage() {
     course_id: '',
     title: '',
     description: '',
-    instructor: '',
     starts_at: '',
     ends_at: '',
-    timezone: 'America/Chicago',
+    timezone: DEFAULT_TRAINING_TIMEZONE,
     location: '',
     capacity: 12,
     status: 'open',
@@ -112,10 +115,9 @@ export default function EditTrainingSessionPage() {
           course_id: (row.course_id as string) || '',
           title: (row.title as string) || '',
           description: (row.description as string) || '',
-          instructor: (row.instructor as string) || '',
           starts_at: toLocalInput(row.starts_at as string),
           ends_at: toLocalInput(row.ends_at as string),
-          timezone: (row.timezone as string) || 'America/Chicago',
+          timezone: (row.timezone as string) || DEFAULT_TRAINING_TIMEZONE,
           location: (row.location as string) || '',
           capacity: row.capacity as number,
           status: row.status as string,
@@ -207,7 +209,6 @@ export default function EditTrainingSessionPage() {
           course_id: form.course_id || null,
           title: form.title || null,
           description: form.description || null,
-          instructor: form.instructor.trim() || null,
           starts_at: starts,
           ends_at: ends,
           timezone: form.timezone,
@@ -358,20 +359,21 @@ export default function EditTrainingSessionPage() {
         </div>
         <div>
           <label className="text-sm font-medium">Timezone</label>
-          <Input value={form.timezone} onChange={(e) => setForm((f) => ({ ...f, timezone: e.target.value }))} className="mt-1" />
+          <select
+            className="mt-1 w-full h-10 rounded-lg border border-zinc-200 dark:border-white/[0.12] bg-white dark:bg-[#141414] px-3 text-sm"
+            value={form.timezone}
+            onChange={(e) => setForm((f) => ({ ...f, timezone: e.target.value }))}
+          >
+            {trainingTimezoneSelectOptions(form.timezone).map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </select>
         </div>
         <div>
           <label className="text-sm font-medium">Location</label>
           <Input value={form.location} onChange={(e) => setForm((f) => ({ ...f, location: e.target.value }))} className="mt-1" />
-        </div>
-        <div>
-          <label className="text-sm font-medium">Instructor (this session)</label>
-          <Input
-            value={form.instructor}
-            onChange={(e) => setForm((f) => ({ ...f, instructor: e.target.value }))}
-            className="mt-1"
-            placeholder="Who is teaching this instance"
-          />
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
@@ -400,7 +402,7 @@ export default function EditTrainingSessionPage() {
           </div>
         </div>
         <div>
-          <label className="text-sm font-medium">Registration closes</label>
+          <label className="text-sm font-medium">Signup closes</label>
           <Input
             type="datetime-local"
             value={form.registration_closes_at}
@@ -438,7 +440,7 @@ export default function EditTrainingSessionPage() {
             Add portal member
           </div>
           <p className="text-xs text-zinc-600 dark:text-zinc-400 mb-3">
-            Search existing accounts (they must already appear under Admin → Users). They are enrolled like a self-registration and receive the same confirmation email. Attendance (scheduled vs confirmed) tracks commitment and is separate from registered vs waitlist.
+            Search existing accounts (they must already appear under Admin → Users). They are added like a portal signup and receive the same confirmation email. Attendance (scheduled vs confirmed) tracks commitment and is separate from roster vs waitlist.
           </p>
           <div className="relative max-w-lg">
             <Input
@@ -476,7 +478,7 @@ export default function EditTrainingSessionPage() {
         {regsLoading ? (
           <p className="text-sm text-zinc-500">Loading roster…</p>
         ) : regs.length === 0 ? (
-          <p className="text-sm text-zinc-500">No active registrations.</p>
+          <p className="text-sm text-zinc-500">No one on the roster yet.</p>
         ) : (
           <>
             <div className="md:hidden space-y-3">

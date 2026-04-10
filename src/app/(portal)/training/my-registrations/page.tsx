@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { fetchWithAuthRetry } from '@/lib/fetch-with-auth'
-import { ArrowLeft, Calendar, User } from 'lucide-react'
+import { ArrowLeft, Calendar } from 'lucide-react'
+import { formatTrainingScheduleParts } from '@/lib/format-training-session-schedule'
 import { TrainingSkeleton } from '@/components/portal/skeletons'
 
 interface Item {
@@ -15,8 +16,8 @@ interface Item {
   session: {
     id: string
     title: string
-    instructor?: string | null
     starts_at: string
+    ends_at: string | null
     location: string
     timezone: string
     status: string
@@ -35,7 +36,7 @@ export default function MyTrainingRegistrationsPage() {
         return res.json()
       })
       .then((data) => setItems(data.items ?? []))
-      .catch(() => setError('Could not load your registrations'))
+      .catch(() => setError('Could not load your classes'))
       .finally(() => setLoading(false))
   }, [])
 
@@ -55,37 +56,44 @@ export default function MyTrainingRegistrationsPage() {
       {error && <p className="text-red-600 dark:text-red-400 text-sm">{error}</p>}
 
       {!error && items.length === 0 && (
-        <p className="text-slate-600 dark:text-zinc-400 text-sm">You have no upcoming registrations.</p>
+        <p className="text-slate-600 dark:text-zinc-400 text-sm">You have no upcoming class signups.</p>
       )}
 
       <div className="space-y-4">
         {items.map((row) => {
-          const when = new Date(row.session.starts_at).toLocaleString(undefined, {
-            dateStyle: 'medium',
-            timeStyle: 'short',
-            timeZone: row.session.timezone || undefined,
-          })
+          const sched = formatTrainingScheduleParts(
+            row.session.starts_at,
+            row.session.ends_at,
+            row.session.timezone,
+            undefined
+          )
           return (
             <Card key={row.registration_id}>
               <CardHeader className="pb-2">
                 <div className="flex items-start justify-between gap-2">
                   <CardTitle className="text-lg">{row.session.title}</CardTitle>
                   <Badge variant={row.status === 'registered' ? 'default' : 'outline'}>
-                    {row.status === 'registered' ? 'Registered' : 'Waitlist'}
+                    {row.status === 'registered' ? 'Signed up' : 'Waitlist'}
                   </Badge>
                 </div>
               </CardHeader>
               <CardContent className="space-y-3 text-sm text-slate-600 dark:text-zinc-400">
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4" />
-                  {when}
-                </div>
-                {row.session.instructor && (
-                  <div className="flex items-center gap-2">
-                    <User className="h-4 w-4" />
-                    {row.session.instructor}
+                <div className="flex gap-2">
+                  <Calendar className="h-4 w-4 shrink-0 mt-0.5" aria-hidden />
+                  <div className="min-w-0 space-y-0.5">
+                    <p>
+                      <span className="font-medium text-slate-800 dark:text-zinc-200">Starts</span> ·{' '}
+                      {sched.startDisplay}
+                    </p>
+                    {sched.endDisplay && (
+                      <p>
+                        <span className="font-medium text-slate-800 dark:text-zinc-200">Ends</span> ·{' '}
+                        {sched.endDisplay}
+                      </p>
+                    )}
+                    <p className="text-xs text-slate-500 dark:text-zinc-500">{sched.timezoneNote}</p>
                   </div>
-                )}
+                </div>
                 <p>{row.session.location}</p>
                 <Button asChild size="sm" variant="outline">
                   <Link href={`/training/sessions/${row.session.id}`}>View class</Link>

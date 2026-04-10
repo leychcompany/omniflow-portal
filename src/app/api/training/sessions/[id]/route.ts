@@ -13,13 +13,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       return NextResponse.json({ error: "Session not found" }, { status: 404 });
     }
 
-    if (["draft", "cancelled", "closed"].includes(row.status as string)) {
+    if (row.status === "draft") {
       return NextResponse.json({ error: "Session not available" }, { status: 404 });
-    }
-
-    const closes = row.registration_closes_at as string | null;
-    if (closes && new Date(closes).getTime() <= Date.now()) {
-      return NextResponse.json({ error: "Registration closed" }, { status: 404 });
     }
 
     const counts = await countRegistrations(id);
@@ -44,7 +39,6 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       topics: string | null;
       duration: string | null;
       format: string | null;
-      location: string | null;
       thumbnail: string | null;
       featured: boolean;
       price: number | null;
@@ -69,7 +63,6 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
           topics: (c.topics as string | null) ?? null,
           duration: (c.duration as string | null) ?? null,
           format: (c.format as string | null) ?? null,
-          location: (c.location as string | null) ?? null,
           thumbnail: (c.thumbnail as string | null) ?? null,
           featured: !!c.featured,
           price: c.price != null ? Number(c.price) : null,
@@ -84,7 +77,6 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       course_id: row.course_id,
       title: displayTitle,
       description: row.description,
-      instructor: row.instructor ?? null,
       starts_at: row.starts_at,
       ends_at: row.ends_at,
       timezone: row.timezone,

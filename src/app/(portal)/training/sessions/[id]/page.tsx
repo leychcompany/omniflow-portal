@@ -7,10 +7,16 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { fetchWithAuthRetry } from '@/lib/fetch-with-auth'
-import { ArrowLeft, Loader2, MapPin, Calendar, Users, User, Video } from 'lucide-react'
+import { ArrowLeft, Loader2, MapPin, Calendar, Video } from 'lucide-react'
 import { TrainingSkeleton } from '@/components/portal/skeletons'
 import { SafeHtml } from '@/components/portal/safe-html'
 import { stripHtml } from '@/lib/strip-html'
+import { formatTrainingScheduleParts } from '@/lib/format-training-session-schedule'
+import {
+  isTrainingSessionSignupBlockedByStatus,
+  publicTrainingSessionStatusLabel,
+  trainingSessionCannotSelfServeSignup,
+} from '@/lib/training-session-public'
 
 interface CourseForSession {
   id: string
@@ -19,7 +25,6 @@ interface CourseForSession {
   topics: string | null
   duration: string | null
   format: string | null
-  location: string | null
   thumbnail: string | null
   featured: boolean
   price: number | null
@@ -31,16 +36,13 @@ interface SessionDetail {
   id: string
   title: string
   description: string | null
-  instructor?: string | null
   starts_at: string
   ends_at: string | null
   timezone: string
   location: string
-  capacity: number
   status: string
+  registration_closes_at: string | null
   waitlist_enabled: boolean
-  registered_count: number
-  waitlisted_count: number
   spots_remaining: number
   my_registration: { id: string; status: string } | null
   course?: CourseForSession | null
@@ -93,7 +95,7 @@ export default function TrainingSessionDetailPage() {
     try {
       const res = await fetchWithAuthRetry(`/api/training/sessions/${id}/register`, { method: 'POST' })
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Could not register')
+      if (!res.ok) throw new Error(data.error || 'Could not complete signup')
       refresh()
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Error')
@@ -109,7 +111,7 @@ export default function TrainingSessionDetailPage() {
     try {
       const res = await fetchWithAuthRetry(`/api/training/sessions/${id}/register`, { method: 'DELETE' })
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Could not cancel')
+      if (!res.ok) throw new Error(data.error || 'Could not cancel signup')
       refresh()
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Error')
@@ -131,13 +133,18 @@ export default function TrainingSessionDetailPage() {
   }
   if (!session) return null
 
-  const when = new Date(session.starts_at).toLocaleString(undefined, {
-    dateStyle: 'full',
-    timeStyle: 'short',
-    timeZone: session.timezone || undefined,
-  })
+  const schedule = formatTrainingScheduleParts(
+    session.starts_at,
+    session.ends_at,
+    session.timezone,
+    undefined
+  )
 
   const mine = session.my_registration
+  const signupClosed = trainingSessionCannotSelfServeSignup(
+    session.status,
+    session.registration_closes_at
+  )
 
   return (
     <div className="max-w-3xl mx-auto w-full py-6 space-y-6">
@@ -151,9 +158,16 @@ export default function TrainingSessionDetailPage() {
       <Card>
         <CardHeader>
           <div className="flex flex-wrap items-start justify-between gap-3">
-            <CardTitle className="text-2xl">{session.title}</CardTitle>
+            <div className="space-y-2 min-w-0">
+              <CardTitle className="text-2xl">{session.title}</CardTitle>
+              {isTrainingSessionSignupBlockedByStatus(session.status) && (
+                <Badge variant="outline" className="font-normal capitalize">
+                  {publicTrainingSessionStatusLabel(session.status)}
+                </Badge>
+              )}
+            </div>
             {mine?.status === 'registered' && (
-              <Badge className="bg-emerald-100 dark:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300">Registered</Badge>
+              <Badge className="bg-emerald-100 dark:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300">Signed up</Badge>
             )}
             {mine?.status === 'waitlisted' && (
               <Badge variant="outline" className="border-amber-300 dark:border-amber-500/40">Waitlisted</Badge>
@@ -163,26 +177,25 @@ export default function TrainingSessionDetailPage() {
         <CardContent className="space-y-4">
           <div className="flex flex-col gap-2 text-sm text-slate-700 dark:text-zinc-300">
             <div className="flex items-start gap-2">
-              <Calendar className="h-4 w-4 mt-0.5 shrink-0 text-blue-500" />
-              <span>{when} ({session.timezone})</span>
+              <Calendar className="h-4 w-4 mt-0.5 shrink-0 text-blue-500" aria-hidden />
+              <div className="min-w-0 space-y-1">
+                <p>
+                  <span className="font-medium text-slate-800 dark:text-zinc-200">Starts</span>
+                  <span className="text-slate-600 dark:text-zinc-400"> · {schedule.startDisplay}</span>
+                </p>
+                {schedule.endDisplay && (
+                  <p>
+                    <span className="font-medium text-slate-800 dark:text-zinc-200">Ends</span>
+                    <span className="text-slate-600 dark:text-zinc-400"> · {schedule.endDisplay}</span>
+                  </p>
+                )}
+                <p className="text-xs text-slate-500 dark:text-zinc-500">{schedule.timezoneNote}</p>
+              </div>
             </div>
             <div className="flex items-start gap-2">
               <MapPin className="h-4 w-4 mt-0.5 shrink-0 text-blue-500" />
               <span>{session.location || 'TBA'}</span>
             </div>
-            <div className="flex items-center gap-2">
-              <Users className="h-4 w-4 shrink-0 text-blue-500" />
-              <span>
-                {session.registered_count} / {session.capacity} enrolled
-                {session.waitlisted_count > 0 && ` · ${session.waitlisted_count} on waitlist`}
-              </span>
-            </div>
-            {session.instructor && (
-              <div className="flex items-start gap-2">
-                <User className="h-4 w-4 mt-0.5 shrink-0 text-blue-500" />
-                <span>Instructor: {session.instructor}</span>
-              </div>
-            )}
           </div>
 
           {session.description && (
@@ -194,22 +207,34 @@ export default function TrainingSessionDetailPage() {
           )}
 
           <div className="flex flex-wrap gap-3 pt-2">
-            {!mine && session.spots_remaining > 0 && (
+            {!mine && !signupClosed && session.spots_remaining > 0 && (
               <Button onClick={register} disabled={actionLoading} className="bg-blue-600 hover:bg-blue-700">
-                {actionLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Register'}
+                {actionLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Sign up'}
               </Button>
             )}
-            {!mine && session.spots_remaining <= 0 && session.waitlist_enabled && (
+            {!mine && !signupClosed && session.spots_remaining <= 0 && session.waitlist_enabled && (
               <Button onClick={register} disabled={actionLoading} variant="secondary">
                 {actionLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Join waitlist'}
               </Button>
             )}
+            {!mine && signupClosed && (
+              <p className="text-sm text-slate-600 dark:text-zinc-400">
+                {isTrainingSessionSignupBlockedByStatus(session.status)
+                  ? `This class is ${publicTrainingSessionStatusLabel(session.status).toLowerCase()}. Signup is not available.`
+                  : 'Signup for this class has closed.'}
+              </p>
+            )}
             {mine && (
               <Button onClick={cancel} disabled={actionLoading} variant="outline">
-                {mine.status === 'waitlisted' ? 'Leave waitlist' : 'Cancel registration'}
+                {mine.status === 'waitlisted' ? 'Leave waitlist' : 'Cancel signup'}
               </Button>
             )}
           </div>
+          {!mine && !signupClosed && (session.spots_remaining > 0 || (session.spots_remaining <= 0 && session.waitlist_enabled)) && (
+            <p className="text-xs text-slate-500 dark:text-zinc-500">
+              Signing up reserves your spot; payment is handled offline (for example by purchase order).
+            </p>
+          )}
         </CardContent>
       </Card>
 
@@ -258,12 +283,6 @@ export default function TrainingSessionDetailPage() {
                     {session.course.title}
                   </Link>
                 </h2>
-                {session.course.location?.trim() && (
-                  <p className="flex items-start gap-2 text-sm text-slate-600 dark:text-zinc-400">
-                    <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-blue-500" aria-hidden />
-                    <span>{session.course.location.trim()}</span>
-                  </p>
-                )}
                 {(session.course.price != null || session.course.early_bird_price != null) && (
                   <p className="text-sm text-slate-700 dark:text-zinc-300">
                     {session.course.price != null && (

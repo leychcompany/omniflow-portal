@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { Calendar, List, LayoutGrid } from 'lucide-react'
+import { Calendar, List, LayoutGrid, MessageSquare } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 type TrainingHubTab = 'courses' | 'schedule'
@@ -18,7 +18,7 @@ export function TrainingHubNav({ activeTab }: TrainingHubNavProps) {
         <div>
           <h1 className="mb-2 text-3xl font-bold text-slate-900 dark:text-zinc-100">Training Center</h1>
           <p className="text-lg text-slate-600 dark:text-zinc-400">
-            Browse courses and register for upcoming classes
+            Browse courses and sign up for upcoming classes
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -30,8 +30,8 @@ export function TrainingHubNav({ activeTab }: TrainingHubNavProps) {
           </Button>
           <Button asChild className="bg-blue-600 text-white shadow-lg shadow-blue-500/25 hover:bg-blue-700">
             <Link href="/training/request">
-              <Calendar className="mr-2 h-4 w-4" />
-              Schedule training
+              <MessageSquare className="mr-2 h-4 w-4" />
+              Support & quotes
             </Link>
           </Button>
         </div>

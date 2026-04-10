@@ -8,6 +8,10 @@ import { Input } from '@/components/ui/input'
 import { fetchWithAdminAuth } from '@/lib/admin-fetch'
 import { ArrowLeft, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
+import {
+  DEFAULT_TRAINING_TIMEZONE,
+  trainingTimezoneSelectOptions,
+} from '@/lib/training-timezones'
 
 function toLocalInput(iso: string): string {
   const d = new Date(iso)
@@ -34,10 +38,9 @@ function NewTrainingSessionPageInner() {
     course_id: '',
     title: '',
     description: '',
-    instructor: '',
     starts_at: toLocalInput(defaultStart.toISOString()),
     ends_at: '',
-    timezone: 'America/Chicago',
+    timezone: DEFAULT_TRAINING_TIMEZONE,
     location: '',
     capacity: 12,
     status: 'open',
@@ -77,10 +80,9 @@ function NewTrainingSessionPageInner() {
           course_id: (data.course_id as string | null) ? String(data.course_id) : '',
           title: (data.title as string | null) ?? '',
           description: (data.description as string | null) ?? '',
-          instructor: ((data.instructor as string | null) ?? '').trim(),
           starts_at: toLocalInput(newStartIso),
           ends_at: newEndIso ? toLocalInput(newEndIso) : '',
-          timezone: (data.timezone as string) || 'America/Chicago',
+          timezone: (data.timezone as string) || DEFAULT_TRAINING_TIMEZONE,
           location: (data.location as string) ?? '',
           capacity: Math.max(1, Number(data.capacity) || 12),
           status: duplicateStatus(String(data.status)),
@@ -111,7 +113,6 @@ function NewTrainingSessionPageInner() {
           course_id: form.course_id || null,
           title: form.title || null,
           description: form.description || null,
-          instructor: form.instructor.trim() || null,
           starts_at: starts,
           ends_at: ends,
           timezone: form.timezone,
@@ -125,7 +126,7 @@ function NewTrainingSessionPageInner() {
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed')
       toast.success('Class created')
-      router.push('/admin/training')
+      router.push('/admin/training/sessions')
     } catch (e: unknown) {
       toast.error(e instanceof Error ? e.message : 'Failed')
     } finally {
@@ -198,20 +199,21 @@ function NewTrainingSessionPageInner() {
         </div>
         <div>
           <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Timezone</label>
-          <Input value={form.timezone} onChange={(e) => setForm((f) => ({ ...f, timezone: e.target.value }))} className="mt-1" />
+          <select
+            className="mt-1 w-full h-10 rounded-lg border border-zinc-200 dark:border-white/[0.12] bg-white dark:bg-[#141414] px-3 text-sm"
+            value={form.timezone}
+            onChange={(e) => setForm((f) => ({ ...f, timezone: e.target.value }))}
+          >
+            {trainingTimezoneSelectOptions(form.timezone).map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </select>
         </div>
         <div>
           <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Location</label>
           <Input value={form.location} onChange={(e) => setForm((f) => ({ ...f, location: e.target.value }))} className="mt-1" />
-        </div>
-        <div>
-          <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Instructor (this session)</label>
-          <Input
-            value={form.instructor}
-            onChange={(e) => setForm((f) => ({ ...f, instructor: e.target.value }))}
-            className="mt-1"
-            placeholder="e.g. Jane Smith"
-          />
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
@@ -241,7 +243,7 @@ function NewTrainingSessionPageInner() {
           </div>
         </div>
         <div>
-          <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Registration closes (local, optional)</label>
+          <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Signup closes (local, optional)</label>
           <Input
             type="datetime-local"
             value={form.registration_closes_at}

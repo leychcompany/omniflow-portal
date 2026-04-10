@@ -12,7 +12,6 @@ import type { BadgeProps } from '@/components/ui/badge'
 interface SessionRow {
   id: string
   display_title?: string
-  instructor?: string | null
   starts_at: string
   location: string
   status: string
@@ -89,7 +88,7 @@ export default function AdminTrainingSessionsPage() {
       {loading ? (
         <p className="text-sm text-zinc-500">Loading…</p>
       ) : sessions.length === 0 ? (
-        <p className="text-sm text-zinc-500">No sessions yet. Create one to allow portal registration.</p>
+        <p className="text-sm text-zinc-500">No sessions yet. Create one to allow portal signups.</p>
       ) : (
         <>
           <div className="md:hidden space-y-3">
@@ -114,12 +113,6 @@ export default function AdminTrainingSessionsPage() {
                     )}
                   </div>
                   <dl className="space-y-2 text-sm">
-                    <div>
-                      <dt className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">Instructor</dt>
-                      <dd className="text-zinc-700 dark:text-zinc-300 mt-0.5">
-                        {(s.instructor && s.instructor.trim()) || '—'}
-                      </dd>
-                    </div>
                     <div>
                       <dt className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">Starts</dt>
                       <dd className="text-zinc-700 dark:text-zinc-300 mt-0.5">{when}</dd>
@@ -168,9 +161,6 @@ export default function AdminTrainingSessionsPage() {
                   <th className="text-left py-3 px-4 font-medium text-zinc-600 dark:text-zinc-400 min-w-[12rem]">
                     Class
                   </th>
-                  <th className="text-left py-3 px-4 font-medium text-zinc-600 dark:text-zinc-400 hidden lg:table-cell w-[10rem]">
-                    Instructor
-                  </th>
                   <th className="text-left py-3 px-4 font-medium text-zinc-600 dark:text-zinc-400 whitespace-nowrap">
                     Starts
                   </th>
@@ -203,11 +193,6 @@ export default function AdminTrainingSessionsPage() {
                         ) : (
                           <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5">No location</p>
                         )}
-                      </td>
-                      <td className="py-3 px-4 text-zinc-600 dark:text-zinc-400 hidden lg:table-cell align-top">
-                        <span className="line-clamp-2 break-words" title={s.instructor?.trim() || undefined}>
-                          {(s.instructor && s.instructor.trim()) || '—'}
-                        </span>
                       </td>
                       <td className="py-3 px-4 text-zinc-600 dark:text-zinc-400 whitespace-nowrap align-top">
                         {new Date(s.starts_at).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })}

@@ -47,7 +47,6 @@ export async function POST(req: NextRequest) {
       price,
       early_bird_price,
       format,
-      location,
       prerequisite_course_id,
     } = body;
 
@@ -90,8 +89,6 @@ export async function POST(req: NextRequest) {
         early_bird_price: parseMoney(early_bird_price),
         format:
           typeof format === "string" && format.trim() ? format.trim() : null,
-        location:
-          typeof location === "string" && location.trim() ? location.trim() : null,
         prerequisite_course_id: preId,
       })
       .select()

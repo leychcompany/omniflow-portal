@@ -54,12 +54,8 @@ function TrainingRequestInner() {
   useEffect(() => {
     if (!courseOptions.length) return
     const initialCourse = searchParams.get('course')
-    const featured = courseOptions.find((c) => (c as { featured?: boolean }).featured) ?? courseOptions[0]
-    const defaultId = featured?.id ?? courseOptions[0]?.id ?? ''
-    if (initialCourse && courseOptions.find((c) => c.id === initialCourse)) {
+    if (initialCourse && courseOptions.some((c) => c.id === initialCourse)) {
       setForm((prev) => ({ ...prev, courseId: initialCourse }))
-    } else if (defaultId) {
-      setForm((prev) => ({ ...prev, courseId: prev.courseId || defaultId }))
     }
   }, [searchParams, courseOptions])
 
@@ -85,19 +81,17 @@ function TrainingRequestInner() {
         throw new Error((data as { error?: string }).error || 'Failed to send request')
       }
 
-      const defaultCourseId =
-        courseOptions.find((c) => (c as { featured?: boolean }).featured)?.id ?? courseOptions[0]?.id ?? ''
       setForm({
         name: '',
         email: '',
         phone: '',
         company: '',
-        courseId: defaultCourseId,
+        courseId: '',
         message: '',
       })
       setStatus('idle')
-      toast.success('Training request sent', {
-        description: "We've received your request and will get back to you soon.",
+      toast.success('Message sent', {
+        description: "We've received your message and will get back to you soon.",
       })
       router.push('/training')
     } catch (err: unknown) {
@@ -111,8 +105,10 @@ function TrainingRequestInner() {
         <Card className="border-0 shadow-lg">
           <CardHeader>
             <div>
-              <CardTitle className="text-xl text-slate-900 dark:text-zinc-100">Request Training</CardTitle>
-              <CardDescription className="text-slate-600 dark:text-zinc-400">Tell us which training you want and how to reach you.</CardDescription>
+              <CardTitle className="text-xl text-slate-900 dark:text-zinc-100">Support, information & quotes</CardTitle>
+              <CardDescription className="text-slate-600 dark:text-zinc-400">
+                Contact us for product support, training information, pricing, or a quote. Share how we can reach you and any details that help.
+              </CardDescription>
             </div>
           </CardHeader>
           <CardContent>
@@ -163,34 +159,40 @@ function TrainingRequestInner() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700 dark:text-zinc-300">Training Class</label>
+                <label className="text-sm font-medium text-slate-700 dark:text-zinc-300">
+                  Related course or topic <span className="font-normal text-slate-500 dark:text-zinc-500">(optional)</span>
+                </label>
                 <select
                   name="courseId"
                   value={form.courseId}
                   onChange={handleChange}
                   className="w-full p-3 border border-slate-200 dark:border-white/[0.12] rounded-lg bg-white dark:bg-white/[0.04] text-slate-900 dark:text-zinc-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  required
                   disabled={coursesLoading}
                 >
                   {coursesLoading ? (
-                    <option>Loading courses...</option>
+                    <option value="">Loading courses...</option>
                   ) : (
-                    courseOptions.map((course) => (
-                      <option key={course.id} value={course.id}>
-                        {course.title}
-                      </option>
-                    ))
+                    <>
+                      <option value="">— General inquiry —</option>
+                      {courseOptions.map((course) => (
+                        <option key={course.id} value={course.id}>
+                          {course.title}
+                        </option>
+                      ))}
+                    </>
                   )}
                 </select>
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700 dark:text-zinc-300">Notes</label>
+                <label className="text-sm font-medium text-slate-700 dark:text-zinc-300">
+                  How can we help? <span className="font-normal text-slate-500 dark:text-zinc-500">(optional)</span>
+                </label>
                 <textarea
                   name="message"
                   value={form.message}
                   onChange={handleChange}
-                  placeholder="Any specific goals, dates, or locations?"
+                  placeholder="e.g. support issue, question about a product, training dates, or what you need quoted"
                   rows={4}
                   className="w-full p-3 border border-slate-200 dark:border-white/[0.12] rounded-lg bg-white dark:bg-white/[0.04] text-slate-900 dark:text-zinc-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
@@ -207,7 +209,7 @@ function TrainingRequestInner() {
                   disabled={status === 'submitting'}
                 >
                   <Send className="h-4 w-4 mr-2" />
-                  {status === 'submitting' ? 'Sending...' : 'Submit Request'}
+                  {status === 'submitting' ? 'Sending...' : 'Send message'}
                 </Button>
               </div>
             </form>

@@ -82,8 +82,7 @@ function AdminTrainingPageInner() {
           stripHtml(c.description).toLowerCase().includes(q) ||
           stripHtml(c.topics).toLowerCase().includes(q) ||
           (c.duration || '').toLowerCase().includes(q) ||
-          (c.format || '').toLowerCase().includes(q) ||
-          (c.location || '').toLowerCase().includes(q)
+          (c.format || '').toLowerCase().includes(q)
         )
       }),
     [courses, searchTerm]

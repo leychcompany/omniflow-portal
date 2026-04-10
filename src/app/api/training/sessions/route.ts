@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { countRegistrations, getSessionDisplayTitle } from "@/lib/training-session-queries";
 
-/** Public list: upcoming published sessions (open/full only, not draft/cancelled/closed) */
+/** Public list: upcoming sessions (excludes draft). Full / closed / cancelled still listed for visibility. */
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
       .from("training_sessions")
       .select("*")
       .gte("starts_at", now)
-      .in("status", ["open", "full"])
+      .in("status", ["open", "full", "closed", "cancelled"])
       .order("starts_at", { ascending: true });
 
     if (courseId) query = query.eq("course_id", courseId);
@@ -23,6 +23,8 @@ export async function GET(req: NextRequest) {
 
     const nowMs = Date.now();
     const upcomingRows = (rows ?? []).filter((row) => {
+      const status = String(row.status ?? "");
+      if (["cancelled", "closed", "full"].includes(status)) return true;
       const closes = row.registration_closes_at as string | null;
       if (!closes) return true;
       return new Date(closes).getTime() > nowMs;
@@ -37,7 +39,6 @@ export async function GET(req: NextRequest) {
           course_id: row.course_id,
           title: displayTitle,
           description: row.description,
-          instructor: row.instructor ?? null,
           starts_at: row.starts_at,
           ends_at: row.ends_at,
           timezone: row.timezone,

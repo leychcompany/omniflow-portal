@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyAdmin } from "@/lib/admin-auth";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { formatTrainingSessionChangeSummary } from "@/lib/format-training-session-schedule";
 import {
   buildSessionContext,
   notifyTrainingAttendee,
@@ -42,7 +43,6 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       "course_id",
       "title",
       "description",
-      "instructor",
       "starts_at",
       "ends_at",
       "timezone",
@@ -99,8 +99,18 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         .in("status", ["registered", "waitlisted"]);
 
       const newTitle = await getSessionDisplayTitle(data as Parameters<typeof getSessionDisplayTitle>[0]);
-      const oldSummary = `When: ${oldRow.starts_at}${oldRow.ends_at ? ` – ${oldRow.ends_at}` : ""} (${oldRow.timezone})\nLocation: ${oldRow.location}`;
-      const newSummary = `When: ${data.starts_at}${data.ends_at ? ` – ${data.ends_at}` : ""} (${data.timezone})\nLocation: ${data.location}`;
+      const oldSummary = formatTrainingSessionChangeSummary(
+        oldRow.starts_at as string,
+        oldRow.ends_at as string | null,
+        oldRow.timezone as string,
+        oldRow.location as string
+      );
+      const newSummary = formatTrainingSessionChangeSummary(
+        data.starts_at as string,
+        data.ends_at as string | null,
+        data.timezone as string,
+        data.location as string
+      );
       const ctx = buildSessionContext(id, {
         title: newTitle,
         starts_at: data.starts_at as string,

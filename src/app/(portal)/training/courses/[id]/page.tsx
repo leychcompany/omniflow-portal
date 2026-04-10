@@ -6,10 +6,15 @@ import { useParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { ArrowLeft, Calendar, MapPin, User, Users, Video } from 'lucide-react'
+import { ArrowLeft, Calendar, MapPin, Video } from 'lucide-react'
 import { TrainingSkeleton } from '@/components/portal/skeletons'
 import { SafeHtml } from '@/components/portal/safe-html'
 import { stripHtml } from '@/lib/strip-html'
+import { formatTrainingSessionListSummary } from '@/lib/format-training-session-schedule'
+import {
+  isTrainingSessionSignupBlockedByStatus,
+  publicTrainingSessionStatusLabel,
+} from '@/lib/training-session-public'
 
 interface CourseDetail {
   id: string
@@ -22,7 +27,6 @@ interface CourseDetail {
   price: number | null
   early_bird_price: number | null
   format: string | null
-  location: string | null
   prerequisite: { id: string; title: string } | null
 }
 
@@ -37,14 +41,10 @@ interface SessionRow {
   id: string
   title: string
   description: string | null
-  instructor?: string | null
   starts_at: string
+  ends_at: string | null
   timezone: string
   location: string
-  spots_remaining: number
-  waitlist_enabled: boolean
-  registered_count: number
-  capacity: number
   status: string
 }
 
@@ -91,7 +91,6 @@ export default function TrainingCourseDetailPage() {
           early_bird_price:
             c.early_bird_price != null ? Number(c.early_bird_price) : null,
           format: c.format ?? null,
-          location: c.location ?? null,
           prerequisite:
             c.prerequisite && typeof c.prerequisite === 'object'
               ? { id: c.prerequisite.id, title: c.prerequisite.title }
@@ -159,12 +158,6 @@ export default function TrainingCourseDetailPage() {
             )}
           </div>
           <h1 className="text-3xl font-bold text-slate-900 dark:text-zinc-100">{course.title}</h1>
-          {course.location?.trim() && (
-            <p className="flex items-start gap-2 text-sm text-slate-600 dark:text-zinc-400">
-              <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-blue-500" aria-hidden />
-              <span>{course.location.trim()}</span>
-            </p>
-          )}
           {(course.price != null || course.early_bird_price != null) && (
             <p className="text-sm text-slate-700 dark:text-zinc-300">
               {course.price != null && (
@@ -245,19 +238,24 @@ export default function TrainingCourseDetailPage() {
           </Card>
         ) : (
           <div className="space-y-3">
-            {sessions.map((s) => (
+            {sessions.map((s) => {
+              const signupBlocked = isTrainingSessionSignupBlockedByStatus(s.status)
+              return (
               <Card key={s.id} className="border border-slate-200 dark:border-white/[0.08] shadow-sm">
                 <CardContent className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
                   <div className="min-w-0 space-y-1">
-                    <h3 className="font-semibold text-slate-900 dark:text-zinc-100">{s.title}</h3>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3 className="font-semibold text-slate-900 dark:text-zinc-100">{s.title}</h3>
+                      {signupBlocked && (
+                        <Badge variant="outline" className="font-normal capitalize shrink-0">
+                          {publicTrainingSessionStatusLabel(s.status)}
+                        </Badge>
+                      )}
+                    </div>
                     <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-slate-600 dark:text-zinc-400">
                       <span className="inline-flex items-center gap-1">
                         <Calendar className="h-3.5 w-3.5 shrink-0 text-blue-500" />
-                        {new Date(s.starts_at).toLocaleString(undefined, {
-                          dateStyle: 'medium',
-                          timeStyle: 'short',
-                          timeZone: s.timezone || undefined,
-                        })}
+                        {formatTrainingSessionListSummary(s.starts_at, s.ends_at, s.timezone, undefined)}
                       </span>
                       <span className="text-slate-400 dark:text-zinc-600">·</span>
                       <span className="inline-flex items-center gap-1">
@@ -265,24 +263,30 @@ export default function TrainingCourseDetailPage() {
                         {s.location || 'TBA'}
                       </span>
                     </p>
-                    {s.instructor && (
-                      <p className="flex items-center gap-1 text-xs text-slate-500 dark:text-zinc-500">
-                        <User className="h-3.5 w-3.5 shrink-0" />
-                        Instructor: {s.instructor}
-                      </p>
-                    )}
-                    <p className="inline-flex items-center gap-1 text-xs text-slate-500 dark:text-zinc-500">
-                      <Users className="h-3.5 w-3.5 shrink-0" />
-                      {s.registered_count}/{s.capacity} enrolled
-                      {s.spots_remaining <= 0 && s.waitlist_enabled && ' · waitlist open'}
-                    </p>
                   </div>
-                  <Button asChild className="shrink-0 bg-blue-600 text-white hover:bg-blue-700">
-                    <Link href={`/training/sessions/${s.id}`}>View & register</Link>
-                  </Button>
+                  <div className="flex shrink-0 flex-col items-stretch gap-2 sm:items-end">
+                    {signupBlocked ? (
+                      <>
+                        <Button type="button" disabled variant="secondary" className="w-full sm:w-auto">
+                          Signup unavailable
+                        </Button>
+                        <Link
+                          href={`/training/sessions/${s.id}`}
+                          className="text-center text-sm font-medium text-blue-600 hover:underline dark:text-blue-400 sm:text-right"
+                        >
+                          View class details
+                        </Link>
+                      </>
+                    ) : (
+                      <Button asChild className="bg-blue-600 text-white hover:bg-blue-700">
+                        <Link href={`/training/sessions/${s.id}`}>View & sign up</Link>
+                      </Button>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
-            ))}
+              )
+            })}
           </div>
         )}
       </section>

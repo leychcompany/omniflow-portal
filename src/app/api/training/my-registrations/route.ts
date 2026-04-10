@@ -39,7 +39,6 @@ export async function GET(req: NextRequest) {
           session: {
             id: sess.id,
             title,
-            instructor: (sess.instructor as string | null | undefined) ?? null,
             starts_at: sess.starts_at,
             ends_at: sess.ends_at,
             timezone: sess.timezone,
@@ -53,6 +52,6 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ items: items.filter(Boolean) });
   } catch (e: unknown) {
     console.error("GET my-registrations:", e);
-    return NextResponse.json({ error: "Failed to load registrations" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to load classes" }, { status: 500 });
   }
 }
