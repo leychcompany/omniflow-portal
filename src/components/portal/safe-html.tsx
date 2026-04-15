@@ -1,11 +1,11 @@
 "use client";
 
 import { useMemo } from "react";
-import DOMPurify from "isomorphic-dompurify";
+import sanitizeHtml from "sanitize-html";
 import { cn } from "@/lib/utils";
 
-const CONFIG: Parameters<typeof DOMPurify.sanitize>[1] = {
-  ALLOWED_TAGS: [
+const SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
+  allowedTags: [
     "p",
     "br",
     "strong",
@@ -19,7 +19,7 @@ const CONFIG: Parameters<typeof DOMPurify.sanitize>[1] = {
     "li",
     "span",
   ],
-  ALLOWED_ATTR: ["class"],
+  allowedAttributes: { span: ["class"] },
 };
 
 type SafeHtmlProps = {
@@ -30,7 +30,7 @@ type SafeHtmlProps = {
 export function SafeHtml({ html, className }: SafeHtmlProps) {
   const safe = useMemo(() => {
     if (!html?.trim()) return null;
-    return DOMPurify.sanitize(html, CONFIG);
+    return sanitizeHtml(html, SANITIZE_OPTIONS);
   }, [html]);
 
   if (!safe) return null;

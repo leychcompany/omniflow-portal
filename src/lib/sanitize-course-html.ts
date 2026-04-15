@@ -1,8 +1,7 @@
-import DOMPurify from "isomorphic-dompurify";
+import sanitizeHtml from "sanitize-html";
 
-/** Allowed tags for course description / topics (TipTap StarterKit subset). */
-const SANITIZE: Parameters<typeof DOMPurify.sanitize>[1] = {
-  ALLOWED_TAGS: [
+const SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
+  allowedTags: [
     "p",
     "br",
     "strong",
@@ -16,7 +15,7 @@ const SANITIZE: Parameters<typeof DOMPurify.sanitize>[1] = {
     "li",
     "span",
   ],
-  ALLOWED_ATTR: ["class"],
+  allowedAttributes: { span: ["class"] },
 };
 
 export function sanitizeCourseHtml(
@@ -25,7 +24,7 @@ export function sanitizeCourseHtml(
   if (input == null) return null;
   const raw = String(input).trim();
   if (raw === "") return null;
-  const cleaned = DOMPurify.sanitize(raw, SANITIZE).trim();
+  const cleaned = sanitizeHtml(raw, SANITIZE_OPTIONS).trim();
   if (cleaned === "" || cleaned === "<p></p>") return null;
   return cleaned;
 }
