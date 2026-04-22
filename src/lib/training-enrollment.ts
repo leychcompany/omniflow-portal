@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { formatTrainingScheduleEmailBlock } from "@/lib/format-training-session-schedule";
+
 /** Body for POST /api/training/sessions/[id]/register (portal self-serve). */
 export const trainingEnrollmentBodySchema = z.object({
   certificate_company_name: z.string().trim().min(1).max(500),
@@ -35,12 +37,37 @@ export function trainingEnrollmentRow(e: TrainingEnrollmentBody) {
   };
 }
 
-/** Plain-text block for internal / management emails */
-export function formatEnrollmentDetailsPlainText(e: TrainingEnrollmentBody): string {
+export type EnrollmentScheduleContext = {
+  startsAtIso: string;
+  endsAtIso?: string | null;
+  timezone: string;
+};
+
+/**
+ * Plain-text block for internal / management emails.
+ *
+ * Fields are separated with blank lines (two newlines) rather than single
+ * newlines. Some clients — notably Gmail — reflow consecutive short lines
+ * of plain text into a single visual line; paragraph breaks prevent that.
+ */
+export function formatEnrollmentDetailsPlainText(
+  e: TrainingEnrollmentBody,
+  schedule?: EnrollmentScheduleContext
+): string {
   const food = e.food_restrictions?.trim() ? e.food_restrictions.trim() : "None stated";
-  return [
-    "Enrollment (submitted on signup)",
-    "",
+  const lines: string[] = ["Enrollment (submitted on signup)"];
+
+  if (schedule) {
+    lines.push(
+      formatTrainingScheduleEmailBlock(
+        schedule.startsAtIso,
+        schedule.endsAtIso,
+        schedule.timezone
+      )
+    );
+  }
+
+  lines.push(
     `Company name (certificate): ${e.certificate_company_name}`,
     `Work title: ${e.work_title}`,
     `First name: ${e.first_name}`,
@@ -52,6 +79,8 @@ export function formatEnrollmentDetailsPlainText(e: TrainingEnrollmentBody): str
     `Country: ${e.country}`,
     `E-mail: ${e.contact_email}`,
     `Phone: ${e.contact_phone}`,
-    `Food restrictions / allergies: ${food}`,
-  ].join("\n");
+    `Food restrictions / allergies: ${food}`
+  );
+
+  return lines.join("\n\n");
 }

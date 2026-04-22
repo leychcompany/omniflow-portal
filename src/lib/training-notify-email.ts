@@ -156,6 +156,8 @@ export function notifyInternalTrainingSignup(
     status: "registered" | "waitlisted";
     /** Portal self-serve signup payload; omit when added by admin so management sees a short notice. */
     enrollment?: TrainingEnrollmentBody | null;
+    /** Session schedule; included in the enrollment block so ops/admins see class start & end. */
+    schedule?: { startsAtIso: string; endsAtIso?: string | null; timezone: string };
   }
 ): void {
   const inbox = process.env.TRAINING_ALERTS_TO?.trim() || process.env.TRAINING_REQUEST_TO?.trim();
@@ -164,7 +166,7 @@ export function notifyInternalTrainingSignup(
   const name = params.attendeeName || params.attendeeEmail;
   const subject = `Training: ${params.status === "registered" ? "New signup" : "Waitlist"} — ${params.sessionTitle}`;
   const enrollmentBlock = params.enrollment
-    ? `\n\n${formatEnrollmentDetailsPlainText(params.enrollment)}`
+    ? `\n\n${formatEnrollmentDetailsPlainText(params.enrollment, params.schedule)}`
     : `\n\nEnrollment details: Not collected via the portal signup form (e.g. admin-added enrollment). For full contact data, see Admin → Users or the session roster in the app.`;
   const text = `
 ${params.status === "registered" ? "New class signup" : "New waitlist signup"}

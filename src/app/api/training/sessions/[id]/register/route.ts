@@ -93,6 +93,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         location: sess.location as string,
       });
       const user = await loadUserNotifyFields(auth.userId);
+      const schedule = {
+        startsAtIso: ctx.startsAtIso,
+        endsAtIso: ctx.endsAtIso,
+        timezone: ctx.timezone,
+      };
       if (regStatus === "registered") {
         notifyTrainingAttendee("registration_confirmed", user.email, user.name, ctx);
         notifyInternalTrainingSignup([], {
@@ -101,6 +106,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
           sessionTitle: title,
           status: "registered",
           enrollment,
+          schedule,
         });
       } else if (regStatus === "waitlisted") {
         notifyTrainingAttendee("waitlist_joined", user.email, user.name, ctx, {
@@ -112,6 +118,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
           sessionTitle: title,
           status: "waitlisted",
           enrollment,
+          schedule,
         });
       }
     }
