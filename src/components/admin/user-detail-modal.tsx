@@ -5,9 +5,9 @@ import { useRouter } from 'next/navigation'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { supabase } from '@/lib/supabase'
 import { fetchWithAdminAuth } from '@/lib/admin-fetch'
 import { Loader2, XCircle, Shield, Lock, Unlock, Trash2, Mail, User, Phone } from 'lucide-react'
+import { toast } from 'sonner'
 
 interface UserDetail {
   id: string
@@ -27,16 +27,18 @@ interface UserDetailModalProps {
   userId: string | null
   open: boolean
   onOpenChange: (open: boolean) => void
-  adminCount?: number
   onUpdate?: () => void
 }
 
-export function UserDetailModal({ userId, open, onOpenChange, adminCount = 0, onUpdate }: UserDetailModalProps) {
+export function UserDetailModal({ userId, open, onOpenChange, onUpdate }: UserDetailModalProps) {
   const router = useRouter()
   const [user, setUser] = useState<UserDetail | null>(null)
+  const [globalAdminCount, setGlobalAdminCount] = useState(0)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [actionLoading, setActionLoading] = useState(false)
+
+  const lastAdminGuard = user?.role === 'admin' && globalAdminCount <= 1
 
   const displayName =
     user?.name ||
@@ -48,35 +50,51 @@ export function UserDetailModal({ userId, open, onOpenChange, adminCount = 0, on
     if (!open || !userId) {
       setUser(null)
       setError('')
+      setGlobalAdminCount(0)
       return
     }
     setLoading(true)
     setError('')
+    setGlobalAdminCount(0)
     fetchWithAdminAuth(`/api/users/${userId}`)
       .then((res) => res.json())
       .then((data) => {
         if (data.error) throw new Error(data.error)
-        setUser(data)
+        const ac = typeof data.adminCount === 'number' ? data.adminCount : 0
+        const { adminCount: _removed, ...rest } = data as Record<string, unknown>
+        setUser(rest as unknown as UserDetail)
+        setGlobalAdminCount(ac)
       })
       .catch((e) => setError(e instanceof Error ? e.message : 'Failed to load'))
       .finally(() => setLoading(false))
   }, [open, userId])
 
   const toggleRole = async () => {
-    if (!user || (user.role === 'admin' && adminCount <= 1)) {
-      alert('At least one admin required.')
+    if (!user || lastAdminGuard) {
+      toast.error('At least one admin is required.')
       return
     }
+    const newRole = user.role === 'admin' ? 'client' : 'admin'
     setActionLoading(true)
+    setError('')
     try {
-      await supabase
-        .from('users')
-        .update({ role: user.role === 'admin' ? 'client' : 'admin' })
-        .eq('id', user.id)
-      setUser((u) => (u ? { ...u, role: u.role === 'admin' ? 'client' : 'admin' } : null))
+      const res = await fetchWithAdminAuth(`/api/users/${user.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role: newRole }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        throw new Error((data as { error?: string }).error || 'Failed to update role')
+      }
+      setUser((u) => (u ? { ...u, role: newRole } : null))
+      setGlobalAdminCount((n) => (newRole === 'admin' ? n + 1 : n - 1))
+      toast.success(newRole === 'admin' ? 'User is now an admin' : 'User is now a client')
       onUpdate?.()
-    } catch {
-      setError('Failed to update role')
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Failed to update role'
+      setError(msg)
+      toast.error(msg)
     } finally {
       setActionLoading(false)
     }
@@ -189,7 +207,7 @@ export function UserDetailModal({ userId, open, onOpenChange, adminCount = 0, on
                 variant="outline"
                 size="sm"
                 onClick={toggleRole}
-                disabled={actionLoading || (user.role === 'admin' && adminCount <= 1)}
+                disabled={actionLoading || lastAdminGuard}
                 className="gap-1.5"
               >
                 {actionLoading ? (
@@ -205,7 +223,7 @@ export function UserDetailModal({ userId, open, onOpenChange, adminCount = 0, on
                 variant="outline"
                 size="sm"
                 onClick={goToDelete}
-                disabled={user.role === 'admin' && adminCount <= 1}
+                disabled={lastAdminGuard}
                 className="gap-1.5 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-500/10"
               >
                 <Trash2 className="h-4 w-4" />

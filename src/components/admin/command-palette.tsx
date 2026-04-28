@@ -389,7 +389,6 @@ export function CommandPalette() {
         userId={userModalId}
         open={!!userModalId}
         onOpenChange={(o) => !o && setUserModalId(null)}
-        adminCount={1}
       />
     </>
   )

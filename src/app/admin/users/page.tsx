@@ -75,9 +75,9 @@ export default function AdminUsersPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [userModalId, setUserModalId] = useState<string | null>(null)
   const [addUserModalOpen, setAddUserModalOpen] = useState(false)
+  const [globalAdminCount, setGlobalAdminCount] = useState<number | null>(null)
   const hasUsersDataRef = useRef(false)
 
-  const adminCount = users.filter((u) => u.role === 'admin').length
   const selectableUsers = users.filter((u) => u.role !== 'admin')
   const selectedLockedCount = selectableUsers.filter((u) => selectedIds.has(u.id) && u.locked).length
   const selectedUnlockedCount = selectableUsers.filter((u) => selectedIds.has(u.id) && !u.locked).length
@@ -109,6 +109,7 @@ export default function AdminUsersPage() {
       )
       setUsersTotal(result.total ?? 0)
       setUsersTotalPages(result.totalPages ?? 1)
+      setGlobalAdminCount(typeof result.adminCount === 'number' ? result.adminCount : null)
       hasUsersDataRef.current = true
     } catch (e) {
       setUsersError(e instanceof Error ? e.message : 'Failed to load')
@@ -160,12 +161,27 @@ export default function AdminUsersPage() {
 
   const toggleRole = async (userId: string) => {
     const u = users.find((x) => x.id === userId)
-    if (!u || (u.role === 'admin' && adminCount <= 1)) {
-      alert('At least one admin required.')
+    const lastAdmin = u?.role === 'admin' && globalAdminCount !== null && globalAdminCount <= 1
+    if (!u || lastAdmin) {
+      toast.error('At least one admin is required.')
       return
     }
-    await supabase.from('users').update({ role: u.role === 'admin' ? 'client' : 'admin' }).eq('id', userId)
-    await fetchUsers()
+    const newRole = u.role === 'admin' ? 'client' : 'admin'
+    try {
+      const res = await fetchWithAdminAuth(`/api/users/${userId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role: newRole }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        throw new Error((data as { error?: string }).error || 'Failed to update role')
+      }
+      toast.success(newRole === 'admin' ? 'User is now an admin' : 'User is now a client')
+      await fetchUsers()
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Failed to update role')
+    }
   }
 
   const toggleLock = async (userId: string) => {
@@ -277,7 +293,7 @@ export default function AdminUsersPage() {
 
   const dashboardStats = [
     { label: 'Users', value: usersTotal },
-    { label: 'Admins', value: adminCount },
+    { label: 'Admins', value: globalAdminCount ?? '—' },
     { label: 'Pending invites', value: invites.length },
   ]
 
@@ -492,7 +508,7 @@ export default function AdminUsersPage() {
                         size="icon"
                         className="h-8 w-8 text-zinc-500 hover:text-red-600"
                         onClick={() => router.push(`/admin/users/${u.id}/delete`)}
-                        disabled={u.role === 'admin' && adminCount <= 1}
+                        disabled={u.role === 'admin' && globalAdminCount !== null && globalAdminCount <= 1}
                         title="Delete"
                       >
                         <Trash2 className="h-4 w-4" />
@@ -576,7 +592,7 @@ export default function AdminUsersPage() {
                               size="icon"
                               className="h-8 w-8 text-zinc-500 hover:text-red-600"
                               onClick={() => router.push(`/admin/users/${u.id}/delete`)}
-                              disabled={u.role === 'admin' && adminCount <= 1}
+                              disabled={u.role === 'admin' && globalAdminCount !== null && globalAdminCount <= 1}
                               title="Delete"
                             >
                               <Trash2 className="h-4 w-4" />
@@ -732,7 +748,6 @@ export default function AdminUsersPage() {
         userId={userModalId}
         open={!!userModalId}
         onOpenChange={(o) => !o && setUserModalId(null)}
-        adminCount={adminCount}
         onUpdate={fetchUsers}
       />
       <AddUserModal

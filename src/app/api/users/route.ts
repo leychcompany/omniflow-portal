@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { verifyAdmin } from "@/lib/admin-auth";
+import { countGlobalAdmins } from "@/lib/count-global-admins";
 
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 100;
@@ -46,7 +47,11 @@ export async function GET(req: NextRequest) {
 
     const from = (page - 1) * limit;
     const to = from + limit - 1;
-    const { data, error, count } = await query.range(from, to);
+
+    const [{ data, error, count }, adminCount] = await Promise.all([
+      query.range(from, to),
+      countGlobalAdmins(),
+    ]);
 
     if (error) throw error;
 
@@ -58,6 +63,7 @@ export async function GET(req: NextRequest) {
       page,
       limit,
       totalPages: Math.ceil(total / limit) || 1,
+      adminCount,
     });
   } catch (error: unknown) {
     console.error("Error fetching users:", error);

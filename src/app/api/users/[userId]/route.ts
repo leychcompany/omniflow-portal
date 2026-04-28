@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { verifyAdmin } from "@/lib/admin-auth";
+import { countGlobalAdmins } from "@/lib/count-global-admins";
 import { sendAccountUnlockedWelcomeEmail } from "@/lib/send-account-unlocked-email";
 
 async function assertAdmin(
@@ -22,16 +23,21 @@ export async function GET(
 
   try {
     const { userId } = await params;
-    const { data, error } = await supabaseAdmin
-      .from("users")
-      .select("id, email, name, role, created_at, locked, first_name, last_name, company, title, phone")
-      .eq("id", userId)
-      .single();
+    const [{ data, error }, adminCount] = await Promise.all([
+      supabaseAdmin
+        .from("users")
+        .select(
+          "id, email, name, role, created_at, locked, first_name, last_name, company, title, phone"
+        )
+        .eq("id", userId)
+        .single(),
+      countGlobalAdmins(),
+    ]);
 
     if (error || !data) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
-    return NextResponse.json(data);
+    return NextResponse.json({ ...data, adminCount });
   } catch (error: unknown) {
     console.error("Error fetching user:", error);
     return NextResponse.json(
@@ -53,63 +59,105 @@ export async function PATCH(
   try {
     const { userId } = await params;
     const body = await request.json().catch(() => ({}));
-    const { locked } = body;
+    const locked = body.locked;
+    const role = body.role as string | undefined;
 
-    if (typeof locked !== "boolean") {
+    const wantsLock = typeof locked === "boolean";
+    const wantsRole =
+      typeof role === "string" &&
+      (role === "admin" || role === "client");
+
+    if (!wantsLock && !wantsRole) {
       return NextResponse.json(
-        { error: "Invalid request. 'locked' must be a boolean." },
+        {
+          error:
+            "Invalid request. Send 'locked' (boolean) and/or 'role' ('admin' | 'client').",
+        },
         { status: 400 }
       );
     }
 
-    const { data: targetUser } = await supabaseAdmin
+    const { data: targetUser, error: fetchErr } = await supabaseAdmin
       .from("users")
-      .select("email, name, locked")
+      .select("email, name, locked, role")
       .eq("id", userId)
       .single();
 
-    const wasLocked = targetUser?.locked === true;
-
-    const { error } = await supabaseAdmin
-      .from("users")
-      .update({ locked })
-      .eq("id", userId);
-
-    if (error) {
-      throw error;
+    if (fetchErr || !targetUser) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    if (!locked && wasLocked && targetUser?.email) {
-      const emailed = await sendAccountUnlockedWelcomeEmail({
-        to: targetUser.email,
-        name: targetUser.name,
-      });
-      if (!emailed.ok) {
-        console.warn(
-          "User unlocked but welcome email failed:",
-          userId,
-          emailed.error
-        );
+    if (wantsRole) {
+      if (
+        targetUser.role === "admin" &&
+        role === "client"
+      ) {
+        const { data: adminRows, error: adminErr } = await supabaseAdmin
+          .from("users")
+          .select("id")
+          .eq("role", "admin");
+        if (!adminErr && adminRows && adminRows.length <= 1) {
+          return NextResponse.json(
+            { error: "Cannot remove the last admin" },
+            { status: 400 }
+          );
+        }
       }
     }
 
-    await supabaseAdmin.from("activity_events").insert({
-      event_type: locked ? "user_lock" : "user_unlock",
-      user_id: adminCheck.userId,
-      resource_type: "user",
-      resource_id: userId,
-      metadata: {
-        target_user_id: userId,
-        target_user_email: targetUser?.email ?? null,
-        target_user_name: targetUser?.name ?? null,
-        performed_at: new Date().toISOString(),
-      },
-    });
+    const wasLocked = targetUser.locked === true;
+    const patch: { locked?: boolean; role?: string } = {};
+    if (wantsLock) patch.locked = locked;
+    if (wantsRole) patch.role = role;
+
+    const { error: updateErr } = await supabaseAdmin
+      .from("users")
+      .update(patch)
+      .eq("id", userId);
+
+    if (updateErr) {
+      throw updateErr;
+    }
+
+    if (wantsLock) {
+      const newLocked = locked as boolean;
+      if (!newLocked && wasLocked && targetUser.email) {
+        const emailed = await sendAccountUnlockedWelcomeEmail({
+          to: targetUser.email,
+          name: targetUser.name,
+        });
+        if (!emailed.ok) {
+          console.warn(
+            "User unlocked but welcome email failed:",
+            userId,
+            emailed.error
+          );
+        }
+      }
+
+      await supabaseAdmin.from("activity_events").insert({
+        event_type: newLocked ? "user_lock" : "user_unlock",
+        user_id: adminCheck.userId,
+        resource_type: "user",
+        resource_id: userId,
+        metadata: {
+          target_user_id: userId,
+          target_user_email: targetUser.email ?? null,
+          target_user_name: targetUser.name ?? null,
+          performed_at: new Date().toISOString(),
+        },
+      });
+    }
 
     return NextResponse.json({
       success: true,
-      locked,
-      message: locked ? "User locked" : "User unlocked",
+      ...(wantsLock && { locked }),
+      ...(wantsRole && { role }),
+      message: wantsRole
+        ? `Role updated to ${role}`
+        : locked
+          ? "User locked"
+          : "User unlocked",
     });
   } catch (error: unknown) {
     console.error("Error updating user:", error);
