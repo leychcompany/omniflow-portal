@@ -1,10 +1,37 @@
 import { NextResponse } from 'next/server'
+import sanitizeHtml from 'sanitize-html'
+import { stripHtml } from '@/lib/strip-html'
 
 const MAX_FILES = 3
 const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
 
 /** Default inbox for /support ticket emails (override with SUPPORT_REQUEST_TO if needed). */
 const DEFAULT_SUPPORT_TO = 'helpdesk@omniflow.com'
+const DESCRIPTION_SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
+  allowedTags: [
+    'p',
+    'br',
+    'strong',
+    'b',
+    'em',
+    'i',
+    's',
+    'u',
+    'ul',
+    'ol',
+    'li',
+  ],
+  allowedAttributes: {},
+}
+
+function escapeHtml(text: string): string {
+  return text
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;')
+}
 
 export async function POST(req: Request) {
   const RESEND_API_KEY = process.env.RESEND_API_KEY
@@ -29,10 +56,12 @@ export async function POST(req: Request) {
   const subject = (formData.get('subject') as string | null)?.trim() || ''
   const category = (formData.get('category') as string | null)?.trim() || ''
   const priority = (formData.get('priority') as string | null)?.trim() || ''
-  const description = (formData.get('description') as string | null)?.trim() || ''
+  const descriptionRaw = (formData.get('description') as string | null)?.trim() || ''
   const email = (formData.get('email') as string | null)?.trim() || ''
+  const description = sanitizeHtml(descriptionRaw, DESCRIPTION_SANITIZE_OPTIONS)
+  const descriptionText = stripHtml(description)
 
-  if (!subject || !category || !priority || !description || !email) {
+  if (!subject || !category || !priority || !descriptionText || !email) {
     return NextResponse.json(
       { error: 'Subject, category, priority, description, and email are required.' },
       { status: 400 }
@@ -73,6 +102,15 @@ Priority: ${priority}
 From: ${email}
 
 Description:
+${descriptionText}
+`
+    const html = `
+<p><strong>Support ticket received</strong></p>
+<p><strong>Subject:</strong> ${escapeHtml(subject)}<br />
+<strong>Category:</strong> ${escapeHtml(category)}<br />
+<strong>Priority:</strong> ${escapeHtml(priority)}<br />
+<strong>From:</strong> ${escapeHtml(email)}</p>
+<p><strong>Description:</strong></p>
 ${description}
 `
 
@@ -82,6 +120,7 @@ ${description}
       reply_to: email,
       subject: `Support: ${subject} [${priority}]`,
       text,
+      html,
       attachments: attachments.length ? attachments : undefined,
     }
 

@@ -8,6 +8,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { RichTextEditor } from '@/components/admin/rich-text-editor'
+import { stripHtml } from '@/lib/strip-html'
 import {
   Headphones, 
   Plus, 
@@ -73,12 +75,13 @@ export default function SupportPage() {
     subject: '',
     category: 'Technical',
     priority: 'Medium',
-    description: '',
     email: '',
   })
   const [attachments, setAttachments] = useState<File[]>([])
   const [status, setStatus] = useState<Status>('idle')
   const [error, setError] = useState<string | null>(null)
+  const [descriptionHtml, setDescriptionHtml] = useState('<p></p>')
+  const [editorKey, setEditorKey] = useState(0)
 
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const ticketFormRef = useRef<HTMLDivElement | null>(null)
@@ -116,7 +119,8 @@ export default function SupportPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!form.subject || !form.description || !form.email) {
+    const descriptionText = stripHtml(descriptionHtml)
+    if (!form.subject || !descriptionText || !form.email) {
       setError('Subject, email, and description are required.')
       return
     }
@@ -129,7 +133,7 @@ export default function SupportPage() {
       formData.append('subject', form.subject)
       formData.append('category', form.category)
       formData.append('priority', form.priority)
-      formData.append('description', form.description)
+      formData.append('description', descriptionHtml)
       formData.append('email', form.email)
 
       attachments.forEach(file => {
@@ -151,9 +155,10 @@ export default function SupportPage() {
         subject: '',
         category: 'Technical',
         priority: 'Medium',
-        description: '',
         email: '',
       })
+      setDescriptionHtml('<p></p>')
+      setEditorKey(prev => prev + 1)
       setAttachments([])
       // Redirect back to main support page after successful submission
       router.push('/support')
@@ -387,14 +392,13 @@ export default function SupportPage() {
                 
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-slate-700 dark:text-zinc-300">Description</label>
-                  <textarea 
-                    name="description"
-                    value={form.description}
-                    onChange={handleChange}
-                    className="w-full p-3 border border-slate-200 dark:border-white/[0.12] rounded-lg bg-white dark:bg-white/[0.04] text-slate-900 dark:text-zinc-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    rows={6}
+                  <RichTextEditor
+                    key={editorKey}
+                    initialContent={descriptionHtml}
+                    onChange={setDescriptionHtml}
+                    aria-label="Support ticket description"
                     placeholder="Please provide detailed information about your issue..."
-                    required
+                    minHeight="180px"
                   />
                 </div>
                 
