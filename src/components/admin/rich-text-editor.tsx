@@ -159,8 +159,9 @@ export function RichTextEditor({
       </div>
       <EditorContent
         editor={editor}
-        className="course-tiptap-editor max-w-none bg-white px-3 py-2 text-sm text-zinc-900 dark:bg-white/[0.04] dark:text-zinc-100"
+        className="course-tiptap-editor max-w-none cursor-text bg-white px-3 py-2 text-sm text-zinc-900 dark:bg-white/[0.04] dark:text-zinc-100"
         style={{ minHeight }}
+        onClick={() => editor.chain().focus().run()}
       />
     </div>
   );
