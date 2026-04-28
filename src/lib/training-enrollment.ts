@@ -55,7 +55,7 @@ export function formatEnrollmentDetailsPlainText(
   schedule?: EnrollmentScheduleContext
 ): string {
   const food = e.food_restrictions?.trim() ? e.food_restrictions.trim() : "None stated";
-  const lines: string[] = ["Enrollment (submitted on signup)"];
+  const lines: string[] = [];
 
   if (schedule) {
     lines.push(
