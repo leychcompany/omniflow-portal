@@ -1,6 +1,7 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import sanitizeHtml from 'sanitize-html'
 import { stripHtml } from '@/lib/strip-html'
+import { verifyAuth } from '@/lib/verify-auth'
 
 const MAX_FILES = 3
 const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
@@ -24,6 +25,17 @@ const DESCRIPTION_SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
   allowedAttributes: {},
 }
 
+async function sendResendEmail(apiKey: string, payload: Record<string, unknown>) {
+  return fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  })
+}
+
 function escapeHtml(text: string): string {
   return text
     .replaceAll('&', '&amp;')
@@ -33,7 +45,7 @@ function escapeHtml(text: string): string {
     .replaceAll("'", '&#39;')
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   const RESEND_API_KEY = process.env.RESEND_API_KEY
   const SUPPORT_REQUEST_FROM = process.env.REQUEST_FROM
   const supportTo =
@@ -44,6 +56,13 @@ export async function POST(req: Request) {
       { error: 'Email is not configured (missing RESEND_API_KEY or REQUEST_FROM).' },
       { status: 500 }
     )
+  }
+
+  const auth = await verifyAuth(req)
+  if (!auth.ok) return auth.response
+  const accountEmail = auth.userEmail.trim()
+  if (!accountEmail) {
+    return NextResponse.json({ error: 'Authenticated account is missing an email address.' }, { status: 400 })
   }
 
   let formData: FormData
@@ -57,13 +76,12 @@ export async function POST(req: Request) {
   const category = (formData.get('category') as string | null)?.trim() || ''
   const priority = (formData.get('priority') as string | null)?.trim() || ''
   const descriptionRaw = (formData.get('description') as string | null)?.trim() || ''
-  const email = (formData.get('email') as string | null)?.trim() || ''
   const description = sanitizeHtml(descriptionRaw, DESCRIPTION_SANITIZE_OPTIONS)
   const descriptionText = stripHtml(description)
 
-  if (!subject || !category || !priority || !descriptionText || !email) {
+  if (!subject || !category || !priority || !descriptionText) {
     return NextResponse.json(
-      { error: 'Subject, category, priority, description, and email are required.' },
+      { error: 'Subject, category, priority, and description are required.' },
       { status: 400 }
     )
   }
@@ -99,7 +117,7 @@ Support ticket received
 Subject: ${subject}
 Category: ${category}
 Priority: ${priority}
-From: ${email}
+From: ${accountEmail}
 
 Description:
 ${descriptionText}
@@ -109,7 +127,7 @@ ${descriptionText}
 <p><strong>Subject:</strong> ${escapeHtml(subject)}<br />
 <strong>Category:</strong> ${escapeHtml(category)}<br />
 <strong>Priority:</strong> ${escapeHtml(priority)}<br />
-<strong>From:</strong> ${escapeHtml(email)}</p>
+<strong>From:</strong> ${escapeHtml(accountEmail)}</p>
 <p><strong>Description:</strong></p>
 ${description}
 `
@@ -117,21 +135,14 @@ ${description}
     const emailPayload = {
       from: SUPPORT_REQUEST_FROM,
       to: [supportTo],
-      reply_to: email,
+      reply_to: accountEmail,
       subject: `Support: ${subject} [${priority}]`,
       text,
       html,
       attachments: attachments.length ? attachments : undefined,
     }
 
-    const res = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${RESEND_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(emailPayload),
-    })
+    const res = await sendResendEmail(RESEND_API_KEY, emailPayload)
 
     if (!res.ok) {
       const errorBody = await res.text()
@@ -141,7 +152,47 @@ ${description}
       )
     }
 
-    return NextResponse.json({ ok: true })
+    const confirmationText = `
+Hi,
+
+We received your support ticket and our team will review it shortly.
+
+Subject: ${subject}
+Category: ${category}
+Priority: ${priority}
+
+Your message:
+${descriptionText}
+
+Thank you,
+Omniflow Support
+`
+    const confirmationHtml = `
+<p>Hi,</p>
+<p>We received your support ticket and our team will review it shortly.</p>
+<p><strong>Subject:</strong> ${escapeHtml(subject)}<br />
+<strong>Category:</strong> ${escapeHtml(category)}<br />
+<strong>Priority:</strong> ${escapeHtml(priority)}</p>
+<p><strong>Your message:</strong></p>
+${description}
+<p>Thank you,<br />Omniflow Support</p>
+`
+    const confirmationPayload = {
+      from: SUPPORT_REQUEST_FROM,
+      to: [accountEmail],
+      subject: `We received your support ticket: ${subject}`,
+      text: confirmationText,
+      html: confirmationHtml,
+    }
+
+    const confirmationRes = await sendResendEmail(RESEND_API_KEY, confirmationPayload)
+    if (!confirmationRes.ok) {
+      const confirmationError = await confirmationRes.text()
+      console.error('Failed to send support confirmation email:', confirmationError)
+      return NextResponse.json({ ok: true, confirmationSent: false })
+    }
+
+    return NextResponse.json({ ok: true, confirmationSent: true })
   } catch (err: any) {
     return NextResponse.json(
       { error: err.message || 'Failed to process request' },

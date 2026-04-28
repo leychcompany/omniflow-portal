@@ -75,7 +75,6 @@ export default function SupportPage() {
     subject: '',
     category: 'Technical',
     priority: 'Medium',
-    email: '',
   })
   const [attachments, setAttachments] = useState<File[]>([])
   const [status, setStatus] = useState<Status>('idle')
@@ -120,8 +119,8 @@ export default function SupportPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     const descriptionText = stripHtml(descriptionHtml)
-    if (!form.subject || !descriptionText || !form.email) {
-      setError('Subject, email, and description are required.')
+    if (!form.subject || !descriptionText) {
+      setError('Subject and description are required.')
       return
     }
 
@@ -134,7 +133,6 @@ export default function SupportPage() {
       formData.append('category', form.category)
       formData.append('priority', form.priority)
       formData.append('description', descriptionHtml)
-      formData.append('email', form.email)
 
       attachments.forEach(file => {
         formData.append('attachments', file)
@@ -155,7 +153,6 @@ export default function SupportPage() {
         subject: '',
         category: 'Technical',
         priority: 'Medium',
-        email: '',
       })
       setDescriptionHtml('<p></p>')
       setEditorKey(prev => prev + 1)
@@ -165,8 +162,6 @@ export default function SupportPage() {
     } catch (err: any) {
       setStatus('error')
       setError(err.message || 'Failed to submit ticket')
-    } finally {
-      setTimeout(() => setStatus('idle'), 3000)
     }
   }
 
@@ -346,17 +341,6 @@ export default function SupportPage() {
                       placeholder="Brief description of your issue"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-700 dark:text-zinc-300">Email</label>
-                    <Input
-                      name="email"
-                      type="email"
-                      value={form.email}
-                      onChange={handleChange}
-                      required
-                      placeholder="you@company.com"
-                    />
-                  </div>
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -447,7 +431,13 @@ export default function SupportPage() {
                   <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
                 )}
                 {status === 'success' && (
-                  <p className="text-sm text-green-600 dark:text-green-400">Ticket submitted. Our team will contact you soon.</p>
+                  <button
+                    type="button"
+                    onClick={() => setStatus('idle')}
+                    className="text-sm text-green-600 dark:text-green-400 hover:underline"
+                  >
+                    Ticket submitted. Our team will contact you soon. Click to dismiss.
+                  </button>
                 )}
                 
                 <div className="flex items-center space-x-4 pt-2">
