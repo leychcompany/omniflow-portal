@@ -117,15 +117,15 @@ export function notifyInternalTrainingSignup(
   const inbox = process.env.TRAINING_ALERTS_TO?.trim() || process.env.TRAINING_REQUEST_TO?.trim();
   const recipients = toEmails.length > 0 ? toEmails : inbox ? [inbox] : [];
   if (recipients.length === 0) return;
-  const name = params.attendeeName || params.attendeeEmail;
   const subject = `Training: ${params.status === "registered" ? "New signup" : "Waitlist"} — ${params.sessionTitle}`;
+  const nameDisplay = params.attendeeName ? ` (${params.attendeeName})` : "";
   const enrollmentBlock = params.enrollment
     ? `\n\n${formatEnrollmentDetailsPlainText(params.enrollment, params.schedule)}`
     : `\n\nEnrollment details: Not collected via the portal signup form (e.g. admin-added enrollment). For full contact data, see Admin → Users or the session roster in the app.`;
   const text = `
 ${params.status === "registered" ? "New class signup" : "New waitlist signup"}
 
-Account (login): ${name} <${params.attendeeEmail}>
+Account (login): ${params.attendeeEmail}${nameDisplay}
 Class: ${params.sessionTitle}${enrollmentBlock}
 `.trim();
 
