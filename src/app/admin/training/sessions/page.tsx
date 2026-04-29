@@ -8,16 +8,22 @@ import { fetchWithAdminAuth } from '@/lib/admin-fetch'
 import { TrainingSessionRowActions } from '@/components/admin/training-session-row-actions'
 import { Plus, Pencil, ArrowLeft } from 'lucide-react'
 import type { BadgeProps } from '@/components/ui/badge'
+import {
+  formatTrainingSessionListSummary,
+  type TrainingSessionDay,
+} from '@/lib/format-training-session-schedule'
 
 interface SessionRow {
   id: string
   display_title?: string
   starts_at: string
+  timezone: string
   location: string
   status: string
   capacity: number
   registered_count?: number
   waitlisted_count?: number
+  days?: TrainingSessionDay[]
 }
 
 function sessionStatusBadge(status: string): { label: string; variant: NonNullable<BadgeProps['variant']> } {
@@ -95,10 +101,7 @@ export default function AdminTrainingSessionsPage() {
             {sessions.map((s) => {
               const badge = sessionStatusBadge(s.status)
               const loc = s.location?.trim() || ''
-              const when = new Date(s.starts_at).toLocaleString(undefined, {
-                dateStyle: 'short',
-                timeStyle: 'short',
-              })
+              const when = formatTrainingSessionListSummary(s.days ?? [], s.timezone, undefined)
               return (
                 <div
                   key={s.id}
@@ -114,7 +117,7 @@ export default function AdminTrainingSessionsPage() {
                   </div>
                   <dl className="space-y-2 text-sm">
                     <div>
-                      <dt className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">Starts</dt>
+                      <dt className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">When</dt>
                       <dd className="text-zinc-700 dark:text-zinc-300 mt-0.5">{when}</dd>
                     </div>
                     <div>
@@ -162,7 +165,7 @@ export default function AdminTrainingSessionsPage() {
                     Class
                   </th>
                   <th className="text-left py-3 px-4 font-medium text-zinc-600 dark:text-zinc-400 whitespace-nowrap">
-                    Starts
+                    When
                   </th>
                   <th className="text-right py-3 px-4 font-medium text-zinc-600 dark:text-zinc-400 whitespace-nowrap tabular-nums">
                     Seats
@@ -194,8 +197,8 @@ export default function AdminTrainingSessionsPage() {
                           <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5">No location</p>
                         )}
                       </td>
-                      <td className="py-3 px-4 text-zinc-600 dark:text-zinc-400 whitespace-nowrap align-top">
-                        {new Date(s.starts_at).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })}
+                      <td className="py-3 px-4 text-zinc-600 dark:text-zinc-400 align-top">
+                        {formatTrainingSessionListSummary(s.days ?? [], s.timezone, undefined)}
                       </td>
                       <td className="py-3 px-4 text-zinc-600 dark:text-zinc-400 text-right tabular-nums align-top">
                         <span>

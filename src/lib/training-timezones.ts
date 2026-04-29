@@ -13,6 +13,11 @@ export const TRAINING_TIMEZONE_OPTIONS: readonly { value: string; label: string 
   { value: "UTC", label: "UTC" },
 ];
 
+export function trainingTimezoneLabel(iana: string): string {
+  const o = TRAINING_TIMEZONE_OPTIONS.find((x) => x.value === iana);
+  return o?.label ?? iana;
+}
+
 export function trainingTimezoneSelectOptions(
   currentTimezone: string | undefined
 ): { value: string; label: string }[] {

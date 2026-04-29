@@ -2,7 +2,10 @@
  * Training class transactional emails via Resend. Fail-open: log only, no throw.
  */
 
-import { formatTrainingScheduleEmailBlock } from "@/lib/format-training-session-schedule";
+import {
+  formatTrainingScheduleEmailBlock,
+  type TrainingSessionDay,
+} from "@/lib/format-training-session-schedule";
 import { formatEnrollmentDetailsPlainText, type TrainingEnrollmentBody } from "@/lib/training-enrollment";
 import { trainingSignupDisclaimerEmailBlock } from "@/lib/training-signup-disclaimers";
 
@@ -21,8 +24,7 @@ export type TrainingEmailKind =
 
 export interface TrainingSessionEmailContext {
   sessionTitle: string;
-  startsAtIso: string;
-  endsAtIso?: string | null;
+  days: ReadonlyArray<TrainingSessionDay>;
   timezone: string;
   location: string;
   portalSessionUrl: string;
@@ -38,11 +40,7 @@ function portalBase(): string {
 }
 
 function formatSessionBlock(ctx: TrainingSessionEmailContext): string {
-  const schedule = formatTrainingScheduleEmailBlock(
-    ctx.startsAtIso,
-    ctx.endsAtIso,
-    ctx.timezone
-  );
+  const schedule = formatTrainingScheduleEmailBlock(ctx.days, ctx.timezone);
   return `
 Class: ${ctx.sessionTitle}
 ${schedule}
@@ -120,8 +118,7 @@ export function notifyTrainingAttendee(
     case "session_cancelled":
       subject = `Cancelled: ${ctx.sessionTitle}`;
       body += `This scheduled class has been cancelled:\n\n${ctx.sessionTitle}\n\n${formatTrainingScheduleEmailBlock(
-        ctx.startsAtIso,
-        ctx.endsAtIso,
+        ctx.days,
         ctx.timezone
       )}\n\nLocation: ${ctx.location || "TBA"}\n\nWe’re sorry for the inconvenience. For questions, reply to this email or contact support.`;
       break;
@@ -156,8 +153,8 @@ export function notifyInternalTrainingSignup(
     status: "registered" | "waitlisted";
     /** Portal self-serve signup payload; omit when added by admin so management sees a short notice. */
     enrollment?: TrainingEnrollmentBody | null;
-    /** Session schedule; included in the enrollment block so ops/admins see class start & end. */
-    schedule?: { startsAtIso: string; endsAtIso?: string | null; timezone: string };
+    /** Session schedule; included in the enrollment block so ops/admins see all days. */
+    schedule?: { days: ReadonlyArray<TrainingSessionDay>; timezone: string };
   }
 ): void {
   const inbox = process.env.TRAINING_ALERTS_TO?.trim() || process.env.TRAINING_REQUEST_TO?.trim();
@@ -183,8 +180,7 @@ export function buildSessionContext(
   sessionId: string,
   row: {
     title: string | null;
-    starts_at: string;
-    ends_at?: string | null;
+    days: ReadonlyArray<TrainingSessionDay>;
     timezone: string;
     location: string;
   }
@@ -193,8 +189,7 @@ export function buildSessionContext(
   const sessionTitle = row.title?.trim() || "Training class";
   return {
     sessionTitle,
-    startsAtIso: row.starts_at,
-    endsAtIso: row.ends_at,
+    days: row.days,
     timezone: row.timezone,
     location: row.location,
     portalSessionUrl: `${base}/training/sessions/${sessionId}`,

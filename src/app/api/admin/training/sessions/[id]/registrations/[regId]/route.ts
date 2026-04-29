@@ -2,7 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifyAdmin } from "@/lib/admin-auth";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { buildSessionContext, notifyTrainingAttendee } from "@/lib/training-notify-email";
-import { getSessionDisplayTitle, loadUserNotifyFields } from "@/lib/training-session-queries";
+import {
+  getSessionDisplayTitle,
+  loadTrainingSessionDays,
+  loadUserNotifyFields,
+} from "@/lib/training-session-queries";
 
 export async function PATCH(
   req: NextRequest,
@@ -113,10 +117,10 @@ export async function DELETE(
 
     if (sess) {
       const title = await getSessionDisplayTitle(sess as Parameters<typeof getSessionDisplayTitle>[0]);
+      const days = await loadTrainingSessionDays(sessionId);
       const ctx = buildSessionContext(sessionId, {
         title,
-        starts_at: sess.starts_at as string,
-        ends_at: sess.ends_at as string | null,
+        days,
         timezone: sess.timezone as string,
         location: sess.location as string,
       });

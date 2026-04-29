@@ -12,19 +12,47 @@ import {
   DEFAULT_TRAINING_TIMEZONE,
   trainingTimezoneSelectOptions,
 } from '@/lib/training-timezones'
+import {
+  TrainingSessionDaysEditor,
+  type DraftDay,
+} from '@/components/admin/training-session-days-editor'
 
-function toLocalInput(iso: string): string {
-  const d = new Date(iso)
-  const p = (n: number) => String(n).padStart(2, '0')
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`
-}
-
-const DUPLICATE_DATE_SHIFT_MS = 7 * 24 * 60 * 60 * 1000
+const DAY_SHIFT_MS = 7 * 24 * 60 * 60 * 1000
 
 function duplicateStatus(source: string): string {
   if (source === 'full') return 'open'
   if (source === 'cancelled' || source === 'closed') return 'draft'
   return source
+}
+
+function defaultDraftDay(): DraftDay {
+  const today = new Date(Date.now() + DAY_SHIFT_MS)
+  const yyyy = today.getFullYear()
+  const mm = String(today.getMonth() + 1).padStart(2, '0')
+  const dd = String(today.getDate()).padStart(2, '0')
+  return { day_date: `${yyyy}-${mm}-${dd}`, start_time: '09:00', end_time: '15:00', label: '' }
+}
+
+function shiftDateString(dateStr: string, ms: number): string {
+  const [y, m, d] = dateStr.split('-').map((s) => parseInt(s, 10))
+  if (!y || !m || !d) return dateStr
+  const dt = new Date(Date.UTC(y, m - 1, d) + ms)
+  const yy = dt.getUTCFullYear()
+  const mm = String(dt.getUTCMonth() + 1).padStart(2, '0')
+  const dd = String(dt.getUTCDate()).padStart(2, '0')
+  return `${yy}-${mm}-${dd}`
+}
+
+function trimSecondsForInput(time: string | null | undefined): string {
+  if (!time) return ''
+  const parts = time.split(':')
+  return parts.length >= 2 ? `${parts[0].padStart(2, '0')}:${parts[1].padStart(2, '0')}` : time
+}
+
+function localInputFromIso(iso: string): string {
+  const d = new Date(iso)
+  const p = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`
 }
 
 function NewTrainingSessionPageInner() {
@@ -33,13 +61,10 @@ function NewTrainingSessionPageInner() {
   const fromSessionId = searchParams.get('from')
   const [courses, setCourses] = useState<{ id: string; title: string }[]>([])
   const [saving, setSaving] = useState(false)
-  const defaultStart = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
   const [form, setForm] = useState({
     course_id: '',
     title: '',
     description: '',
-    starts_at: toLocalInput(defaultStart.toISOString()),
-    ends_at: '',
     timezone: DEFAULT_TRAINING_TIMEZONE,
     location: '',
     capacity: 12,
@@ -47,6 +72,7 @@ function NewTrainingSessionPageInner() {
     waitlist_enabled: true,
     registration_closes_at: '',
   })
+  const [days, setDays] = useState<DraftDay[]>(() => [defaultDraftDay()])
 
   useEffect(() => {
     fetchWithAdminAuth('/api/courses')
@@ -64,32 +90,33 @@ function NewTrainingSessionPageInner() {
         if (!r.ok) throw new Error(data.error || 'Failed')
         if (cancelled) return
 
-        const startMs = new Date(data.starts_at as string).getTime()
-        const endRaw = data.ends_at as string | null | undefined
-        const endMs = endRaw ? new Date(endRaw).getTime() : null
-        const newStartMs = startMs + DUPLICATE_DATE_SHIFT_MS
-        const newStartIso = new Date(newStartMs).toISOString()
-        const newEndIso =
-          endMs != null ? new Date(newStartMs + (endMs - startMs)).toISOString() : null
-        const closesRaw = data.registration_closes_at as string | null | undefined
-        const newClosesIso = closesRaw
-          ? new Date(new Date(closesRaw).getTime() + DUPLICATE_DATE_SHIFT_MS).toISOString()
-          : null
-
         setForm({
           course_id: (data.course_id as string | null) ? String(data.course_id) : '',
           title: (data.title as string | null) ?? '',
           description: (data.description as string | null) ?? '',
-          starts_at: toLocalInput(newStartIso),
-          ends_at: newEndIso ? toLocalInput(newEndIso) : '',
           timezone: (data.timezone as string) || DEFAULT_TRAINING_TIMEZONE,
           location: (data.location as string) ?? '',
           capacity: Math.max(1, Number(data.capacity) || 12),
           status: duplicateStatus(String(data.status)),
           waitlist_enabled: Boolean(data.waitlist_enabled),
-          registration_closes_at: newClosesIso ? toLocalInput(newClosesIso) : '',
+          registration_closes_at: data.registration_closes_at
+            ? localInputFromIso(
+                new Date(new Date(data.registration_closes_at as string).getTime() + DAY_SHIFT_MS).toISOString()
+              )
+            : '',
         })
-        toast.success('Duplicated — times moved forward one week. Review and create.')
+
+        const incoming = Array.isArray(data.days) ? data.days : []
+        const shifted: DraftDay[] = incoming.length
+          ? incoming.map((d: { day_date: string; start_time: string; end_time: string; label?: string | null }) => ({
+              day_date: shiftDateString(d.day_date, DAY_SHIFT_MS),
+              start_time: trimSecondsForInput(d.start_time),
+              end_time: trimSecondsForInput(d.end_time),
+              label: d.label ?? '',
+            }))
+          : [defaultDraftDay()]
+        setDays(shifted)
+        toast.success('Duplicated — dates moved forward one week. Review and create.')
       })
       .catch(() => toast.error('Could not load class to duplicate'))
     return () => {
@@ -99,10 +126,12 @@ function NewTrainingSessionPageInner() {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (days.length === 0) {
+      toast.error('Add at least one class day.')
+      return
+    }
     setSaving(true)
     try {
-      const starts = new Date(form.starts_at).toISOString()
-      const ends = form.ends_at.trim() ? new Date(form.ends_at).toISOString() : null
       const closes = form.registration_closes_at.trim()
         ? new Date(form.registration_closes_at).toISOString()
         : null
@@ -113,14 +142,18 @@ function NewTrainingSessionPageInner() {
           course_id: form.course_id || null,
           title: form.title || null,
           description: form.description || null,
-          starts_at: starts,
-          ends_at: ends,
           timezone: form.timezone,
           location: form.location,
           capacity: Number(form.capacity),
           status: form.status,
           waitlist_enabled: form.waitlist_enabled,
           registration_closes_at: closes,
+          days: days.map((d) => ({
+            day_date: d.day_date,
+            start_time: d.start_time,
+            end_time: d.end_time,
+            label: d.label?.trim() || null,
+          })),
         }),
       })
       const data = await res.json()
@@ -135,7 +168,7 @@ function NewTrainingSessionPageInner() {
   }
 
   return (
-    <div className="max-w-2xl space-y-6 pb-20 md:pb-0">
+    <div className="max-w-3xl space-y-6 pb-20 md:pb-0">
       <Button asChild variant="ghost" size="sm" className="gap-2 -ml-2">
         <Link href="/admin/training/sessions">
           <ArrowLeft className="h-4 w-4" />
@@ -148,7 +181,7 @@ function NewTrainingSessionPageInner() {
           <span className="block text-sm font-normal text-zinc-500 mt-1">Copying from another class — dates shifted by one week</span>
         )}
       </h1>
-      <form onSubmit={submit} className="space-y-4 border border-zinc-200 dark:border-white/[0.08] rounded-xl p-6 bg-white dark:bg-[#141414]">
+      <form onSubmit={submit} className="space-y-5 border border-zinc-200 dark:border-white/[0.08] rounded-xl p-6 bg-white dark:bg-[#141414]">
         <div>
           <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Course (optional)</label>
           <select
@@ -176,27 +209,6 @@ function NewTrainingSessionPageInner() {
             onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
           />
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Starts (local)</label>
-            <Input
-              type="datetime-local"
-              required
-              value={form.starts_at}
-              onChange={(e) => setForm((f) => ({ ...f, starts_at: e.target.value }))}
-              className="mt-1"
-            />
-          </div>
-          <div>
-            <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Ends (local, optional)</label>
-            <Input
-              type="datetime-local"
-              value={form.ends_at}
-              onChange={(e) => setForm((f) => ({ ...f, ends_at: e.target.value }))}
-              className="mt-1"
-            />
-          </div>
-        </div>
         <div>
           <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Timezone</label>
           <select
@@ -210,7 +222,13 @@ function NewTrainingSessionPageInner() {
               </option>
             ))}
           </select>
+          <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+            All class times below are interpreted in this timezone.
+          </p>
         </div>
+
+        <TrainingSessionDaysEditor days={days} timezone={form.timezone} onChange={setDays} />
+
         <div>
           <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Location</label>
           <Input value={form.location} onChange={(e) => setForm((f) => ({ ...f, location: e.target.value }))} className="mt-1" />
@@ -243,7 +261,7 @@ function NewTrainingSessionPageInner() {
           </div>
         </div>
         <div>
-          <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Signup closes (local, optional)</label>
+          <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Signup closes (browser local, optional)</label>
           <Input
             type="datetime-local"
             value={form.registration_closes_at}

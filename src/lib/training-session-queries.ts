@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import type { TrainingSessionDay } from "@/lib/format-training-session-schedule";
 
 export interface TrainingSessionRow {
   id: string;
@@ -15,6 +16,65 @@ export interface TrainingSessionRow {
   registration_closes_at: string | null;
   created_at: string;
   updated_at: string;
+}
+
+/**
+ * Load the per-day schedule for a class, ordered by day then position.
+ * Returns [] when the row hasn't been backfilled yet (e.g. fresh insert
+ * before the days have been written) so callers can fall back gracefully.
+ */
+export async function loadTrainingSessionDays(
+  sessionId: string
+): Promise<TrainingSessionDay[]> {
+  const { data, error } = await supabaseAdmin
+    .from("training_session_days")
+    .select("position, day_date, start_time, end_time, label")
+    .eq("session_id", sessionId)
+    .order("day_date", { ascending: true })
+    .order("position", { ascending: true });
+  if (error) {
+    console.error("loadTrainingSessionDays:", error);
+    return [];
+  }
+  return (data ?? []).map((row) => ({
+    position: Number(row.position ?? 0),
+    day_date: String(row.day_date),
+    start_time: String(row.start_time),
+    end_time: String(row.end_time),
+    label: (row.label as string | null) ?? null,
+  }));
+}
+
+/**
+ * Load days for a batch of session ids in a single query (used by list endpoints).
+ */
+export async function loadTrainingSessionDaysMap(
+  sessionIds: ReadonlyArray<string>
+): Promise<Map<string, TrainingSessionDay[]>> {
+  const out = new Map<string, TrainingSessionDay[]>();
+  if (sessionIds.length === 0) return out;
+  const { data, error } = await supabaseAdmin
+    .from("training_session_days")
+    .select("session_id, position, day_date, start_time, end_time, label")
+    .in("session_id", [...sessionIds])
+    .order("day_date", { ascending: true })
+    .order("position", { ascending: true });
+  if (error) {
+    console.error("loadTrainingSessionDaysMap:", error);
+    return out;
+  }
+  for (const row of data ?? []) {
+    const id = String(row.session_id);
+    if (!out.has(id)) out.set(id, []);
+    out.get(id)!.push({
+      position: Number(row.position ?? 0),
+      day_date: String(row.day_date),
+      start_time: String(row.start_time),
+      end_time: String(row.end_time),
+      label: (row.label as string | null) ?? null,
+    });
+  }
+  return out;
 }
 
 /** Display title: session title or linked course title */

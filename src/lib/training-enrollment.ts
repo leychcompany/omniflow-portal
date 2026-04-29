@@ -1,6 +1,9 @@
 import { z } from "zod";
 
-import { formatTrainingScheduleEmailBlock } from "@/lib/format-training-session-schedule";
+import {
+  formatTrainingScheduleEmailBlock,
+  type TrainingSessionDay,
+} from "@/lib/format-training-session-schedule";
 
 /** Body for POST /api/training/sessions/[id]/register (portal self-serve). */
 export const trainingEnrollmentBodySchema = z.object({
@@ -38,8 +41,7 @@ export function trainingEnrollmentRow(e: TrainingEnrollmentBody) {
 }
 
 export type EnrollmentScheduleContext = {
-  startsAtIso: string;
-  endsAtIso?: string | null;
+  days: ReadonlyArray<TrainingSessionDay>;
   timezone: string;
 };
 
@@ -58,13 +60,7 @@ export function formatEnrollmentDetailsPlainText(
   const lines: string[] = [];
 
   if (schedule) {
-    lines.push(
-      formatTrainingScheduleEmailBlock(
-        schedule.startsAtIso,
-        schedule.endsAtIso,
-        schedule.timezone
-      )
-    );
+    lines.push(formatTrainingScheduleEmailBlock(schedule.days, schedule.timezone));
   }
 
   lines.push(

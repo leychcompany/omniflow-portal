@@ -6,9 +6,10 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { fetchWithAuthRetry } from '@/lib/fetch-with-auth'
-import { ArrowLeft, Calendar } from 'lucide-react'
-import { formatTrainingScheduleParts } from '@/lib/format-training-session-schedule'
+import { ArrowLeft } from 'lucide-react'
+import { TrainingScheduleDisplay } from '@/components/portal/training-schedule-display'
 import { TrainingSkeleton } from '@/components/portal/skeletons'
+import type { TrainingSessionDay } from '@/lib/format-training-session-schedule'
 
 interface Item {
   registration_id: string
@@ -21,6 +22,7 @@ interface Item {
     location: string
     timezone: string
     status: string
+    days: TrainingSessionDay[]
   }
 }
 
@@ -60,48 +62,28 @@ export default function MyTrainingRegistrationsPage() {
       )}
 
       <div className="space-y-4">
-        {items.map((row) => {
-          const sched = formatTrainingScheduleParts(
-            row.session.starts_at,
-            row.session.ends_at,
-            row.session.timezone,
-            undefined
-          )
-          return (
-            <Card key={row.registration_id}>
-              <CardHeader className="pb-2">
-                <div className="flex items-start justify-between gap-2">
-                  <CardTitle className="text-lg">{row.session.title}</CardTitle>
-                  <Badge variant={row.status === 'registered' ? 'default' : 'outline'}>
-                    {row.status === 'registered' ? 'Signed up' : 'Waitlist'}
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-3 text-sm text-slate-600 dark:text-zinc-400">
-                <div className="flex gap-2">
-                  <Calendar className="h-4 w-4 shrink-0 mt-0.5" aria-hidden />
-                  <div className="min-w-0 space-y-0.5">
-                    <p>
-                      <span className="font-medium text-slate-800 dark:text-zinc-200">Starts</span> ·{' '}
-                      {sched.startDisplay}
-                    </p>
-                    {sched.endDisplay && (
-                      <p>
-                        <span className="font-medium text-slate-800 dark:text-zinc-200">Ends</span> ·{' '}
-                        {sched.endDisplay}
-                      </p>
-                    )}
-                    <p className="text-xs text-slate-500 dark:text-zinc-500">{sched.timezoneNote}</p>
-                  </div>
-                </div>
-                <p>{row.session.location}</p>
-                <Button asChild size="sm" variant="outline">
-                  <Link href={`/training/sessions/${row.session.id}`}>View class</Link>
-                </Button>
-              </CardContent>
-            </Card>
-          )
-        })}
+        {items.map((row) => (
+          <Card key={row.registration_id}>
+            <CardHeader className="pb-2">
+              <div className="flex items-start justify-between gap-2">
+                <CardTitle className="text-lg">{row.session.title}</CardTitle>
+                <Badge variant={row.status === 'registered' ? 'default' : 'outline'}>
+                  {row.status === 'registered' ? 'Signed up' : 'Waitlist'}
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-3 text-sm text-slate-600 dark:text-zinc-400">
+              <TrainingScheduleDisplay
+                days={row.session.days ?? []}
+                timezone={row.session.timezone}
+              />
+              <p>{row.session.location}</p>
+              <Button asChild size="sm" variant="outline">
+                <Link href={`/training/sessions/${row.session.id}`}>View class</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        ))}
       </div>
     </div>
   )

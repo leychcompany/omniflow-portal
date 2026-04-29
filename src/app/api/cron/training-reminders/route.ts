@@ -4,7 +4,11 @@ import {
   buildSessionContext,
   notifyTrainingAttendee,
 } from "@/lib/training-notify-email";
-import { getSessionDisplayTitle, loadUserNotifyFields } from "@/lib/training-session-queries";
+import {
+  getSessionDisplayTitle,
+  loadTrainingSessionDays,
+  loadUserNotifyFields,
+} from "@/lib/training-session-queries";
 
 function authorizeCron(req: NextRequest): boolean {
   const secret = process.env.CRON_SECRET;
@@ -54,10 +58,10 @@ export async function GET(req: NextRequest) {
         .is("reminder_7d_sent_at", null);
 
       const title = await getSessionDisplayTitle(sess as Parameters<typeof getSessionDisplayTitle>[0]);
+      const days = await loadTrainingSessionDays(sess.id as string);
       const ctx = buildSessionContext(sess.id as string, {
         title,
-        starts_at: sess.starts_at as string,
-        ends_at: sess.ends_at as string | null,
+        days,
         timezone: sess.timezone as string,
         location: sess.location as string,
       });
@@ -91,10 +95,10 @@ export async function GET(req: NextRequest) {
         .is("reminder_1d_sent_at", null);
 
       const title = await getSessionDisplayTitle(sess as Parameters<typeof getSessionDisplayTitle>[0]);
+      const days = await loadTrainingSessionDays(sess.id as string);
       const ctx = buildSessionContext(sess.id as string, {
         title,
-        starts_at: sess.starts_at as string,
-        ends_at: sess.ends_at as string | null,
+        days,
         timezone: sess.timezone as string,
         location: sess.location as string,
       });

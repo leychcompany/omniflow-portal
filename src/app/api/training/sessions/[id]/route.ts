@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { getOptionalUserId } from "@/lib/verify-auth";
-import { countRegistrations, getSessionDisplayTitle } from "@/lib/training-session-queries";
+import {
+  countRegistrations,
+  getSessionDisplayTitle,
+  loadTrainingSessionDays,
+} from "@/lib/training-session-queries";
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -19,6 +23,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
     const counts = await countRegistrations(id);
     const displayTitle = await getSessionDisplayTitle(row as Parameters<typeof getSessionDisplayTitle>[0]);
+    const days = await loadTrainingSessionDays(id);
 
     let myRegistration: { status: string; id: string } | null = null;
     if (userId) {
@@ -85,6 +90,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       status: row.status,
       waitlist_enabled: row.waitlist_enabled,
       registration_closes_at: row.registration_closes_at,
+      days,
       registered_count: counts.registered,
       waitlisted_count: counts.waitlisted,
       spots_remaining: Math.max(0, (row.capacity as number) - counts.registered),

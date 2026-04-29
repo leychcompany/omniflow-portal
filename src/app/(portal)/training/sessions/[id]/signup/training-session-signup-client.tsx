@@ -6,7 +6,7 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { fetchWithAuthRetry } from '@/lib/fetch-with-auth'
-import { ArrowLeft, Loader2, Calendar, MapPin } from 'lucide-react'
+import { ArrowLeft, Loader2, MapPin } from 'lucide-react'
 import { TrainingSkeleton } from '@/components/portal/skeletons'
 import {
   TrainingEnrollmentForm,
@@ -18,7 +18,8 @@ import {
   publicTrainingSessionStatusLabel,
   trainingSessionCannotSelfServeSignup,
 } from '@/lib/training-session-public'
-import { formatTrainingScheduleParts } from '@/lib/format-training-session-schedule'
+import { TrainingScheduleDisplay } from '@/components/portal/training-schedule-display'
+import type { TrainingSessionDay } from '@/lib/format-training-session-schedule'
 
 interface SessionDetail {
   id: string
@@ -33,6 +34,7 @@ interface SessionDetail {
   waitlist_enabled: boolean
   spots_remaining: number
   my_registration: { id: string; status: string } | null
+  days: TrainingSessionDay[]
 }
 
 export function TrainingSessionSignupClient() {
@@ -231,13 +233,6 @@ export function TrainingSessionSignupClient() {
       ? 'waitlist'
       : 'register'
 
-  const schedule = formatTrainingScheduleParts(
-    session.starts_at,
-    session.ends_at,
-    session.timezone,
-    undefined
-  )
-
   return (
     <div className="max-w-xl mx-auto w-full py-6 space-y-6 px-4">
       <Button asChild variant="ghost" className="gap-2 -ml-2 text-zinc-600 dark:text-zinc-400">
@@ -251,22 +246,10 @@ export function TrainingSessionSignupClient() {
         <CardHeader className="space-y-2">
           <CardTitle className="text-xl leading-snug">{session.title}</CardTitle>
           <div className="flex flex-col gap-2 text-sm text-slate-600 dark:text-zinc-400">
-            <div className="flex items-start gap-2">
-              <Calendar className="h-4 w-4 mt-0.5 shrink-0 text-blue-500" aria-hidden />
-              <div>
-                <p>
-                  <span className="font-medium text-slate-800 dark:text-zinc-200">Starts</span>
-                  <span> · {schedule.startDisplay}</span>
-                </p>
-                {schedule.endDisplay && (
-                  <p>
-                    <span className="font-medium text-slate-800 dark:text-zinc-200">Ends</span>
-                    <span> · {schedule.endDisplay}</span>
-                  </p>
-                )}
-                <p className="text-xs text-slate-500 dark:text-zinc-500">{schedule.timezoneNote}</p>
-              </div>
-            </div>
+            <TrainingScheduleDisplay
+              days={session.days ?? []}
+              timezone={session.timezone}
+            />
             <div className="flex items-start gap-2">
               <MapPin className="h-4 w-4 mt-0.5 shrink-0 text-blue-500" />
               <span>{session.location || 'TBA'}</span>

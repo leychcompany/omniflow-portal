@@ -8,7 +8,10 @@ import { Card, CardContent } from '@/components/ui/card'
 import { TrainingHubNav } from '@/components/portal/training-hub-nav'
 import { TrainingSkeleton } from '@/components/portal/skeletons'
 import { Calendar } from 'lucide-react'
-import { formatTrainingSessionListSummary } from '@/lib/format-training-session-schedule'
+import {
+  formatTrainingSessionListSummary,
+  type TrainingSessionDay,
+} from '@/lib/format-training-session-schedule'
 import {
   isTrainingSessionSignupBlockedByStatus,
   publicTrainingSessionStatusLabel,
@@ -23,6 +26,7 @@ interface UpcomingSession {
   timezone: string
   location: string
   status: string
+  days: TrainingSessionDay[]
 }
 
 /** YYYY-MM-DD in the session's timezone for stable grouping */
@@ -143,7 +147,7 @@ export default function TrainingSchedulePage() {
                             )}
                           </div>
                           <p className="text-sm text-slate-600 dark:text-zinc-400">
-                            {formatTrainingSessionListSummary(s.starts_at, s.ends_at, s.timezone, undefined)}
+                            {formatTrainingSessionListSummary(s.days ?? [], s.timezone, undefined)}
                             <span className="text-slate-400 dark:text-zinc-600"> · </span>
                             {s.location || 'TBA'}
                           </p>

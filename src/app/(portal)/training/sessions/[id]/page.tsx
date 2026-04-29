@@ -7,11 +7,12 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { fetchWithAuthRetry } from '@/lib/fetch-with-auth'
-import { ArrowLeft, Loader2, MapPin, Calendar, Video } from 'lucide-react'
+import { ArrowLeft, Loader2, MapPin, Video } from 'lucide-react'
 import { TrainingSkeleton } from '@/components/portal/skeletons'
 import { SafeHtml } from '@/components/portal/safe-html'
 import { stripHtml } from '@/lib/strip-html'
-import { formatTrainingScheduleParts } from '@/lib/format-training-session-schedule'
+import { TrainingScheduleDisplay } from '@/components/portal/training-schedule-display'
+import type { TrainingSessionDay } from '@/lib/format-training-session-schedule'
 import {
   isTrainingSessionSignupBlockedByStatus,
   publicTrainingSessionStatusLabel,
@@ -46,6 +47,7 @@ interface SessionDetail {
   spots_remaining: number
   my_registration: { id: string; status: string } | null
   course?: CourseForSession | null
+  days: TrainingSessionDay[]
 }
 
 function formatPriceAmount(n: number) {
@@ -117,13 +119,6 @@ export default function TrainingSessionDetailPage() {
   }
   if (!session) return null
 
-  const schedule = formatTrainingScheduleParts(
-    session.starts_at,
-    session.ends_at,
-    session.timezone,
-    undefined
-  )
-
   const mine = session.my_registration
   const signupClosed = trainingSessionCannotSelfServeSignup(
     session.status,
@@ -160,22 +155,10 @@ export default function TrainingSessionDetailPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-col gap-2 text-sm text-slate-700 dark:text-zinc-300">
-            <div className="flex items-start gap-2">
-              <Calendar className="h-4 w-4 mt-0.5 shrink-0 text-blue-500" aria-hidden />
-              <div className="min-w-0 space-y-1">
-                <p>
-                  <span className="font-medium text-slate-800 dark:text-zinc-200">Starts</span>
-                  <span className="text-slate-600 dark:text-zinc-400"> · {schedule.startDisplay}</span>
-                </p>
-                {schedule.endDisplay && (
-                  <p>
-                    <span className="font-medium text-slate-800 dark:text-zinc-200">Ends</span>
-                    <span className="text-slate-600 dark:text-zinc-400"> · {schedule.endDisplay}</span>
-                  </p>
-                )}
-                <p className="text-xs text-slate-500 dark:text-zinc-500">{schedule.timezoneNote}</p>
-              </div>
-            </div>
+            <TrainingScheduleDisplay
+              days={session.days ?? []}
+              timezone={session.timezone}
+            />
             <div className="flex items-start gap-2">
               <MapPin className="h-4 w-4 mt-0.5 shrink-0 text-blue-500" />
               <span>{session.location || 'TBA'}</span>

@@ -8,7 +8,11 @@ import {
   notifyInternalTrainingSignup,
   notifyTrainingAttendee,
 } from "@/lib/training-notify-email";
-import { getSessionDisplayTitle, loadUserNotifyFields } from "@/lib/training-session-queries";
+import {
+  getSessionDisplayTitle,
+  loadTrainingSessionDays,
+  loadUserNotifyFields,
+} from "@/lib/training-session-queries";
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const auth = await verifyAdmin(req);
@@ -99,10 +103,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const { data: sess } = await supabaseAdmin.from("training_sessions").select("*").eq("id", sessionId).single();
     if (sess && regId) {
       const title = await getSessionDisplayTitle(sess as Parameters<typeof getSessionDisplayTitle>[0]);
+      const days = await loadTrainingSessionDays(sessionId);
       const ctx = buildSessionContext(sessionId, {
         title,
-        starts_at: sess.starts_at as string,
-        ends_at: sess.ends_at as string | null,
+        days,
         timezone: sess.timezone as string,
         location: sess.location as string,
       });

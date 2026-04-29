@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyAuth } from "@/lib/verify-auth";
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import { getSessionDisplayTitle } from "@/lib/training-session-queries";
+import {
+  getSessionDisplayTitle,
+  loadTrainingSessionDaysMap,
+} from "@/lib/training-session-queries";
 
 export async function GET(req: NextRequest) {
   const auth = await verifyAuth(req);
@@ -26,6 +29,7 @@ export async function GET(req: NextRequest) {
         .in("id", sessionIds);
       for (const s of sessions ?? []) sessionMap.set(s.id as string, s as Record<string, unknown>);
     }
+    const daysMap = await loadTrainingSessionDaysMap(sessionIds);
 
     const items = await Promise.all(
       (regs ?? []).map(async (r) => {
@@ -44,6 +48,7 @@ export async function GET(req: NextRequest) {
             timezone: sess.timezone,
             location: sess.location,
             status: sess.status,
+            days: daysMap.get(sess.id as string) ?? [],
           },
         };
       })

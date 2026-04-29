@@ -6,7 +6,11 @@ import {
   notifyInternalTrainingSignup,
   notifyTrainingAttendee,
 } from "@/lib/training-notify-email";
-import { getSessionDisplayTitle, loadUserNotifyFields } from "@/lib/training-session-queries";
+import {
+  getSessionDisplayTitle,
+  loadTrainingSessionDays,
+  loadUserNotifyFields,
+} from "@/lib/training-session-queries";
 import { trainingSessionCannotSelfServeSignup } from "@/lib/training-session-public";
 import { trainingEnrollmentBodySchema, trainingEnrollmentRow } from "@/lib/training-enrollment";
 
@@ -85,19 +89,15 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const { data: sess } = await supabaseAdmin.from("training_sessions").select("*").eq("id", sessionId).single();
     if (sess && regId) {
       const title = await getSessionDisplayTitle(sess as Parameters<typeof getSessionDisplayTitle>[0]);
+      const days = await loadTrainingSessionDays(sessionId);
       const ctx = buildSessionContext(sessionId, {
         title,
-        starts_at: sess.starts_at as string,
-        ends_at: sess.ends_at as string | null,
+        days,
         timezone: sess.timezone as string,
         location: sess.location as string,
       });
       const user = await loadUserNotifyFields(auth.userId);
-      const schedule = {
-        startsAtIso: ctx.startsAtIso,
-        endsAtIso: ctx.endsAtIso,
-        timezone: ctx.timezone,
-      };
+      const schedule = { days, timezone: ctx.timezone };
       if (regStatus === "registered") {
         notifyTrainingAttendee("registration_confirmed", user.email, user.name, ctx);
         notifyInternalTrainingSignup([], {
@@ -169,10 +169,10 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
 
     if (beforeSess) {
       const title = await getSessionDisplayTitle(beforeSess as Parameters<typeof getSessionDisplayTitle>[0]);
+      const days = await loadTrainingSessionDays(sessionId);
       const ctx = buildSessionContext(sessionId, {
         title,
-        starts_at: beforeSess.starts_at as string,
-        ends_at: beforeSess.ends_at as string | null,
+        days,
         timezone: beforeSess.timezone as string,
         location: beforeSess.location as string,
       });

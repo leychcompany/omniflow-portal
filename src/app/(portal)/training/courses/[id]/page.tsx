@@ -10,7 +10,10 @@ import { ArrowLeft, Calendar, MapPin, Video } from 'lucide-react'
 import { TrainingSkeleton } from '@/components/portal/skeletons'
 import { SafeHtml } from '@/components/portal/safe-html'
 import { stripHtml } from '@/lib/strip-html'
-import { formatTrainingSessionListSummary } from '@/lib/format-training-session-schedule'
+import {
+  formatTrainingSessionListSummary,
+  type TrainingSessionDay,
+} from '@/lib/format-training-session-schedule'
 import {
   isTrainingSessionSignupBlockedByStatus,
   publicTrainingSessionStatusLabel,
@@ -46,6 +49,7 @@ interface SessionRow {
   timezone: string
   location: string
   status: string
+  days: TrainingSessionDay[]
 }
 
 export default function TrainingCourseDetailPage() {
@@ -255,7 +259,7 @@ export default function TrainingCourseDetailPage() {
                     <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-slate-600 dark:text-zinc-400">
                       <span className="inline-flex items-center gap-1">
                         <Calendar className="h-3.5 w-3.5 shrink-0 text-blue-500" />
-                        {formatTrainingSessionListSummary(s.starts_at, s.ends_at, s.timezone, undefined)}
+                        {formatTrainingSessionListSummary(s.days ?? [], s.timezone, undefined)}
                       </span>
                       <span className="text-slate-400 dark:text-zinc-600">·</span>
                       <span className="inline-flex items-center gap-1">

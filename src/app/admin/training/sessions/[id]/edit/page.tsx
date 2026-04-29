@@ -12,12 +12,22 @@ import {
   DEFAULT_TRAINING_TIMEZONE,
   trainingTimezoneSelectOptions,
 } from '@/lib/training-timezones'
+import {
+  TrainingSessionDaysEditor,
+  type DraftDay,
+} from '@/components/admin/training-session-days-editor'
 
 function toLocalInput(iso: string | null | undefined): string {
   if (!iso) return ''
   const d = new Date(iso)
   const p = (n: number) => String(n).padStart(2, '0')
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`
+}
+
+function trimSecondsForInput(time: string | null | undefined): string {
+  if (!time) return ''
+  const parts = time.split(':')
+  return parts.length >= 2 ? `${parts[0].padStart(2, '0')}:${parts[1].padStart(2, '0')}` : time
 }
 
 type AttendanceStatus = 'scheduled' | 'confirmed'
@@ -69,8 +79,6 @@ export default function EditTrainingSessionPage() {
     course_id: '',
     title: '',
     description: '',
-    starts_at: '',
-    ends_at: '',
     timezone: DEFAULT_TRAINING_TIMEZONE,
     location: '',
     capacity: 12,
@@ -78,6 +86,7 @@ export default function EditTrainingSessionPage() {
     waitlist_enabled: true,
     registration_closes_at: '',
   })
+  const [days, setDays] = useState<DraftDay[]>([])
   const [userQuery, setUserQuery] = useState('')
   const [userResults, setUserResults] = useState<UserSearchRow[]>([])
   const [userSearchLoading, setUserSearchLoading] = useState(false)
@@ -127,8 +136,6 @@ export default function EditTrainingSessionPage() {
           course_id: (row.course_id as string) || '',
           title: (row.title as string) || '',
           description: (row.description as string) || '',
-          starts_at: toLocalInput(row.starts_at as string),
-          ends_at: toLocalInput(row.ends_at as string),
           timezone: (row.timezone as string) || DEFAULT_TRAINING_TIMEZONE,
           location: (row.location as string) || '',
           capacity: row.capacity as number,
@@ -136,6 +143,17 @@ export default function EditTrainingSessionPage() {
           waitlist_enabled: !!row.waitlist_enabled,
           registration_closes_at: toLocalInput(row.registration_closes_at as string),
         })
+        const incomingDays = Array.isArray(row.days) ? row.days : []
+        setDays(
+          incomingDays.map(
+            (d: { day_date: string; start_time: string; end_time: string; label?: string | null }) => ({
+              day_date: d.day_date,
+              start_time: trimSecondsForInput(d.start_time),
+              end_time: trimSecondsForInput(d.end_time),
+              label: d.label ?? '',
+            })
+          )
+        )
       } catch {
         if (!cancelled) toast.error('Failed to load session')
       } finally {
@@ -207,10 +225,12 @@ export default function EditTrainingSessionPage() {
   const save = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!id) return
+    if (days.length === 0) {
+      toast.error('Add at least one class day.')
+      return
+    }
     setSaving(true)
     try {
-      const starts = new Date(form.starts_at).toISOString()
-      const ends = form.ends_at.trim() ? new Date(form.ends_at).toISOString() : null
       const closes = form.registration_closes_at.trim()
         ? new Date(form.registration_closes_at).toISOString()
         : null
@@ -221,14 +241,18 @@ export default function EditTrainingSessionPage() {
           course_id: form.course_id || null,
           title: form.title || null,
           description: form.description || null,
-          starts_at: starts,
-          ends_at: ends,
           timezone: form.timezone,
           location: form.location,
           capacity: Number(form.capacity),
           status: form.status,
           waitlist_enabled: form.waitlist_enabled,
           registration_closes_at: closes,
+          days: days.map((d) => ({
+            day_date: d.day_date,
+            start_time: d.start_time,
+            end_time: d.end_time,
+            label: d.label?.trim() || null,
+          })),
         }),
       })
       const data = await res.json()
@@ -380,27 +404,6 @@ export default function EditTrainingSessionPage() {
             onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
           />
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="text-sm font-medium">Starts (local)</label>
-            <Input
-              type="datetime-local"
-              required
-              value={form.starts_at}
-              onChange={(e) => setForm((f) => ({ ...f, starts_at: e.target.value }))}
-              className="mt-1"
-            />
-          </div>
-          <div>
-            <label className="text-sm font-medium">Ends (local)</label>
-            <Input
-              type="datetime-local"
-              value={form.ends_at}
-              onChange={(e) => setForm((f) => ({ ...f, ends_at: e.target.value }))}
-              className="mt-1"
-            />
-          </div>
-        </div>
         <div>
           <label className="text-sm font-medium">Timezone</label>
           <select
@@ -414,7 +417,12 @@ export default function EditTrainingSessionPage() {
               </option>
             ))}
           </select>
+          <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+            All class times below are interpreted in this timezone.
+          </p>
         </div>
+
+        <TrainingSessionDaysEditor days={days} timezone={form.timezone} onChange={setDays} />
         <div>
           <label className="text-sm font-medium">Location</label>
           <Input value={form.location} onChange={(e) => setForm((f) => ({ ...f, location: e.target.value }))} className="mt-1" />

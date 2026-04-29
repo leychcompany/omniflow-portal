@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import { countRegistrations, getSessionDisplayTitle } from "@/lib/training-session-queries";
+import {
+  countRegistrations,
+  getSessionDisplayTitle,
+  loadTrainingSessionDaysMap,
+} from "@/lib/training-session-queries";
 
 /** Public list: upcoming sessions (excludes draft). Full / closed / cancelled still listed for visibility. */
 export async function GET(req: NextRequest) {
@@ -30,6 +34,9 @@ export async function GET(req: NextRequest) {
       return new Date(closes).getTime() > nowMs;
     });
 
+    const ids = upcomingRows.map((r) => r.id as string);
+    const daysMap = await loadTrainingSessionDaysMap(ids);
+
     const sessions = await Promise.all(
       upcomingRows.map(async (row) => {
         const counts = await countRegistrations(row.id as string);
@@ -47,6 +54,7 @@ export async function GET(req: NextRequest) {
           status: row.status,
           waitlist_enabled: row.waitlist_enabled,
           registration_closes_at: row.registration_closes_at,
+          days: daysMap.get(row.id as string) ?? [],
           registered_count: counts.registered,
           waitlisted_count: counts.waitlisted,
           spots_remaining: Math.max(0, (row.capacity as number) - counts.registered),
