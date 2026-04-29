@@ -93,7 +93,7 @@ export function notifyTrainingAttendee(
   switch (kind) {
     case "registration_confirmed":
       subject = `You’re signed up: ${ctx.sessionTitle}`;
-      body += `You’ve signed up for this class. Payment is handled offline (for example by purchase order); your OMNI representative will follow up as needed.\n\n${block}\n\n${trainingSignupDisclaimerEmailBlock()}\n\nWe look forward to seeing you.`;
+      body += `You’ve signed up for this class. Your OMNI representative will follow up as needed.\n\n${block}\n\n${trainingSignupDisclaimerEmailBlock()}\n\nWe look forward to seeing you.`;
       break;
     case "waitlist_joined":
       subject = `Waitlist: ${ctx.sessionTitle}`;
