@@ -23,9 +23,6 @@ import {
 function buildScheduleLines(ctx: TrainingSessionEmailContext): string[] {
   const sched = formatTrainingSessionSchedule(ctx.days, ctx.timezone, "en-US");
   if (sched.perDay.length === 0) return ["Schedule TBA"];
-  if (sched.uniform && sched.dates && sched.time) {
-    return [sched.dates, sched.time];
-  }
   return sched.perDay.map((d) =>
     d.label ? `${d.date} · ${d.time} — ${d.label}` : `${d.date} · ${d.time}`
   );

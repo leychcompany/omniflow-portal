@@ -189,28 +189,15 @@ export function TrainingSessionDaysEditor({ days, timezone, onChange }: Training
           <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500 mb-1">
             Preview (what users will see)
           </p>
-          {sched.uniform && sched.dates && sched.time ? (
-            <div className="space-y-0.5">
-              <p>
-                <span className="font-medium">Dates</span>
-                <span className="text-zinc-600 dark:text-zinc-400"> · {sched.dates}</span>
-              </p>
-              <p>
-                <span className="font-medium">Time</span>
-                <span className="text-zinc-600 dark:text-zinc-400"> · {sched.time}</span>
-              </p>
-            </div>
-          ) : (
-            <ul className="space-y-0.5">
-              {sched.perDay.map((p, idx) => (
-                <li key={idx}>
-                  <span className="font-medium">{p.date}</span>
-                  <span className="text-zinc-600 dark:text-zinc-400"> · {p.time}</span>
-                  {p.label && <span className="text-zinc-500"> — {p.label}</span>}
-                </li>
-              ))}
-            </ul>
-          )}
+          <ul className="space-y-0.5">
+            {sched.perDay.map((p, idx) => (
+              <li key={idx}>
+                <span className="font-medium">{p.date}</span>
+                <span className="text-zinc-600 dark:text-zinc-400"> · {p.time}</span>
+                {p.label && <span className="text-zinc-500"> — {p.label}</span>}
+              </li>
+            ))}
+          </ul>
         </div>
       )}
     </div>

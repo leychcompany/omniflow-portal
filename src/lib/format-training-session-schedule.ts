@@ -18,13 +18,7 @@ export type TrainingSessionDay = {
 };
 
 export type TrainingSessionScheduleSummary = {
-  /** True when every day has the same start_time and end_time (so we can collapse to "each day"). */
-  uniform: boolean;
-  /** Combined date span when `uniform` is true. e.g. "Tuesday, August 25 – Thursday, August 27, 2026" */
-  dates: string | null;
-  /** Daily time when `uniform` is true. e.g. "9:00 AM – 3:00 PM (CDT) each day" */
-  time: string | null;
-  /** Per-day lines (always populated, used directly when `uniform` is false). */
+  /** Per-day lines, always one entry per class day. */
   perDay: Array<{
     date: string;
     time: string;
@@ -39,12 +33,6 @@ function parseTime(time: string): { hour: number; minute: number } {
   const hour = Number.parseInt(hStr, 10) || 0;
   const minute = Number.parseInt(mStr, 10) || 0;
   return { hour, minute };
-}
-
-function timesEqual(a: string, b: string): boolean {
-  const pa = parseTime(a);
-  const pb = parseTime(b);
-  return pa.hour === pb.hour && pa.minute === pb.minute;
 }
 
 function parseDateString(dateStr: string): { y: number; m: number; d: number } {
@@ -100,20 +88,6 @@ function tzAbbreviationFor(dateStr: string, tz: string, locale: Intl.LocalesArgu
   return parts.find((p) => p.type === "timeZoneName")?.value ?? "local";
 }
 
-function dateSpanLabel(
-  firstDate: string,
-  lastDate: string,
-  locale: Intl.LocalesArgument
-): string {
-  if (firstDate === lastDate) return formatDateLong(firstDate, locale);
-  const first = parseDateString(firstDate);
-  const last = parseDateString(lastDate);
-  if (first.y !== last.y) {
-    return `${formatDateLong(firstDate, locale)} – ${formatDateLong(lastDate, locale)}`;
-  }
-  return `${formatDateLongNoYear(firstDate, locale)} – ${formatDateLong(lastDate, locale)}`;
-}
-
 function timeRangeLabel(
   startTime: string,
   endTime: string,
@@ -132,9 +106,8 @@ function sortDays(days: ReadonlyArray<TrainingSessionDay>): TrainingSessionDay[]
 }
 
 /**
- * Build a summary that's safe to render anywhere. Always returns `perDay`,
- * and when every day shares the same hours also returns collapsed
- * `dates` / `time` strings.
+ * Returns one entry per class day — no grouping, no "each day" collapsing.
+ * What you set is what every screen and email shows.
  */
 export function formatTrainingSessionSchedule(
   days: ReadonlyArray<TrainingSessionDay>,
@@ -142,7 +115,7 @@ export function formatTrainingSessionSchedule(
   locale: Intl.LocalesArgument = DEFAULT_LOCALE
 ): TrainingSessionScheduleSummary {
   if (!days || days.length === 0) {
-    return { uniform: true, dates: null, time: null, perDay: [] };
+    return { perDay: [] };
   }
 
   const sorted = sortDays(days);
@@ -156,36 +129,15 @@ export function formatTrainingSessionSchedule(
     };
   });
 
-  const first = sorted[0];
-  const last = sorted[sorted.length - 1];
-
-  const uniform = sorted.every(
-    (d) => timesEqual(d.start_time, first.start_time) && timesEqual(d.end_time, first.end_time)
-  );
-
-  if (!uniform) {
-    return { uniform: false, dates: null, time: null, perDay };
-  }
-
-  const abbrev = tzAbbreviationFor(first.day_date, timezone, locale);
-  const dates = dateSpanLabel(first.day_date, last.day_date, locale);
-  const baseTime = timeRangeLabel(first.start_time, first.end_time, abbrev, locale);
-  const time = sorted.length > 1 ? `${baseTime} each day` : baseTime;
-
-  return { uniform: true, dates, time, perDay };
+  return { perDay };
 }
 
 /**
- * Plain-text email block. en-US locale for consistent copy.
- *
- *   Dates: Tuesday, August 25 – Thursday, August 27, 2026
- *   Time: 9:00 AM – 3:00 PM (CDT) each day
- *
- * For non-uniform schedules:
+ * Plain-text email block — one line per class day.
  *
  *   Schedule:
  *     Tuesday, August 25, 2026 · 9:00 AM – 3:00 PM (CDT)
- *     Wednesday, August 26, 2026 · 9:00 AM – 12:00 PM (CDT) — Half day
+ *     Wednesday, August 26, 2026 · 9:00 AM – 3:00 PM (CDT) — Day Two
  *     ...
  */
 export function formatTrainingScheduleEmailBlock(
@@ -195,9 +147,6 @@ export function formatTrainingScheduleEmailBlock(
   const sched = formatTrainingSessionSchedule(days, timezone, "en-US");
   if (sched.perDay.length === 0) {
     return "Schedule: TBA";
-  }
-  if (sched.uniform && sched.dates && sched.time) {
-    return `Dates: ${sched.dates}\nTime: ${sched.time}`;
   }
   const lines = sched.perDay.map((d) => {
     const base = `  ${d.date} · ${d.time}`;
@@ -214,12 +163,12 @@ export function formatTrainingSessionListSummary(
 ): string {
   const sched = formatTrainingSessionSchedule(days, timezone, locale ?? DEFAULT_LOCALE);
   if (sched.perDay.length === 0) return "Schedule TBA";
-  if (sched.uniform && sched.dates && sched.time) {
-    return `${sched.dates} · ${sched.time}`;
+  if (sched.perDay.length === 1) {
+    return `${sched.perDay[0].date} · ${sched.perDay[0].time}`;
   }
   const first = sched.perDay[0];
   const last = sched.perDay[sched.perDay.length - 1];
-  return `${first.date} – ${last.date} · multiple times`;
+  return `${first.date} – ${last.date} · ${sched.perDay.length} days`;
 }
 
 /** "Previous" / "Updated" summary for admin schedule-change emails. */

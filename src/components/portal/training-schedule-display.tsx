@@ -16,11 +16,8 @@ type TrainingScheduleDisplayProps = {
 }
 
 /**
- * Dates + Time lines aligned with training emails. Always renders in the
- * **class timezone** (e.g. "10:00 AM (CST)") regardless of the visitor.
- *
- * - When all days share the same hours: collapsed "Dates / Time (… each day)".
- * - When hours differ: a per-day list (date · time · optional label).
+ * One line per class day — always explicit, never grouped.
+ * Times are shown in the class timezone (e.g. "10:00 AM (CST)").
  */
 export function TrainingScheduleDisplay({
   days,
@@ -37,32 +34,17 @@ export function TrainingScheduleDisplay({
   return (
     <div className={cn('flex items-start gap-2', className)}>
       <Calendar className="h-4 w-4 mt-0.5 shrink-0 text-blue-500" aria-hidden />
-      <div className={cn('min-w-0 space-y-1', textClassName)}>
-        {sched.uniform && sched.dates && sched.time ? (
-          <>
-            <p>
-              <span className="font-medium text-slate-800 dark:text-zinc-200">Dates</span>
-              <span className="text-slate-600 dark:text-zinc-400"> · {sched.dates}</span>
-            </p>
-            <p>
-              <span className="font-medium text-slate-800 dark:text-zinc-200">Time</span>
-              <span className="text-slate-600 dark:text-zinc-400"> · {sched.time}</span>
-            </p>
-          </>
-        ) : (
-          <ul className="space-y-1">
-            {sched.perDay.map((d, idx) => (
-              <li key={idx} className="leading-snug">
-                <span className="font-medium text-slate-800 dark:text-zinc-200">{d.date}</span>
-                <span className="text-slate-600 dark:text-zinc-400"> · {d.time}</span>
-                {d.label && (
-                  <span className="text-slate-500 dark:text-zinc-500"> — {d.label}</span>
-                )}
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+      <ul className={cn('min-w-0 space-y-1', textClassName)}>
+        {sched.perDay.map((d, idx) => (
+          <li key={idx} className="leading-snug">
+            <span className="font-medium text-slate-800 dark:text-zinc-200">{d.date}</span>
+            <span className="text-slate-600 dark:text-zinc-400"> · {d.time}</span>
+            {d.label && (
+              <span className="text-slate-500 dark:text-zinc-500"> — {d.label}</span>
+            )}
+          </li>
+        ))}
+      </ul>
     </div>
   )
 }
