@@ -8,6 +8,7 @@ import {
 } from "@/lib/format-training-session-schedule";
 import { formatEnrollmentDetailsPlainText, type TrainingEnrollmentBody } from "@/lib/training-enrollment";
 import { trainingSignupDisclaimerEmailBlock } from "@/lib/training-signup-disclaimers";
+import { renderTrainingEmail } from "@/lib/emails/render-training-email";
 
 const RESEND_URL = "https://api.resend.com/emails";
 
@@ -39,19 +40,12 @@ function portalBase(): string {
   );
 }
 
-function formatSessionBlock(ctx: TrainingSessionEmailContext): string {
-  const schedule = formatTrainingScheduleEmailBlock(ctx.days, ctx.timezone);
-  return `
-Class: ${ctx.sessionTitle}
-${schedule}
-
-Location: ${ctx.location || "TBA"}
-
-View details: ${ctx.portalSessionUrl}
-`.trim();
-}
-
-async function sendResend(to: string, subject: string, text: string): Promise<void> {
+async function sendResend(
+  to: string,
+  subject: string,
+  html: string,
+  text: string
+): Promise<void> {
   const key = process.env.RESEND_API_KEY;
   const from = process.env.REQUEST_FROM;
   if (!key || !from) {
@@ -64,7 +58,7 @@ async function sendResend(to: string, subject: string, text: string): Promise<vo
       Authorization: `Bearer ${key}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ from, to: [to], subject, text }),
+    body: JSON.stringify({ from, to: [to], subject, html, text }),
   });
   if (!res.ok) {
     const body = await res.text().catch(() => "");
@@ -84,64 +78,27 @@ export function notifyTrainingAttendee(
   extra?: { waitlistPosition?: number; oldSummary?: string; newSummary?: string }
 ): void {
   if (!toEmail) return;
-  const greeting = userName ? `Hi ${userName},` : "Hi,";
-  const block = formatSessionBlock(ctx);
 
-  let subject = "";
-  let body = `${greeting}\n\n`;
+  const subjects: Record<TrainingEmailKind, string> = {
+    registration_confirmed: `You're signed up: ${ctx.sessionTitle}`,
+    waitlist_joined: `Waitlist: ${ctx.sessionTitle}`,
+    promoted_from_waitlist: `A seat opened — you're signed up: ${ctx.sessionTitle}`,
+    registration_cancelled_self: `Signup cancelled: ${ctx.sessionTitle}`,
+    removed_by_admin: `Update: ${ctx.sessionTitle}`,
+    session_cancelled: `Cancelled: ${ctx.sessionTitle}`,
+    session_updated: `Schedule update: ${ctx.sessionTitle}`,
+    reminder_7d: `Reminder — class in about a week: ${ctx.sessionTitle}`,
+    reminder_1d: `Tomorrow: ${ctx.sessionTitle}`,
+  };
 
-  switch (kind) {
-    case "registration_confirmed":
-      subject = `You’re signed up: ${ctx.sessionTitle}`;
-      body += `You’ve signed up for this class. Your OMNI representative will follow up as needed.\n\n${block}\n\n${trainingSignupDisclaimerEmailBlock()}\n\nWe look forward to seeing you.`;
-      break;
-    case "waitlist_joined":
-      subject = `Waitlist: ${ctx.sessionTitle}`;
-      body += `You’re on the waitlist for this class:\n\n${block}\n\n`;
-      if (extra?.waitlistPosition != null) {
-        body += `Your position: #${extra.waitlistPosition}\n\n`;
-      }
-      body += `${trainingSignupDisclaimerEmailBlock()}\n\nIf a seat opens, we’ll email you.`;
-      break;
-    case "promoted_from_waitlist":
-      subject = `A seat opened — you’re signed up: ${ctx.sessionTitle}`;
-      body += `Good news — a seat opened and your signup is confirmed:\n\n${block}\n\n${trainingSignupDisclaimerEmailBlock()}`;
-      break;
-    case "registration_cancelled_self":
-      subject = `Signup cancelled: ${ctx.sessionTitle}`;
-      body += `You’ve cancelled your signup for:\n\n${block}`;
-      break;
-    case "removed_by_admin":
-      subject = `Update: ${ctx.sessionTitle}`;
-      body += `You’re no longer signed up or on the waitlist for this class:\n\n${block}\n\nIf this was unexpected, contact your OMNI representative.`;
-      break;
-    case "session_cancelled":
-      subject = `Cancelled: ${ctx.sessionTitle}`;
-      body += `This scheduled class has been cancelled:\n\n${ctx.sessionTitle}\n\n${formatTrainingScheduleEmailBlock(
-        ctx.days,
-        ctx.timezone
-      )}\n\nLocation: ${ctx.location || "TBA"}\n\nWe’re sorry for the inconvenience. For questions, reply to this email or contact support.`;
-      break;
-    case "session_updated":
-      subject = `Schedule update: ${ctx.sessionTitle}`;
-      body += `The details for this class have changed.\n\n${block}\n\n`;
-      if (extra?.oldSummary && extra?.newSummary) {
-        body += `Previous:\n${extra.oldSummary}\n\nUpdated:\n${extra.newSummary}\n`;
-      }
-      break;
-    case "reminder_7d":
-      subject = `Reminder — class in about a week: ${ctx.sessionTitle}`;
-      body += `This is a friendly reminder:\n\n${block}`;
-      break;
-    case "reminder_1d":
-      subject = `Tomorrow: ${ctx.sessionTitle}`;
-      body += `Your class is coming up:\n\n${block}`;
-      break;
-    default:
-      return;
-  }
+  const subject = subjects[kind];
+  if (!subject) return;
 
-  safeSend(sendResend(toEmail, subject, body));
+  safeSend(
+    renderTrainingEmail(kind, userName, ctx, extra).then(({ html, text }) =>
+      sendResend(toEmail, subject, html, text)
+    )
+  );
 }
 
 export function notifyInternalTrainingSignup(
@@ -171,8 +128,10 @@ ${params.status === "registered" ? "New class signup" : "New waitlist signup"}
 Account (login): ${name} <${params.attendeeEmail}>
 Class: ${params.sessionTitle}${enrollmentBlock}
 `.trim();
+
   for (const to of recipients) {
-    safeSend(sendResend(to, subject, text));
+    // Internal ops emails stay plain text (structured data is easier to scan)
+    safeSend(sendResend(to, subject, `<pre style="font-family:monospace;white-space:pre-wrap">${text}</pre>`, text));
   }
 }
 
