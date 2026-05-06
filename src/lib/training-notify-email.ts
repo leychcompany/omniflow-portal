@@ -8,8 +8,17 @@ import {
 } from "@/lib/format-training-session-schedule";
 import { formatEnrollmentDetailsPlainText, type TrainingEnrollmentBody } from "@/lib/training-enrollment";
 import { renderInternalTrainingSignupEmail, renderTrainingEmail } from "@/lib/emails/render-training-email";
+import { buildTrainingIcs } from "@/lib/emails/build-training-ics";
 
 const RESEND_URL = "https://api.resend.com/emails";
+
+type ResendAttachment = {
+  filename: string;
+  /** Base64-encoded file content. */
+  content: string;
+  /** Optional MIME type (e.g. "text/calendar; method=PUBLISH; charset=UTF-8"). */
+  content_type?: string;
+};
 
 export type TrainingEmailKind =
   | "registration_confirmed"
@@ -23,6 +32,7 @@ export type TrainingEmailKind =
   | "reminder_1d";
 
 export interface TrainingSessionEmailContext {
+  sessionId: string;
   sessionTitle: string;
   days: ReadonlyArray<TrainingSessionDay>;
   timezone: string;
@@ -43,7 +53,8 @@ async function sendResend(
   to: string,
   subject: string,
   html: string,
-  text: string
+  text: string,
+  attachments?: ResendAttachment[]
 ): Promise<void> {
   const key = process.env.RESEND_API_KEY;
   const from = process.env.REQUEST_FROM;
@@ -51,13 +62,23 @@ async function sendResend(
     console.warn("training-notify-email: missing RESEND_API_KEY or REQUEST_FROM");
     return;
   }
+  const payload: Record<string, unknown> = {
+    from,
+    to: [to],
+    subject,
+    html,
+    text,
+  };
+  if (attachments && attachments.length > 0) {
+    payload.attachments = attachments;
+  }
   const res = await fetch(RESEND_URL, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${key}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ from, to: [to], subject, html, text }),
+    body: JSON.stringify(payload),
   });
   if (!res.ok) {
     const body = await res.text().catch(() => "");
@@ -67,6 +88,40 @@ async function sendResend(
 
 function safeSend(p: Promise<void>): void {
   p.catch((e) => console.error("training-notify-email:", e));
+}
+
+/**
+ * Email kinds that should include a calendar (.ics) attachment so the
+ * trainee can add the class to Google Calendar / Outlook / Apple Calendar
+ * with a single click. We attach for confirmations, promotions, schedule
+ * updates, and reminders. Waitlist / cancellation kinds intentionally
+ * skip the attachment.
+ */
+const ICS_ATTACHMENT_KINDS: ReadonlySet<TrainingEmailKind> = new Set([
+  "registration_confirmed",
+  "promoted_from_waitlist",
+  "session_updated",
+  "reminder_7d",
+  "reminder_1d",
+]);
+
+function buildIcsAttachment(
+  ctx: TrainingSessionEmailContext
+): ResendAttachment | null {
+  const ics = buildTrainingIcs({
+    sessionId: ctx.sessionId,
+    sessionTitle: ctx.sessionTitle,
+    days: ctx.days,
+    timezone: ctx.timezone,
+    location: ctx.location,
+    portalSessionUrl: ctx.portalSessionUrl,
+  });
+  if (!ics) return null;
+  return {
+    filename: ics.filename,
+    content: Buffer.from(ics.content, "utf8").toString("base64"),
+    content_type: ics.contentType,
+  };
 }
 
 export function notifyTrainingAttendee(
@@ -93,9 +148,15 @@ export function notifyTrainingAttendee(
   const subject = subjects[kind];
   if (!subject) return;
 
+  const attachments: ResendAttachment[] = [];
+  if (ICS_ATTACHMENT_KINDS.has(kind)) {
+    const ics = buildIcsAttachment(ctx);
+    if (ics) attachments.push(ics);
+  }
+
   safeSend(
     renderTrainingEmail(kind, userName, ctx, extra).then(({ html, text }) =>
-      sendResend(toEmail, subject, html, text)
+      sendResend(toEmail, subject, html, text, attachments.length ? attachments : undefined)
     )
   );
 }
@@ -164,6 +225,7 @@ export function buildSessionContext(
   const base = portalBase();
   const sessionTitle = row.title?.trim() || "Training class";
   return {
+    sessionId,
     sessionTitle,
     days: row.days,
     timezone: row.timezone,
