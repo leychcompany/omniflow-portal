@@ -7,8 +7,7 @@ import {
   type TrainingSessionDay,
 } from "@/lib/format-training-session-schedule";
 import { formatEnrollmentDetailsPlainText, type TrainingEnrollmentBody } from "@/lib/training-enrollment";
-import { trainingSignupDisclaimerEmailBlock } from "@/lib/training-signup-disclaimers";
-import { renderTrainingEmail } from "@/lib/emails/render-training-email";
+import { renderInternalTrainingSignupEmail, renderTrainingEmail } from "@/lib/emails/render-training-email";
 
 const RESEND_URL = "https://api.resend.com/emails";
 
@@ -119,19 +118,37 @@ export function notifyInternalTrainingSignup(
   if (recipients.length === 0) return;
   const subject = `Training: ${params.status === "registered" ? "New signup" : "Waitlist"} — ${params.sessionTitle}`;
   const nameDisplay = params.attendeeName ? ` (${params.attendeeName})` : "";
+  const scheduleLines =
+    params.schedule && params.schedule.days.length > 0
+      ? formatTrainingScheduleEmailBlock(params.schedule.days, params.schedule.timezone).split("\n")
+      : ["Schedule TBA"];
+  const locationLine = "See session details";
+  const portalUrl = `${portalBase()}/training`;
   const enrollmentBlock = params.enrollment
-    ? `\n\n${formatEnrollmentDetailsPlainText(params.enrollment, params.schedule)}`
-    : `\n\nEnrollment details: Not collected via the portal signup form (e.g. admin-added enrollment). For full contact data, see Admin → Users or the session roster in the app.`;
+    ? formatEnrollmentDetailsPlainText(params.enrollment, params.schedule)
+    : `Enrollment details: Not collected via the portal signup form (e.g. admin-added enrollment). For full contact data, see Admin -> Users or the session roster in the app.`;
   const text = `
 ${params.status === "registered" ? "New class signup" : "New waitlist signup"}
 
 Account (login): ${params.attendeeEmail}${nameDisplay}
-Class: ${params.sessionTitle}${enrollmentBlock}
+Class: ${params.sessionTitle}
+
+${enrollmentBlock}
 `.trim();
 
   for (const to of recipients) {
-    // Internal ops emails stay plain text (structured data is easier to scan)
-    safeSend(sendResend(to, subject, `<pre style="font-family:monospace;white-space:pre-wrap">${text}</pre>`, text));
+    safeSend(
+      renderInternalTrainingSignupEmail({
+        attendeeEmail: params.attendeeEmail,
+        attendeeName: params.attendeeName,
+        sessionTitle: params.sessionTitle,
+        status: params.status,
+        location: locationLine,
+        portalSessionUrl: portalUrl,
+        scheduleLines,
+        enrollmentBlock,
+      }).then(({ html }) => sendResend(to, subject, html, text))
+    );
   }
 }
 

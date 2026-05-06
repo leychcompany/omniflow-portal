@@ -10,7 +10,7 @@ import {
   TrainingEmailLayout,
   emailStyles,
 } from "./training-email-template";
-import { Text, Heading } from "@react-email/components";
+import { Text } from "@react-email/components";
 import type { TrainingEmailKind, TrainingSessionEmailContext } from "@/lib/training-notify-email";
 import { TRAINING_SIGNUP_DISCLAIMER_PARAGRAPHS } from "@/lib/training-signup-disclaimers";
 import {
@@ -329,6 +329,90 @@ export async function renderTrainingEmail(
 
   const html = await render(element);
   const text = buildPlainText(kind, greeting, ctx, extra);
+  return { html, text };
+}
+
+export async function renderInternalTrainingSignupEmail(params: {
+  attendeeEmail: string;
+  attendeeName: string | null;
+  sessionTitle: string;
+  status: "registered" | "waitlisted";
+  location: string;
+  portalSessionUrl: string;
+  scheduleLines: string[];
+  enrollmentBlock: string;
+}): Promise<{ html: string; text: string }> {
+  const preview = `Training: ${params.status === "registered" ? "New signup" : "Waitlist"} — ${params.sessionTitle}`;
+  const nameDisplay = params.attendeeName ? ` (${params.attendeeName})` : "";
+  const title = params.status === "registered" ? "New class signup" : "New waitlist signup";
+  const headingLead =
+    params.status === "registered"
+      ? "A customer signed up for this class."
+      : "A customer joined the waitlist for this class.";
+  const detailLines = params.enrollmentBlock
+    .split(/\n+/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  const html = await render(
+    <TrainingEmailLayout preview={preview}>
+      <Text style={emailStyles.greeting}>{title}</Text>
+      <Text style={emailStyles.lead}>
+        {headingLead}
+        <br />
+        Account (login): {params.attendeeEmail}
+        {nameDisplay}
+      </Text>
+      <ClassInfoBox
+        title={params.sessionTitle}
+        scheduleLines={params.scheduleLines}
+        location={params.location}
+        ctaUrl={params.portalSessionUrl}
+      />
+      <div
+        style={{
+          marginTop: "16px",
+          fontSize: "14px",
+          lineHeight: "22px",
+          color: "#3f3f46",
+        }}
+      >
+        {detailLines.map((line, idx) => {
+          const separatorIdx = line.indexOf(":");
+          const possibleLabel = separatorIdx > 0 ? line.slice(0, separatorIdx) : "";
+          const isLabeledPair = separatorIdx > 0 && !/\d/.test(possibleLabel);
+          if (isLabeledPair) {
+            const label = possibleLabel;
+            const value = line.slice(separatorIdx + 1).trim();
+            return (
+              <Text key={`${idx}-${label}`} style={{ margin: "0 0 10px" }}>
+                <strong style={{ color: "#18181b" }}>{label}:</strong>{" "}
+                {value ? <span>{value}</span> : null}
+              </Text>
+            );
+          }
+          return (
+            <Text key={`${idx}-plain`} style={{ margin: "0 0 10px", color: "#3f3f46" }}>
+              {line}
+            </Text>
+          );
+        })}
+      </div>
+    </TrainingEmailLayout>
+  );
+
+  const text = `
+${title}
+
+Account (login): ${params.attendeeEmail}${nameDisplay}
+Class: ${params.sessionTitle}
+${params.scheduleLines.join("\n")}
+Location: ${params.location || "TBA"}
+View details: ${params.portalSessionUrl}
+
+${params.enrollmentBlock}
+`.trim();
+
   return { html, text };
 }
 

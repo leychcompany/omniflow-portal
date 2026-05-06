@@ -6,18 +6,18 @@ import {
   Body,
   Container,
   Head,
-  Heading,
   Hr,
   Html,
+  Img,
   Link,
   Preview,
-  Section,
   Text,
 } from "@react-email/components";
 import * as React from "react";
 
 // ─── Brand tokens ────────────────────────────────────────────────────────────
 const BLUE = "#1d4ed8";
+const BLACK = "#000000";
 const BLUE_LIGHT = "#eff6ff";
 const GREY_BG = "#f4f4f5";
 const GREY_BORDER = "#e4e4e7";
@@ -39,17 +39,16 @@ const styles = {
     padding: "40px 16px",
   } as React.CSSProperties,
   header: {
-    backgroundColor: BLUE,
+    backgroundColor: BLACK,
     borderRadius: "8px 8px 0 0",
-    padding: "24px 32px",
+    padding: "20px 32px",
     textAlign: "center" as const,
   } as React.CSSProperties,
-  headerText: {
-    color: "#ffffff",
-    fontSize: "20px",
-    fontWeight: "700",
-    margin: 0,
-    letterSpacing: "-0.3px",
+  headerLogo: {
+    display: "block",
+    margin: "0 auto",
+    width: "auto",
+    height: "50px",
   } as React.CSSProperties,
   card: {
     backgroundColor: "#ffffff",
@@ -214,6 +213,9 @@ export function TrainingEmailLayout({
   preview: string;
   children: React.ReactNode;
 }) {
+  const appBaseUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") || "";
+  const logoSrc = `${appBaseUrl}/training-email-logo.png`;
+
   return (
     <Html lang="en">
       <Head />
@@ -222,7 +224,12 @@ export function TrainingEmailLayout({
         <Container style={styles.container}>
           {/* Header bar */}
           <div style={styles.header}>
-            <div style={styles.headerText}>OMNI Training</div>
+            <Img
+              src={logoSrc}
+              alt="Omni"
+              height="50"
+              style={styles.headerLogo}
+            />
           </div>
 
           {/* Content card */}
